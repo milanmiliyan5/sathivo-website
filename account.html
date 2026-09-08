@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#702842">
+  <meta name="robots" content="noindex">
+  <meta name="referrer" content="no-referrer">
+  <meta name="description" content="Your Sathivo account. A little space for good company, for adults 18+ only.">
+  <title>Your account — Sathivo</title>
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="account.css">
+  <script type="module" src="js/account-page.js"></script>
+</head>
+<body class="account-page">
+  <a class="skip-link" href="#account-main">Skip to account</a>
+  <header class="site-header"><div class="container account-nav">
+    <a class="brand" href="./" aria-label="Sathivo home"><span class="brand-mark" aria-hidden="true">♡</span>sathivo<span class="brand-period">.</span></a>
+    <a class="account-back" href="./#experiences"><span aria-hidden="true">←</span> Keep exploring</a>
+  </div></header>
+  <main class="container account-layout" id="account-main">
+    <aside class="account-story" aria-labelledby="story-title">
+      <p class="eyebrow">A LITTLE SPACE FOR YOU</p>
+      <h1 id="story-title">Good company.<br><em>A fresh chapter.</em></h1>
+      <p>Some of life's best moments start with a simple hello. Make a little room for yours.</p>
+      <div class="account-photo"><img src="assets/companionship-india.jpg" width="1122" height="1402" alt="Illustrative scene of Indian adults enjoying a friendly conversation over coffee"><span>Small moments. More meaning.</span></div>
+      <div class="account-assurance"><span>18+ only</span><span>Strictly platonic</span><span>Made for India</span></div>
+    </aside>
+    <section class="account-card" aria-label="Your Sathivo account">
+      <div id="launch-notice" class="account-notice"><strong>Accounts are coming soon.</strong><p>Email verification is being prepared. These screens are a preview; signup and sign-in are not open yet.</p></div>
+      <noscript><div class="account-notice">Please enable JavaScript to use account features. You can still <a href="./">explore Sathivo</a>.</div></noscript>
+      <div id="account-tabs" class="account-tabs" aria-label="Account options"><a href="#login" data-route="login" aria-current="page">Sign in</a><a href="#signup" data-route="signup">Create account</a></div>
+      <p id="account-status" class="account-status" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></p>
+
+      <section data-panel="login" aria-labelledby="login-title">
+        <p class="eyebrow">WELCOME BACK</p><h2 id="login-title" tabindex="-1">Your next <em>hello.</em></h2><p class="panel-intro">Sign in with your email and password.</p>
+        <form id="login-form" novalidate><fieldset disabled>
+          <label for="login-email">Email address</label><input id="login-email" name="email" type="email" autocomplete="username" maxlength="254" required placeholder="you@example.com">
+          <label for="login-password">Password</label><div class="password-field"><input id="login-password" name="password" type="password" autocomplete="current-password" maxlength="128" required><button type="button" data-toggle-password="login-password" aria-label="Show password" aria-pressed="false">Show</button></div>
+          <a class="form-link forgot-link" href="#forgot" data-route="forgot">Forgot password?</a>
+          <button class="button button-primary form-submit" type="submit">Sign in <span aria-hidden="true">↗</span></button>
+        </fieldset></form>
+        <p class="panel-note">Email not verified? <a class="form-link" href="#verify-email" data-route="verify-email">Verify my email</a></p>
+      </section>
+
+      <section data-panel="signup" aria-labelledby="signup-title" hidden>
+        <p class="eyebrow">LET'S START WITH HELLO</p><h2 id="signup-title" tabindex="-1">A little more <em>connection.</em></h2><p class="panel-intro">One account for your Sathivo journey.</p>
+        <form id="signup-form" novalidate><fieldset disabled>
+          <label for="signup-name">Your name</label><input id="signup-name" name="name" autocomplete="name" minlength="2" maxlength="60" required placeholder="What should we call you?">
+          <label for="signup-email">Email address</label><input id="signup-email" name="email" type="email" autocomplete="username" maxlength="254" required placeholder="you@example.com">
+          <label for="signup-password">Create a password</label><div class="password-field"><input id="signup-password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" aria-describedby="signup-password-hint" required><button type="button" data-toggle-password="signup-password" aria-label="Show password" aria-pressed="false">Show</button></div><p class="field-hint" id="signup-password-hint">12–128 characters. Try a few unrelated words.</p>
+          <label for="signup-confirmation">Confirm password</label><input id="signup-confirmation" name="confirmation" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
+          <label class="check-label"><input type="checkbox" name="adult" required><span>I confirm that I am 18 years or older.</span></label>
+          <label class="check-label"><input type="checkbox" name="boundaries" required><span>I agree to the <a href="#account-boundaries" class="form-link">platonic-only boundaries</a> and have read the account privacy notice below.</span></label>
+          <button class="button button-primary form-submit" type="submit">Create account <span aria-hidden="true">↗</span></button>
+        </fieldset></form>
+        <p class="panel-note">Companion applications and bookings will open separately.</p>
+      </section>
+
+      <section data-panel="forgot" aria-labelledby="forgot-title" hidden>
+        <a class="form-link panel-back" href="#login" data-route="login">← Back to sign in</a><p class="eyebrow">A FRESH START</p><h2 id="forgot-title" tabindex="-1">Let's get you <em>back in.</em></h2><p class="panel-intro">Enter your account email. If it belongs to a verified account, we'll send a 6-digit password reset code.</p>
+        <form id="recovery-form" novalidate><fieldset disabled><label for="recovery-email">Registered email address</label><input id="recovery-email" name="email" type="email" autocomplete="username" maxlength="254" required placeholder="you@example.com"><button class="button button-primary form-submit" type="submit">Send reset code <span aria-hidden="true">↗</span></button></fieldset></form>
+        <p class="panel-note">Your password changes only after you verify the code and choose a new password.</p>
+      </section>
+
+      <section data-panel="verify-email" aria-labelledby="email-title" hidden>
+        <a class="form-link panel-back" href="#login" data-route="login">← Back to sign in</a><p class="eyebrow">ONE SMALL STEP</p><h2 id="email-title" tabindex="-1">Verify your <em>email.</em></h2><p class="panel-intro">If your account is waiting for verification, we'll send a new email code.</p>
+        <form id="verification-form" novalidate><fieldset disabled><label for="verification-email">Email address</label><input id="verification-email" name="email" type="email" autocomplete="username" maxlength="254" required placeholder="you@example.com"><button class="button button-primary form-submit" type="submit">Send verification code</button></fieldset></form>
+      </section>
+
+      <section data-panel="otp" aria-labelledby="otp-title" hidden>
+        <a class="form-link panel-back" href="#login" data-route="login">← Back to sign in</a><p class="eyebrow" id="otp-eyebrow">CHECK YOUR EMAIL</p><h2 id="otp-title" tabindex="-1">A code. Then <em>you're in.</em></h2><p class="panel-intro" id="otp-explanation"></p><p class="email-destination" id="otp-destination"></p>
+        <form id="otp-form" novalidate><fieldset disabled><label for="otp-code">6-digit email code</label><input class="otp-input" id="otp-code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" aria-describedby="otp-hint" required placeholder="000000"><p class="field-hint" id="otp-hint">Check your spam folder too. Never share this code.</p><button class="button button-primary form-submit" type="submit">Verify code</button></fieldset></form>
+        <button id="resend-code" class="form-link resend-code" type="button" disabled>Resend code</button><span id="resend-countdown" class="field-hint"></span>
+      </section>
+
+      <section data-panel="new-password" aria-labelledby="password-title" hidden>
+        <p class="eyebrow">EMAIL CODE VERIFIED</p><h2 id="password-title" tabindex="-1">New password.<br><em>Fresh start.</em></h2><p class="panel-intro">Choose a password you don't use elsewhere.</p>
+        <form id="password-form" novalidate><fieldset disabled><label for="new-password">New password</label><div class="password-field"><input id="new-password" name="password" type="password" autocomplete="new-password" minlength="12" maxlength="128" aria-describedby="new-password-hint" required><button type="button" data-toggle-password="new-password" aria-label="Show password" aria-pressed="false">Show</button></div><p class="field-hint" id="new-password-hint">Use 12–128 characters.</p><label for="new-confirmation">Confirm new password</label><input id="new-confirmation" name="confirmation" type="password" autocomplete="new-password" minlength="12" maxlength="128" required><button class="button button-primary form-submit" type="submit">Save new password</button></fieldset></form>
+      </section>
+
+      <section data-panel="account" aria-labelledby="account-title" hidden>
+        <span class="account-emblem" aria-hidden="true">♡</span><p class="eyebrow">YOUR SATHIVO SPACE</p><h2 id="account-title" tabindex="-1">Welcome, <em id="account-name">friend</em>.</h2><p class="panel-intro">Your account is ready for what's next.</p>
+        <div class="account-summary"><span>Account email</span><strong id="account-email"></strong><span class="email-verified">Email verified</span></div>
+        <p class="panel-note">Email verification confirms access to your inbox. It is not identity or age verification.</p>
+        <div class="next-chapter"><strong>More good moments are on the way.</strong><p>Companion profiles, applications and booking will arrive in the next stages.</p></div>
+        <a class="button button-primary form-submit" href="./#experiences">Explore experiences <span aria-hidden="true">↗</span></a><button class="form-link signout" id="signout" type="button">Sign out on this device</button>
+      </section>
+
+      <details class="account-boundaries" id="account-boundaries"><summary>Account privacy & community boundaries</summary><div>
+        <p>Sathivo is for adults 18+ and strictly platonic companionship. Sexual services, sexual offers, escort services and sexual activity are prohibited. Respect consent, privacy and boundaries.</p>
+        <p>When accounts open, your name, email address and declarations will be stored with our authentication provider, Supabase. Your password is handled by Supabase Auth; Sathivo's page does not save it. Verification and recovery emails go to the address you provide.</p>
+        <p>Sign-in session tokens will be stored in this browser so you can stay signed in. Password reset sessions stay in memory and end when you leave or reload this page. Sign out when using a shared device.</p>
+        <p>GitHub Pages hosts this website. Google Fonts supplies the fonts. These providers receive normal connection information such as IP addresses. This release has no advertising or analytics trackers.</p>
+        <p>Public signup is not open. The full privacy policy, support contact and account deletion process will be published before accounts open to everyone.</p>
+      </div></details>
+    </section>
+  </main>
+  <footer class="container account-footer"><span>© <span id="account-year">2026</span> Sathivo</span><a href="./#safety">Warm connections. Clear boundaries.</a></footer>
+</body>
+</html>

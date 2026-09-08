@@ -2,7 +2,7 @@
 
 ## Current status
 
-The public homepage is in place, including the Indian cafe hero image. The owner enabled GitHub Pages from main at the repository root. Accounts, live discovery, profiles, bookings, payments, and moderation are not implemented yet.
+The public homepage is in place, including the Indian cafe hero image. The owner enabled GitHub Pages from main at the repository root. A separate account preview and Supabase authentication integration have now been added. Public signup/sign-in remain closed pending email sender/template configuration and live acceptance testing. Discovery, companion profiles, bookings, payments, and moderation are not implemented yet.
 
 ## Confirmed product decisions
 
@@ -35,7 +35,7 @@ Stages 6, 8, and the detailed commercial/operational rules are proposed plans to
 
 ## First milestone: real account access
 
-Recommended backend: Supabase, subject to the owner connecting the project. A Supabase plugin was found but was not connected when this roadmap was written. GitHub remains the website source repository.
+Supabase is now connected. The Sathivo project (`ujutlzjsgbqtlisecpnh`, `ap-south-1`) is active. GitHub remains the website source repository. Account screens, signup/email verification, password login, sign-out, and recovery OTP integration are implemented behind a closed-enrollment flag. Eighteen automated tests cover auth flow boundaries and SDK loading; live email delivery and end-to-end acceptance remain pending. See [account activation setup](docs/AUTH_SETUP.md) for exact progress and the remaining configuration.
 
 Prepare email/password signup and recovery with verified email, a password-recovery OTP (not a normal login OTP substituted for recovery), expiry, resend/attempt limits, neutral error responses, and password-change confirmation. Keep privileged keys server-side. Protect account/profile records with server-enforced access rules.
 

@@ -1,5 +1,11 @@
 # Third-party assets
 
+## Authentication SDK
+
+`assets/vendor/supabase-2.116.0.js` is the unmodified browser bundle from `@supabase/supabase-js` version 2.116.0, licensed under MIT. The complete license is in `assets/vendor/supabase-LICENSE.txt`. Its npm package integrity was verified before extraction, and the source package URL and file SHA-256 are recorded in `assets/vendor/manifest.json`. The package version and dependencies are pinned in `package.json` and `package-lock.json`.
+
+The SDK is served locally and loaded only when account enrollment is enabled; no third-party JavaScript CDN is requested at runtime.
+
 ## Current hero photograph
 
 `assets/companionship-india.jpg` was generated with OpenAI Image Generation for Sathivo. It depicts fictional Indian adults in a public cafe, not actual users, verified companions, or endorsers.

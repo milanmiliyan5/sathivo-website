@@ -89,9 +89,9 @@ document.querySelectorAll('[data-info]').forEach(button => {
       ]);
     } else if (button.dataset.info === 'privacy') {
       openDialog(button, 'ABOUT THIS WEBSITE RELEASE', 'Website privacy', [
-        paragraph('This homepage does not have account registration, payment collection, contact forms, analytics scripts, or advertising trackers. It does not store your interactions in browser storage.'),
+        paragraph('This homepage has no payment collection, contact forms, analytics scripts, or advertising trackers. It does not store your interactions in browser storage. The linked account screens are a preview: signup and sign-in are not open, and those forms do not submit personal information in this release.'),
         paragraph('The page requests fonts from Google Fonts. Your browser sends network information, including your IP address, when requesting those fonts. The hosting provider may also keep normal access logs.'),
-        paragraph('Before accounts and bookings launch, a full privacy policy will explain what personal information Sathivo collects, why it is needed, how it is handled, and how to exercise your rights.')
+        paragraph('The account page explains the planned handling of account information and sign-in sessions. A full privacy policy, support contact and account deletion process will be published before public signup opens.')
       ]);
     }
   });

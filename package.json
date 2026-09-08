@@ -1,0 +1,14 @@
+{
+  "name": "sathivo-website",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "description": "Sathivo static website and account integration",
+  "scripts": {
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check script.js && node --check js/account-page.js && node --check js/auth-flow.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.116.0"
+  }
+}
