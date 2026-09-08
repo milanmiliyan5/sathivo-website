@@ -18,7 +18,8 @@ This is a working informational homepage, **not a live marketplace**. Accounts, 
 index.html                  Semantic homepage and section content
 styles.css                  Design tokens, component styles, responsive layouts
 script.js                   Menu, experience information, and accessible dialogs
-assets/companionship.jpg     Locally served, licensed stock photograph
+assets/companionship-india.jpg  AI-generated Indian cafe hero photograph
+assets/companionship.jpg        Original stock photo retained as an unused asset
 assets/icons.svg             Interface icon sprite
 assets/favicon.svg           Brand favicon
 THIRD_PARTY_NOTICES.md       Asset attribution and licensing

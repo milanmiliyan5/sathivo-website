@@ -1,6 +1,12 @@
 # Third-party assets
 
-## Hero photograph
+## Current hero photograph
+
+`assets/companionship-india.jpg` was generated with OpenAI Image Generation for Sathivo. It depicts fictional Indian adults in a public cafe, not actual users, verified companions, or endorsers.
+
+Prompt summary: Photorealistic Indian man and woman, adults around 25–30, sharing a friendly platonic conversation over coffee in a contemporary public Indian cafe; cream linen shirt, dusty-rose kurta, warm daylight, portrait framing, no text or logos.
+
+## Original stock photograph (retained, not used in the homepage)
 
 - Photographer: Sarah Chai, via Pexels.
 - Source: https://www.pexels.com/photo/joyful-young-female-friends-drinking-coffee-and-talking-on-bench-in-morning-7266832/
