@@ -1,6 +1,6 @@
-import { authConfig } from './auth-config.js?v=20260912-2';
-import { createAuthFlow } from './auth-flow.js?v=20260912-2';
-import { createAuthFetch } from './auth-transport.js?v=20260912-2';
+import { authConfig } from './auth-config.js?v=20260912-3';
+import { createAuthFlow } from './auth-flow.js?v=20260912-3';
+import { createAuthFetch } from './auth-transport.js?v=20260912-3';
 
 const panels = [...document.querySelectorAll('[data-panel]')];
 const tabs = document.querySelector('#account-tabs');
@@ -114,7 +114,11 @@ function bindForm(id, task, loadingMessage) {
   const form = document.querySelector(id);
   form.addEventListener('submit', event => {
     event.preventDefault();
-    if (busy || !form.reportValidity()) return;
+    if (busy) return;
+    if (!form.reportValidity()) {
+      if (id === '#otp-form') announce('Enter the 8-digit code from your email.', 'error', true);
+      return;
+    }
     // Capture values before the fieldset becomes disabled.
     const values = Object.fromEntries(new FormData(form));
     void run(() => task(values, form), loadingMessage);
@@ -215,7 +219,7 @@ const initialRoute = location.hash.slice(1);
 const hadTokenUrl = /access_token|refresh_token|token_hash|[?&]code=/.test(location.hash + location.search);
 if (location.search || hadTokenUrl) history.replaceState(null, '', location.pathname + '#login');
 showPanel(publicRoutes.has(initialRoute) ? initialRoute : 'login', { focus: false });
-if (hadTokenUrl) announce('Use a 6-digit email code on this page. Request a fresh code to continue.', 'info');
+if (hadTokenUrl) announce('Use an 8-digit email code on this page. Request a fresh code to continue.', 'info');
 
 async function initialize() {
   if (!authConfig.accountsEnabled) return;

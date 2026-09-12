@@ -1,5 +1,13 @@
 # Sathivo account activation
 
+## Eight-digit OTP correction — 2026-09-12
+
+A fresh owner-selected signup returned HTTP 200, and a read-only Auth query confirmed a new, unverified user with a confirmation-send timestamp. The owner confirmed that the delivered email contained **eight digits**. The page still required six digits in its input pattern, minimum/maximum length and JavaScript validator. Browser validity inspection found a pattern mismatch, and no verification request was logged. The frontend format gate was therefore blocking verification before Supabase could check the code.
+
+The shared signup/recovery field, validation, instructions and prepared email-template wording now use eight digits. Codes remain strings so leading zeroes are preserved. Invalid field format also produces a visible status message. Release queries are advanced together to `20260912-3` so returning browsers load the updated validator. No Auth methods, homepage layout, SMTP settings or provider OTP configuration were changed. Repository email templates still require independent application in Supabase; editing these files does not update the hosted templates.
+
+The focused regression suite now includes the HTML input constraints alongside eight-digit verification through the actual vendored SDK's controlled transport, leading-zero preservation and rejection of six-, seven- and nine-digit inputs. Real signup and code receipt are evidenced as described above; successful real verification and subsequent password login are still being tested. Controlled tests do not prove inbox delivery or production acceptance.
+
 ## Signup resend investigation — 2026-09-12
 
 The owner received the first confirmation email in Gmail, then reported that signup/resend no longer delivered a code after changing the hosted signup template to `{{ .Token }}`. A fresh read-only Auth query found that the test account's email was **already confirmed at 07:10:53 UTC (12:40:53 IST)**, with a sign-in at the same time. Its last signup confirmation send remained 07:02:06 UTC; no recovery email had been requested when this investigation started. This establishes the verified state, not who clicked a link or which browser performed confirmation.
@@ -25,7 +33,7 @@ The owner reports that Resend verified `auth.sathivo.co` and Custom SMTP is enab
 
 GitHub and the live browser still showed the preview switch off at the start of this task. A fresh Supabase query found zero accounts and zero confirmed emails before testing.
 
-The local public Auth settings request timed out. SMTP settings are owner-confirmed, not independently read through this connector. In particular, custom SMTP being enabled does not prove that the signup/recovery templates contain a six-digit code. Confirm this from an actual delivered email.
+The local public Auth settings request timed out. SMTP settings are owner-confirmed, not independently read through this connector. Custom SMTP being enabled does not establish the delivered code length or template content. The later eight-digit investigation above records the owner's actual signup email observation; the hosted recovery template still requires an independent live check.
 
 At activation, live inbox delivery, signup confirmation, logout/login, wrong and expired OTPs, password reset, old-password rejection, and the created Supabase user were pending. The investigation record above contains subsequent evidence. Passwords and OTPs must be entered in the secure browser, not shared in chat or committed.
 
@@ -42,14 +50,14 @@ The available Supabase connector can inspect projects and databases but does not
 ## Implemented behavior
 
 - Email and password signup, with name, adult self-declaration and platonic-boundaries acceptance.
-- Signup email confirmation using a typed 6-digit code and `verifyOtp` with `type: 'email'`.
+- Signup email confirmation using a typed 8-digit code and `verifyOtp` with `type: 'email'`.
 - Email/password login, server-validated session restoration, and sign-out on this device.
 - Recovery uses `resetPasswordForEmail`, then `verifyOtp` with `type: 'recovery'`, then `updateUser({ password })`. It never substitutes passwordless login for password recovery.
 - Recovery uses a separate in-memory SDK client. Tokens are not copied into application state, URLs, or persisted recovery storage. Leaving/reloading the page requires a fresh recovery flow.
 - A verified recovery grant is consumed after a successful change and expires in this UI after ten minutes. Supabase enforces the actual token validity.
 - The page requests global sign-out after password changes and discards its local sessions. If revocation fails, the page reports that the password changed but sign-out was incomplete. Already-issued access tokens can remain valid until their configured expiry; do not advertise instant session revocation.
 - The SDK stores normal sign-in session tokens in browser storage under `sathivo.auth.v1`. Recovery uses a distinct, nonpersistent storage key.
-- Six-digit format validation, password confirmation, safe errors, duplicate-submit prevention, a 60-second resend cooldown and handling of provider rate-limit errors.
+- Eight-digit format validation, password confirmation, safe errors, duplicate-submit prevention, a 60-second resend cooldown and handling of provider rate-limit errors.
 
 The browser cooldown, declared age and feature flag are **not server access controls**. User metadata is editable and is used only for a display name and self-declaration. It grants no customer/companion/admin privileges and does not prove age or identity. No application table or role permission is exposed in this stage.
 
@@ -60,7 +68,7 @@ Use an authorized project configuration connection or the Supabase Dashboard. Re
 1. Check the current email provider, email confirmation setting, URL configuration, OTP settings, signup restrictions and rate limits.
 2. Connect an owner-controlled email sender with a verified sending domain and a suitable SMTP provider. Do not create a paid subscription or buy a domain without the owner's authorization. The built-in sender is limited to testing and cannot be assumed to deliver to public customers.
 3. Enable email/password authentication and require email confirmation. Keep anonymous sign-in disabled. Set the password minimum to at least 12 characters. The frontend's password rule alone cannot enforce this against direct API requests.
-4. Configure 6-digit email codes, an appropriate short expiry (proposed: 10 minutes), and server-enforced sending/verification rate limits. Set up abuse protection appropriate for public enrollment. If CAPTCHA is enabled, implement and test its token handoff before opening forms.
+4. Keep email OTP length aligned with the current eight-digit frontend and delivered codes. Review the actual expiry (proposed: 10 minutes) and server-enforced sending/verification rate limits. Set up abuse protection appropriate for public enrollment. If CAPTCHA is enabled, implement and test its token handoff before opening forms.
 5. Apply `supabase/templates/confirmation.html` to **Confirm signup**, and `supabase/templates/recovery.html` to **Reset password**. Both use `{{ .Token }}` rather than a confirmation link. Suggested subjects: “Verify your Sathivo email” and “Reset your Sathivo password”. These files are prepared templates, not proof they have been applied.
 6. Set the Site URL to `https://milanmiliyan5.github.io/sathivo-website/` and allow the account page `https://milanmiliyan5.github.io/sathivo-website/account.html` as needed. Do not leave localhost as the production fallback or add broad redirect wildcards. The implemented flow uses typed codes and does not consume tokens from redirect URLs.
 7. Publish the actual account privacy policy, support contact, and account deletion process. Define how the 18+ requirement will be enforced before opening marketplace participation; email verification and a checkbox are not age verification.
@@ -79,7 +87,7 @@ Since 3 June 2026, new free-tier projects on Supabase's default email provider c
 - Password update and sign-out failures are accurately reported; recovery cannot resume from URL tampering or a back/forward cache snapshot.
 - Verify keyboard navigation, screen-reader status messages and mobile layouts on an actual browser.
 
-No test email has been sent and no test account has been created by this release. Automated tests use a mock Auth transport and test the actual vendored SDK's global export without network requests.
+The initial implementation sent no test email or signup request; subsequent real-test evidence is recorded above. Automated tests use a controlled Auth transport and test the actual vendored SDK without sending live requests.
 
 ## References
 

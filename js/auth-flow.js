@@ -28,7 +28,7 @@ export function validatePassword(value, confirmation = value) {
 
 function normalizeOtp(value) {
   const token = String(value ?? '').trim();
-  if (!/^\d{6}$/.test(token)) fail('otp', 'Enter the 6-digit code from your email.');
+  if (!/^\d{8}$/.test(token)) fail('otp', 'Enter the 8-digit code from your email.');
   return token;
 }
 

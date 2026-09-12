@@ -11,7 +11,7 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="account.css">
-  <script type="module" src="js/account-page.js?v=20260912-2"></script>
+  <script type="module" src="js/account-page.js?v=20260912-3"></script>
 </head>
 <body class="account-page">
   <a class="skip-link" href="#account-main">Skip to account</a>
@@ -60,7 +60,7 @@
       </section>
 
       <section data-panel="forgot" aria-labelledby="forgot-title" hidden>
-        <a class="form-link panel-back" href="#login" data-route="login">← Back to sign in</a><p class="eyebrow">A FRESH START</p><h2 id="forgot-title" tabindex="-1">Let's get you <em>back in.</em></h2><p class="panel-intro">Enter your account email. If it belongs to a verified account, we'll send a 6-digit password reset code.</p>
+        <a class="form-link panel-back" href="#login" data-route="login">← Back to sign in</a><p class="eyebrow">A FRESH START</p><h2 id="forgot-title" tabindex="-1">Let's get you <em>back in.</em></h2><p class="panel-intro">Enter your account email. If it belongs to a verified account, we'll send an 8-digit password reset code.</p>
         <form id="recovery-form" novalidate><fieldset disabled><label for="recovery-email">Registered email address</label><input id="recovery-email" name="email" type="email" autocomplete="username" maxlength="254" required placeholder="you@example.com"><button class="button button-primary form-submit" type="submit" data-email-send aria-describedby="recovery-send-wait">Send reset code <span aria-hidden="true">↗</span></button></fieldset></form>
         <p class="field-hint" id="recovery-send-wait" data-email-countdown></p>
         <p class="panel-note">Your password changes only after you verify the code and choose a new password.</p>
@@ -75,7 +75,7 @@
 
       <section data-panel="otp" aria-labelledby="otp-title" hidden>
         <a class="form-link panel-back" href="#login" data-route="login">← Back to sign in</a><p class="eyebrow" id="otp-eyebrow">CHECK YOUR EMAIL</p><h2 id="otp-title" tabindex="-1">A code. Then <em>you're in.</em></h2><p class="panel-intro" id="otp-explanation"></p><p class="email-destination" id="otp-destination"></p>
-        <form id="otp-form" novalidate><fieldset disabled><label for="otp-code">6-digit email code</label><input class="otp-input" id="otp-code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" aria-describedby="otp-hint" required placeholder="000000"><p class="field-hint" id="otp-hint">Check your spam folder too. Never share this code.</p><button class="button button-primary form-submit" type="submit">Verify code</button></fieldset></form>
+        <form id="otp-form" novalidate><fieldset disabled><label for="otp-code">8-digit email code</label><input class="otp-input" id="otp-code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{8}" minlength="8" maxlength="8" aria-describedby="otp-hint" required placeholder="00000000"><p class="field-hint" id="otp-hint">Check your spam folder too. Never share this code.</p><button class="button button-primary form-submit" type="submit">Verify code</button></fieldset></form>
         <button id="resend-code" class="form-link resend-code" type="button" disabled>Resend code</button><span id="resend-countdown" class="field-hint"></span>
         <div id="signup-code-help" class="panel-note" hidden><p>Already used an email confirmation link? You can sign in now. Signup verification is only needed once.</p><p><a class="form-link" href="#login" data-route="login">Sign in with password</a> · <a class="form-link" href="#forgot" data-route="forgot">Forgot password?</a></p></div>
       </section>

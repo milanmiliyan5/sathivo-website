@@ -78,8 +78,25 @@ test('signup verifies an email OTP while signup resend never starts a passwordle
   tick(60_000);
   await flow.resend();
   assert.deepEqual(calls.at(-1).args, { type: 'signup', email: user.email });
-  assert.deepEqual(await flow.verify('123456'), { kind: 'signup', user });
-  assert.deepEqual(calls.at(-1).args, { email: user.email, token: '123456', type: 'email' });
+  assert.deepEqual(await flow.verify('12345678'), { kind: 'signup', user });
+  assert.deepEqual(calls.at(-1).args, { email: user.email, token: '12345678', type: 'email' });
+});
+
+test('the OTP form accepts eight digits including a leading zero without truncation', async () => {
+  const html = await readFile(new URL('../account.html', import.meta.url), 'utf8');
+  const input = html.match(/<input\b[^>]*\bid="otp-code"[^>]*>/)?.[0];
+  assert.ok(input, 'The shared signup/recovery OTP field must exist');
+  const attribute = name => input.match(new RegExp(`\\b${name}="([^"]*)"`))?.[1];
+  const pattern = new RegExp(`^(?:${attribute('pattern')})$`);
+  assert.equal(attribute('minlength'), '8');
+  assert.equal(attribute('maxlength'), '8');
+  assert.equal(attribute('autocomplete'), 'one-time-code');
+  assert.ok(pattern.test('01234567'));
+  for (const token of ['123456', '1234567', '123456789', 'abcdefgh']) assert.ok(!pattern.test(token));
+  const { flow, calls } = setup();
+  await flow.signup(validSignup);
+  await flow.verify('01234567');
+  assert.equal(calls.at(-1).args.token, '01234567');
 });
 
 test('login verifies the server user and does not apply a new password policy to old passwords', async () => {
@@ -107,8 +124,8 @@ test('recovery always uses its separate client and a recovery challenge', async 
   const { flow, calls } = setup();
   assert.deepEqual(await flow.requestRecovery(user.email), { kind: 'recovery', email: user.email });
   assert.deepEqual(calls[0], { client: 'recovery', method: 'resetPasswordForEmail', args: user.email });
-  await flow.verify('012345');
-  assert.deepEqual(calls.at(-1), { client: 'recovery', method: 'verifyOtp', args: { email: user.email, token: '012345', type: 'recovery' } });
+  await flow.verify('01234567');
+  assert.deepEqual(calls.at(-1), { client: 'recovery', method: 'verifyOtp', args: { email: user.email, token: '01234567', type: 'recovery' } });
 });
 
 test('a normal signed-in user cannot bypass recovery verification', async () => {
@@ -120,12 +137,12 @@ test('a normal signed-in user cannot bypass recovery verification', async () => 
 
 test('invalid OTP format, a missing challenge and a wrong code cannot authorize a password change', async () => {
   const { flow, calls, recoveryAuth } = setup();
-  await assert.rejects(flow.verify('123456'), { code: 'no_challenge' });
+  await assert.rejects(flow.verify('12345678'), { code: 'no_challenge' });
   await flow.requestRecovery(user.email);
-  for (const token of ['12345', '1234567', '123 45', 'abcdef']) await assert.rejects(flow.verify(token), { code: 'otp' });
+  for (const token of ['', '123456', '1234567', '123456789', '1234 678', 'abcdefgh', '１２３４５６７８']) await assert.rejects(flow.verify(token), { code: 'otp' });
   assert.equal(calls.filter(c => c.method === 'verifyOtp').length, 0);
   recoveryAuth.verifyOtp = async () => ({ error: { code: 'otp_expired', status: 403 } });
-  await assert.rejects(flow.verify('123456'), { code: 'invalid_code' });
+  await assert.rejects(flow.verify('12345678'), { code: 'invalid_code' });
   await assert.rejects(flow.changePassword(password, password), { code: 'recovery_expired' });
 });
 
@@ -133,7 +150,7 @@ test('network failure during OTP verification is not described as a wrong code',
   const { flow, recoveryAuth } = setup();
   await flow.requestRecovery(user.email);
   recoveryAuth.verifyOtp = async () => { throw new TypeError('Failed to fetch'); };
-  await assert.rejects(flow.verify('123456'), { code: 'unavailable' });
+  await assert.rejects(flow.verify('12345678'), { code: 'unavailable' });
 });
 
 test('resend has a one-minute cooldown and server rate limits remain authoritative', async () => {
@@ -248,28 +265,29 @@ test('the vendored SDK sends the expected signup, resend, verify and recovery HT
   assert.equal(requests.at(-1).path, '/auth/v1/resend');
   assert.equal(requests.at(-1).body.type, 'signup');
   assert.equal(requests.at(-1).body.email, user.email);
-  await assert.rejects(flow.verify('123456'), { code: 'invalid_code' });
+  await assert.rejects(flow.verify('12345678'), { code: 'invalid_code' });
   assert.equal(requests.at(-1).path, '/auth/v1/verify');
   assert.equal(requests.at(-1).body.type, 'email');
-  assert.equal(requests.at(-1).body.token, '123456');
+  assert.equal(requests.at(-1).body.token, '12345678');
   assert.equal(requests.at(-1).body.email, user.email);
   now += 60_000;
   await flow.requestRecovery(user.email);
   assert.equal(requests.at(-1).path, '/auth/v1/recover');
   assert.equal(requests.at(-1).body.email, user.email);
-  await assert.rejects(flow.verify('123456'), { code: 'invalid_code' });
+  await assert.rejects(flow.verify('12345678'), { code: 'invalid_code' });
   assert.equal(requests.at(-1).body.type, 'recovery');
+  assert.equal(requests.at(-1).body.token, '12345678');
   assert.ok(requests.every(request => request.method === 'POST'));
 });
 
 test('recovery grants expire and canceling a flow removes the grant', async () => {
   const { flow, tick } = setup();
   await flow.requestRecovery(user.email);
-  await flow.verify('123456');
+  await flow.verify('12345678');
   tick(600_000);
   await assert.rejects(flow.changePassword(password, password), { code: 'recovery_expired' });
   await flow.requestRecovery(user.email);
-  await flow.verify('123456');
+  await flow.verify('12345678');
   await flow.cancelChallenge();
   await assert.rejects(flow.changePassword(password, password), { code: 'recovery_expired' });
 });
@@ -277,7 +295,7 @@ test('recovery grants expire and canceling a flow removes the grant', async () =
 test('successful recovery updates once, requests global sign-out and clears local sessions', async () => {
   const { flow, calls } = setup();
   await flow.requestRecovery(user.email);
-  await flow.verify('123456');
+  await flow.verify('12345678');
   assert.deepEqual(await flow.changePassword(password, password), { sessionsRevoked: true });
   assert.deepEqual(calls.filter(c => c.method === 'updateUser'), [{ client: 'recovery', method: 'updateUser', args: { password } }]);
   assert.deepEqual(calls.filter(c => c.method === 'signOut').map(c => [c.client, c.args.scope]), [['recovery', 'global'], ['recovery', 'local'], ['main', 'local']]);
@@ -287,7 +305,7 @@ test('successful recovery updates once, requests global sign-out and clears loca
 test('failed password updates can be corrected, while failed sign-out cannot falsely undo a successful reset', async () => {
   const { flow, recoveryAuth } = setup();
   await flow.requestRecovery(user.email);
-  await flow.verify('123456');
+  await flow.verify('12345678');
   recoveryAuth.updateUser = async () => ({ error: { code: 'same_password' } });
   await assert.rejects(flow.changePassword(password, password), { code: 'same_password' });
   recoveryAuth.updateUser = async () => ({ data: { user }, error: null });
