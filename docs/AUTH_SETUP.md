@@ -1,10 +1,20 @@
 # Sathivo account activation
 
-## Status on 2026-09-08
+## Live acceptance testing — 2026-09-12
+
+The owner reports that Resend verified `auth.sathivo.co` and Custom SMTP is enabled in Supabase with `no-reply@auth.sathivo.co`. The existing account integration is being activated for the requested real-account tests; it has not been rewritten. `accountsEnabled` is now true.
+
+GitHub and the live browser still showed the preview switch off at the start of this task. A fresh Supabase query found zero accounts and zero confirmed emails before testing.
+
+The local public Auth settings request timed out. SMTP settings are owner-confirmed, not independently read through this connector. In particular, custom SMTP being enabled does not prove that the signup/recovery templates contain a six-digit code. Confirm this from an actual delivered email.
+
+Live inbox delivery, signup confirmation, logout/login, wrong and expired OTPs, password reset, old-password rejection, and the created Supabase user remain pending. Passwords and OTPs must be entered in the secure browser, not shared in chat or committed.
+
+## Initial implementation record — 2026-09-08
 
 The connected Supabase project is **Sathivo**, reference `ujutlzjsgbqtlisecpnh`, region `ap-south-1`. The connector reports `ACTIVE_HEALTHY`. A read-only SQL check found zero existing Auth accounts; the `public` schema has no application tables. No account or database data was modified during this release.
 
-The account UI and Supabase integration are implemented, but **public enrollment remains closed** through `accountsEnabled: false` in `js/auth-config.js`. Disabled forms and the account notice make this visible. This is not a completed live-auth release. No signup, OTP delivery, password reset, or mobile browser session has been tested against the live provider yet.
+The account UI and Supabase integration are implemented, but **public enrollment was initially closed** through `accountsEnabled: false` in `js/auth-config.js`. The forms were disabled in the initial release. This is not yet a completed live-auth release. No signup, OTP delivery, password reset, or mobile browser session has been tested against the live provider yet.
 
 The available Supabase connector can inspect projects and databases but does not expose Auth configuration, SMTP secrets, or email template updates. Sender settings have not been verified. The public Auth settings HTTP request could not complete because network approval was cancelled. Do not assume default settings or change existing settings without reading them first.
 
@@ -33,7 +43,7 @@ Use an authorized project configuration connection or the Supabase Dashboard. Re
 5. Apply `supabase/templates/confirmation.html` to **Confirm signup**, and `supabase/templates/recovery.html` to **Reset password**. Both use `{{ .Token }}` rather than a confirmation link. Suggested subjects: “Verify your Sathivo email” and “Reset your Sathivo password”. These files are prepared templates, not proof they have been applied.
 6. Set the Site URL to `https://milanmiliyan5.github.io/sathivo-website/` and allow the account page `https://milanmiliyan5.github.io/sathivo-website/account.html` as needed. Do not leave localhost as the production fallback or add broad redirect wildcards. The implemented flow uses typed codes and does not consume tokens from redirect URLs.
 7. Publish the actual account privacy policy, support contact, and account deletion process. Define how the 18+ requirement will be enforced before opening marketplace participation; email verification and a checkbox are not age verification.
-8. Test with an authorized test account in an isolated preview using the same files and config. The homepage remains anonymous. Change `accountsEnabled` to true in the release only after the settings and live flow are verified; update the notice/privacy wording and this document in that release.
+8. Complete the owner-authorized real-account testing on the activated account page. The homepage remains anonymous. Treat the account release as under test until each acceptance check below is evidenced; update this record with actual outcomes. Activation alone is not proof of production readiness.
 
 Since 3 June 2026, new free-tier projects on Supabase's default email provider cannot customize Auth email templates. A custom SMTP provider permits customization. This project was created after that date; check its plan and sender rather than assuming template edits are available.
 

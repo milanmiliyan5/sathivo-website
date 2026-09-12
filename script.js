@@ -89,9 +89,9 @@ document.querySelectorAll('[data-info]').forEach(button => {
       ]);
     } else if (button.dataset.info === 'privacy') {
       openDialog(button, 'ABOUT THIS WEBSITE RELEASE', 'Website privacy', [
-        paragraph('This homepage has no payment collection, contact forms, analytics scripts, or advertising trackers. It does not store your interactions in browser storage. The linked account screens are a preview: signup and sign-in are not open, and those forms do not submit personal information in this release.'),
+        paragraph('This homepage has no payment collection, contact forms, analytics scripts, or advertising trackers. It does not store your interactions in browser storage. The linked account page uses Supabase for signup and sign-in, and Resend for verification and recovery emails. Account testing is in progress.'),
         paragraph('The page requests fonts from Google Fonts. Your browser sends network information, including your IP address, when requesting those fonts. The hosting provider may also keep normal access logs.'),
-        paragraph('The account page explains the planned handling of account information and sign-in sessions. A full privacy policy, support contact and account deletion process will be published before public signup opens.')
+        paragraph('The account page explains the handling of account information and browser sign-in sessions. The full service privacy policy, support contact and account deletion process are still being prepared.')
       ]);
     }
   });
