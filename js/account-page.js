@@ -1,4 +1,4 @@
-import { authConfig } from './auth-config.js';
+import { authConfig } from './auth-config.js?v=20260912-1';
 import { createAuthFlow } from './auth-flow.js';
 
 const panels = [...document.querySelectorAll('[data-panel]')];

@@ -10,6 +10,8 @@ The local public Auth settings request timed out. SMTP settings are owner-confir
 
 Live inbox delivery, signup confirmation, logout/login, wrong and expired OTPs, password reset, old-password rejection, and the created Supabase user remain pending. Passwords and OTPs must be entered in the secure browser, not shared in chat or committed.
 
+Activation exposed a stale-module issue in the live browser: the new HTML rendered, but forms remained disabled and the SDK script was never requested while GitHub's configuration was already enabled. The account entry script and its configuration import now use the same release query (`20260912-1`) so a returning browser requests the new configuration. When changing account configuration, advance both release queries together. Confirm enabled forms in the live browser after deployment; a successful build alone is insufficient.
+
 ## Initial implementation record — 2026-09-08
 
 The connected Supabase project is **Sathivo**, reference `ujutlzjsgbqtlisecpnh`, region `ap-south-1`. The connector reports `ACTIVE_HEALTHY`. A read-only SQL check found zero existing Auth accounts; the `public` schema has no application tables. No account or database data was modified during this release.
