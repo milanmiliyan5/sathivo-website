@@ -35,7 +35,12 @@ function normalizeOtp(value) {
 function providerError(error, context) {
   if (error instanceof AuthFlowError) return error;
   if (error?.status === 429 || /rate_limit|over_email_send_rate_limit|over_request_rate_limit/.test(error?.code ?? '')) {
-    return new AuthFlowError('rate_limit', 'Too many attempts. Please wait a few minutes before trying again.');
+    return new AuthFlowError('rate_limit', 'Requests are temporarily limited. Please wait before trying again; the email provider may require a longer wait.');
+  }
+  if (error?.code === 'email_address_invalid') return new AuthFlowError('email', 'Use a real email address that can receive messages.');
+  if (error?.code === 'email_address_not_authorized') return new AuthFlowError('email_delivery', 'Email delivery is not available for this address right now. Please try again later.');
+  if (['signup', 'send'].includes(context) && error?.status >= 500) {
+    return new AuthFlowError('email_delivery', 'The email request could not be completed. Please try again later.');
   }
   if (context === 'verify' && (error?.status === 400 || error?.status === 403 || error?.code === 'otp_expired')) {
     return new AuthFlowError('invalid_code', 'That code is invalid or has expired. Check the code or request a new one.');
@@ -74,7 +79,19 @@ export function createAuthFlow({ auth, recoveryAuth, enabled, clock = Date.now }
     return challenge;
   };
   const requireSendWindow = () => {
-    if (clock() < resendAt) fail('resend_wait', 'Please wait before requesting another code.');
+    const remaining = Math.max(0, Math.ceil((resendAt - clock()) / 1000));
+    if (remaining) fail('resend_wait', `Please wait ${remaining} seconds before requesting another code.`);
+  };
+  const deferEmailRequests = (seconds = 60) => {
+    if (Number.isFinite(seconds) && seconds > 0) resendAt = Math.max(resendAt, clock() + Math.ceil(seconds) * 1000);
+  };
+  const send = async (operation, context = 'send') => {
+    try { return await call(operation, context); }
+    catch (error) {
+      // A rejected request must also start a cooldown. Keep any longer Retry-After.
+      if (error.code === 'rate_limit') deferEmailRequests();
+      throw error;
+    }
   };
   const startChallenge = (kind, email) => {
     challenge = { kind, email };
@@ -86,6 +103,7 @@ export function createAuthFlow({ auth, recoveryAuth, enabled, clock = Date.now }
   return {
     getChallenge: () => challenge && { ...challenge },
     resendSeconds: () => Math.max(0, Math.ceil((resendAt - clock()) / 1000)),
+    deferEmailRequests,
     async signup({ name, email, password, confirmation, adult, boundaries }) {
       requireEnabled();
       requireSendWindow();
@@ -94,7 +112,7 @@ export function createAuthFlow({ auth, recoveryAuth, enabled, clock = Date.now }
       if (adult !== true) fail('adult', 'Sathivo is for adults aged 18 or older.');
       if (boundaries !== true) fail('boundaries', 'Please agree to the platonic-only community boundaries.');
       const address = normalizeEmail(email);
-      const data = await call(() => auth.signUp({
+      const data = await send(() => auth.signUp({
         email: address,
         password: validatePassword(password, confirmation),
         options: { data: {
@@ -136,23 +154,23 @@ export function createAuthFlow({ auth, recoveryAuth, enabled, clock = Date.now }
       requireSendWindow();
       const address = normalizeEmail(email);
       // A password-recovery challenge, never signInWithOtp / account creation.
-      await call(() => recoveryAuth.resetPasswordForEmail(address), 'send');
+      await send(() => recoveryAuth.resetPasswordForEmail(address));
       return startChallenge('recovery', address);
     },
     async requestSignupCode(email) {
       requireEnabled();
       requireSendWindow();
       const address = normalizeEmail(email);
-      await call(() => auth.resend({ type: 'signup', email: address }), 'send');
+      await send(() => auth.resend({ type: 'signup', email: address }));
       return startChallenge('signup', address);
     },
     async resend() {
       const pending = requireChallenge();
       requireSendWindow();
       if (pending.kind === 'recovery') {
-        await call(() => recoveryAuth.resetPasswordForEmail(pending.email), 'send');
+        await send(() => recoveryAuth.resetPasswordForEmail(pending.email));
       } else {
-        await call(() => auth.resend({ type: 'signup', email: pending.email }), 'send');
+        await send(() => auth.resend({ type: 'signup', email: pending.email }));
       }
       recoveryUntil = 0;
       resendAt = clock() + 60_000;

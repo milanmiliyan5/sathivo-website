@@ -1,5 +1,6 @@
-import { authConfig } from './auth-config.js?v=20260912-1';
-import { createAuthFlow } from './auth-flow.js';
+import { authConfig } from './auth-config.js?v=20260912-2';
+import { createAuthFlow } from './auth-flow.js?v=20260912-2';
+import { createAuthFetch } from './auth-transport.js?v=20260912-2';
 
 const panels = [...document.querySelectorAll('[data-panel]')];
 const tabs = document.querySelector('#account-tabs');
@@ -61,14 +62,21 @@ function updateResend() {
   const remaining = flow?.resendSeconds() ?? 0;
   resendButton.disabled = busy || !flow || activePanel !== 'otp' || remaining > 0;
   document.querySelector('#resend-countdown').textContent = activePanel === 'otp' && remaining > 0 ? `Available in ${remaining}s` : '';
+  document.querySelectorAll('[data-email-send]').forEach(button => {
+    button.disabled = busy || !flow || remaining > 0;
+  });
+  document.querySelectorAll('[data-email-countdown]').forEach(hint => {
+    hint.textContent = remaining > 0 ? `Please wait ${remaining}s before requesting another email. Provider limits may last longer.` : '';
+  });
 }
 
 function renderOtp(pending) {
   const recovery = pending.kind === 'recovery';
   document.querySelector('#otp-title').textContent = recovery ? 'Check your inbox.' : 'Verify your email.';
   document.querySelector('#otp-explanation').textContent = recovery
-    ? 'If this email belongs to a verified account, a password reset code is on its way. Enter it below to choose a new password.'
-    : 'If this account needs verification, a code is on its way. Check your email and enter it below. If you already have an account, sign in instead.';
+    ? 'A password reset code is sent only if this email belongs to an eligible account. Check your inbox and spam folder, then enter the latest code below.'
+    : 'Signup codes are sent only while your email is waiting for verification. If you already verified it, sign in with your password instead.';
+  document.querySelector('#signup-code-help').hidden = recovery;
   document.querySelector('#otp-destination').textContent = pending.email;
   showPanel('otp');
   clearSecrets();
@@ -150,7 +158,9 @@ bindForm('#password-form', async values => {
 resendButton.addEventListener('click', () => void run(async () => {
   await flow.resend();
   document.querySelector('#otp-code').value = '';
-  announce('If the account is eligible, a new code is on its way. Use the most recent email.', 'info', true);
+  announce(flow.getChallenge()?.kind === 'recovery'
+    ? 'Request completed. Eligible accounts receive a reset code; use the latest email and check spam too.'
+    : 'Request completed. Already verified? No signup code will be sent. Use “Sign in with password” below, or reset your password.', 'info', true);
 }, 'Requesting another code…'));
 
 signoutButton.addEventListener('click', () => void run(async () => {
@@ -177,6 +187,9 @@ document.querySelectorAll('[data-route]').forEach(link => {
   link.addEventListener('click', event => {
     event.preventDefault();
     if (busy) return;
+    const pendingEmail = flow?.getChallenge()?.email;
+    if (pendingEmail && link.dataset.route === 'login') document.querySelector('#login-email').value = pendingEmail;
+    if (pendingEmail && link.dataset.route === 'forgot') document.querySelector('#recovery-email').value = pendingEmail;
     clearSecrets();
     // Immediately clear the recovery grant before changing screens.
     if (flow) void flow.cancelChallenge();
@@ -217,10 +230,17 @@ async function initialize() {
       document.head.append(script);
     });
     if (!globalThis.supabase?.createClient) throw new Error('SDK unavailable');
+    const authFetch = createAuthFetch({
+      supabaseUrl: authConfig.supabaseUrl,
+      report: event => console.info('[Sathivo Auth]', JSON.stringify(event)),
+      onSendRateLimit: seconds => flow?.deferEmailRequests(seconds),
+    });
     const client = globalThis.supabase.createClient(authConfig.supabaseUrl, authConfig.publishableKey, {
+      global: { fetch: authFetch },
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: 'sathivo.auth.v1' },
     });
     const recoveryClient = globalThis.supabase.createClient(authConfig.supabaseUrl, authConfig.publishableKey, {
+      global: { fetch: authFetch },
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'sathivo.recovery.v1' },
     });
     flow = createAuthFlow({ auth: client.auth, recoveryAuth: recoveryClient.auth, enabled: true });

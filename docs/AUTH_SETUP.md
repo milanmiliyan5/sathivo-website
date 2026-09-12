@@ -1,5 +1,24 @@
 # Sathivo account activation
 
+## Signup resend investigation — 2026-09-12
+
+The owner received the first confirmation email in Gmail, then reported that signup/resend no longer delivered a code after changing the hosted signup template to `{{ .Token }}`. A fresh read-only Auth query found that the test account's email was **already confirmed at 07:10:53 UTC (12:40:53 IST)**, with a sign-in at the same time. Its last signup confirmation send remained 07:02:06 UTC; no recovery email had been requested when this investigation started. This establishes the verified state, not who clicked a link or which browser performed confirmation.
+
+Supabase's [resend implementation](https://github.com/supabase/auth/blob/master/internal/api/resend.go) intentionally returns HTTP 200 with an empty object for an already-confirmed email and sends nothing. It also returns a neutral response for an unknown address. Neither a successful resend response nor the SDK's empty result proves inbox delivery. Do not introduce an unauthenticated account-lookup endpoint or infer account existence from that response.
+
+The existing calls were correct: password signup through `signUp`, signup resend through `resend({ type: 'signup', email })`, signup OTP verification with `type: 'email'`, and recovery through `resetPasswordForEmail` / `verifyOtp({ type: 'recovery' })`. They have been preserved.
+
+Targeted changes:
+
+- The signup OTP page explains that verification is needed only once and provides visible password sign-in and reset links. The pending email carries over when the user chooses a link. Request feedback no longer implies that a completed request proves an email was sent.
+- Server-rejected email requests also start a cooldown, including failures on the first request. Honor a readable `Retry-After` interval; otherwise use a 60-second local wait. Show the wait on signup, verification and recovery forms. Provider limits remain authoritative and may last longer.
+- `js/auth-transport.js` adds local console diagnostics containing only fixed operation names and HTTP status numbers. It does not read/log bodies, email addresses, passwords, codes, headers, tokens or complete URLs. The only header used internally is `Retry-After`. No diagnostics are uploaded to a telemetry service.
+- Provider email/service failures remain errors and cannot transition into a successful email challenge. Release queries for the account entry script and its module imports are `20260912-2`.
+
+The browser console inspected before the fix showed extension metadata errors, not a Sathivo application exception. The available Supabase connector does not expose hosted Auth service logs; the Auth database audit query returned no events. Do not interpret missing audit entries as proof that requests were absent. The new browser diagnostics can establish the endpoint and HTTP outcome during real testing without exposing credentials.
+
+All 23 automated regression checks pass. They exercise the actual vendored SDK with a controlled HTTP transport, including the empty resend response, correct endpoint/payload types, wrong-code rejection, rate-limit delays, and diagnostic redaction. They do **not** prove real inbox delivery. The existing account should next be tested using email/password sign-in. A separate owner-selected unused email is required for a fresh signup test. Real OTP arrival, OTP verification, expiration, password recovery and new/old-password acceptance remain pending until evidenced; the account release is not yet fully accepted.
+
 ## Live acceptance testing — 2026-09-12
 
 The owner reports that Resend verified `auth.sathivo.co` and Custom SMTP is enabled in Supabase with `no-reply@auth.sathivo.co`. The existing account integration is being activated for the requested real-account tests; it has not been rewritten. `accountsEnabled` is now true.
@@ -8,9 +27,9 @@ GitHub and the live browser still showed the preview switch off at the start of 
 
 The local public Auth settings request timed out. SMTP settings are owner-confirmed, not independently read through this connector. In particular, custom SMTP being enabled does not prove that the signup/recovery templates contain a six-digit code. Confirm this from an actual delivered email.
 
-Live inbox delivery, signup confirmation, logout/login, wrong and expired OTPs, password reset, old-password rejection, and the created Supabase user remain pending. Passwords and OTPs must be entered in the secure browser, not shared in chat or committed.
+At activation, live inbox delivery, signup confirmation, logout/login, wrong and expired OTPs, password reset, old-password rejection, and the created Supabase user were pending. The investigation record above contains subsequent evidence. Passwords and OTPs must be entered in the secure browser, not shared in chat or committed.
 
-Activation exposed a stale-module issue in the live browser: the new HTML rendered, but forms remained disabled and the SDK script was never requested while GitHub's configuration was already enabled. The account entry script and its configuration import now use the same release query (`20260912-1`) so a returning browser requests the new configuration. When changing account configuration, advance both release queries together. Confirm enabled forms in the live browser after deployment; a successful build alone is insufficient.
+Activation exposed a stale-module issue in the live browser: the new HTML rendered, but forms remained disabled and the SDK script was never requested while GitHub's configuration was already enabled. The account entry script and its configuration import were versioned together (`20260912-1` at activation) so a returning browser requests the new configuration. When changing account modules, advance the entry script and import release queries together. Confirm enabled forms in the live browser after deployment; a successful build alone is insufficient.
 
 ## Initial implementation record — 2026-09-08
 

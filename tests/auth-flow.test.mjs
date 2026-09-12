@@ -4,6 +4,7 @@ import { readFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import vm from 'node:vm';
 import { createAuthFlow, normalizeEmail, validatePassword } from '../js/auth-flow.js';
+import { createAuthFetch } from '../js/auth-transport.js';
 
 const user = { id: 'test-user', email: 'hello@example.com', email_confirmed_at: '2026-09-08T00:00:00Z', user_metadata: { display_name: 'Asha' } };
 const session = { user, access_token: 'test-token-never-used-on-network' };
@@ -149,6 +150,116 @@ test('resend has a one-minute cooldown and server rate limits remain authoritati
   tick(60_000);
   recoveryAuth.resetPasswordForEmail = async () => ({ error: { status: 429 } });
   await assert.rejects(flow.resend(), { code: 'rate_limit' });
+  assert.equal(flow.resendSeconds(), 60);
+  await assert.rejects(flow.resend(), { code: 'resend_wait' });
+});
+
+test('an initial send rejection starts a cooldown without inventing an OTP challenge', async () => {
+  for (const operation of ['signup', 'requestSignupCode', 'requestRecovery']) {
+    const { flow, auth, recoveryAuth, tick } = setup();
+    const limited = async () => ({ error: { status: 429, code: 'over_email_send_rate_limit' } });
+    auth.signUp = auth.resend = recoveryAuth.resetPasswordForEmail = limited;
+    await assert.rejects(flow[operation](operation === 'signup' ? validSignup : user.email), { code: 'rate_limit' });
+    assert.equal(flow.getChallenge(), null);
+    assert.equal(flow.resendSeconds(), 60);
+    flow.deferEmailRequests(180);
+    flow.deferEmailRequests(1);
+    assert.equal(flow.resendSeconds(), 180);
+    tick(60_000);
+    await assert.rejects(flow.requestRecovery(user.email), error => error.code === 'resend_wait' && error.message.includes('120'));
+  }
+});
+
+test('SMTP/service errors never produce a successful email challenge or expose provider details', async () => {
+  const { flow, auth, recoveryAuth } = setup();
+  const unavailable = async () => ({ error: { status: 500, code: 'unexpected_failure', message: 'private SMTP detail' } });
+  auth.resend = recoveryAuth.resetPasswordForEmail = unavailable;
+  await assert.rejects(flow.requestSignupCode(user.email), error => error.code === 'email_delivery' && !error.message.includes('private'));
+  await assert.rejects(flow.requestRecovery(user.email), { code: 'email_delivery' });
+  assert.equal(flow.getChallenge(), null);
+});
+
+test('HTTP diagnostics preserve the response and reveal only fixed operation names and statuses', async () => {
+  const events = [];
+  const response = new Response(JSON.stringify({ access_token: 'fixture-response-secret' }), { status: 200 });
+  const input = 'https://auth.example.com/auth/v1/verify?token=fixture-query-secret';
+  const init = { method: 'POST', headers: { Authorization: 'fixture-header-secret' }, body: JSON.stringify({ email: user.email, token: 'fixture-body-secret' }) };
+  const tracedFetch = createAuthFetch({ supabaseUrl: 'https://auth.example.com', report: event => events.push(event), fetchImpl: async (url, options) => {
+    assert.equal(url, input);
+    assert.equal(options, init);
+    return response;
+  } });
+  assert.equal(await tracedFetch(input, init), response);
+  assert.equal(response.bodyUsed, false);
+  assert.deepEqual(events, [{ operation: 'verify_code', status: 200 }]);
+  const failure = new TypeError('fixture-network-secret');
+  const failedFetch = createAuthFetch({ supabaseUrl: 'https://auth.example.com', report: event => events.push(event), fetchImpl: async () => { throw failure; } });
+  await assert.rejects(failedFetch(input), error => error === failure);
+  assert.deepEqual(events.at(-1), { operation: 'verify_code', status: 0 });
+  assert.ok(!JSON.stringify(events).includes('secret'));
+  assert.ok(!JSON.stringify(events).includes(user.email));
+});
+
+test('email HTTP rate limits honor Retry-After without reading response bodies or affecting other hosts', async () => {
+  const waits = [];
+  const events = [];
+  let retryAfter = '180';
+  const fetchImpl = async () => new Response('{}', { status: 429, headers: { 'Retry-After': retryAfter } });
+  const tracedFetch = createAuthFetch({ supabaseUrl: 'https://auth.example.com', fetchImpl, report: event => events.push(event), onSendRateLimit: value => waits.push(value), clock: () => 0 });
+  await tracedFetch(new Request('https://auth.example.com/auth/v1/resend'));
+  assert.deepEqual(waits, [180]);
+  retryAfter = 'Thu, 01 Jan 1970 00:02:00 GMT';
+  await tracedFetch('https://auth.example.com/auth/v1/recover');
+  assert.equal(waits.at(-1), 120);
+  retryAfter = 'invalid';
+  await tracedFetch('https://auth.example.com/auth/v1/signup');
+  assert.equal(waits.at(-1), 60);
+  await tracedFetch('https://other.example.com/auth/v1/resend');
+  assert.equal(waits.length, 3);
+  assert.equal(events.length, 3);
+  const silentFetch = createAuthFetch({ supabaseUrl: 'https://auth.example.com', fetchImpl, report: () => { throw new Error('logger'); }, onSendRateLimit: () => { throw new Error('observer'); } });
+  assert.equal((await silentFetch('https://auth.example.com/auth/v1/resend')).status, 429);
+});
+
+test('the vendored SDK sends the expected signup, resend, verify and recovery HTTP requests', async () => {
+  const source = await readFile(new URL('../assets/vendor/supabase-2.116.0.js', import.meta.url), 'utf8');
+  const context = vm.createContext({ URL, console, setTimeout, clearTimeout, setInterval, clearInterval, fetch, Headers, Request, Response, AbortController, TextEncoder, TextDecoder, WebSocket: globalThis.WebSocket, crypto: globalThis.crypto });
+  vm.runInContext(source, context);
+  const requests = [];
+  const fetchImpl = async (input, init) => {
+    const path = new URL(input).pathname;
+    requests.push({ path, method: init.method, body: JSON.parse(init.body ?? '{}') });
+    if (path.endsWith('/verify')) return new Response(JSON.stringify({ code: 'otp_expired', msg: 'Token has expired or is invalid' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
+    const body = path.endsWith('/signup') ? { ...user, email_confirmed_at: null, identities: [] } : {};
+    return new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } });
+  };
+  const client = storageKey => context.supabase.createClient('https://auth.example.com', 'public-fixture-key', {
+    global: { fetch: createAuthFetch({ supabaseUrl: 'https://auth.example.com', fetchImpl }) },
+    auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey },
+  }).auth;
+  let now = 0;
+  const flow = createAuthFlow({ auth: client('fixture.main'), recoveryAuth: client('fixture.recovery'), enabled: true, clock: () => now });
+  await flow.signup(validSignup);
+  assert.equal(requests.at(-1).path, '/auth/v1/signup');
+  assert.equal(requests.at(-1).body.email, user.email);
+  assert.equal(requests.at(-1).body.password, password);
+  now += 60_000;
+  await flow.resend();
+  assert.equal(requests.at(-1).path, '/auth/v1/resend');
+  assert.equal(requests.at(-1).body.type, 'signup');
+  assert.equal(requests.at(-1).body.email, user.email);
+  await assert.rejects(flow.verify('123456'), { code: 'invalid_code' });
+  assert.equal(requests.at(-1).path, '/auth/v1/verify');
+  assert.equal(requests.at(-1).body.type, 'email');
+  assert.equal(requests.at(-1).body.token, '123456');
+  assert.equal(requests.at(-1).body.email, user.email);
+  now += 60_000;
+  await flow.requestRecovery(user.email);
+  assert.equal(requests.at(-1).path, '/auth/v1/recover');
+  assert.equal(requests.at(-1).body.email, user.email);
+  await assert.rejects(flow.verify('123456'), { code: 'invalid_code' });
+  assert.equal(requests.at(-1).body.type, 'recovery');
+  assert.ok(requests.every(request => request.method === 'POST'));
 });
 
 test('recovery grants expire and canceling a flow removes the grant', async () => {
