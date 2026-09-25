@@ -1,5 +1,15 @@
 # Sathivo account activation
 
+## Six-digit rollout preparation — 2026-09-25
+
+The owner requested six-digit email codes after completing verification. A read-only Auth check confirmed that the selected test account's email was verified at 14:00:01 UTC on 25 September, with a sign-in at the same time. This establishes successful real signup confirmation and an initial authenticated session. It does not establish logout/password login or successful password recovery.
+
+Supabase generates the code length; frontend validation and the `{{ .Token }}` email template cannot change it. Its supported email OTP length is 6–10 digits. The owner must set **Authentication → Sign In / Providers → Email → Email OTP length** to **6** and save in the hosted project. The connected tools do not expose hosted Auth configuration updates, so this setting has not been changed or independently read here. Do not claim that six-digit emails are live until a newly delivered code confirms it.
+
+Release `20260925-1` accepts exactly six or eight ASCII digits in both the shared HTML field and JavaScript validator. Six digits are the target; eight remain compatible with the currently delivered codes and emails already in flight. Supabase still verifies the complete token and its type. Codes are never truncated, converted to numbers, or accepted merely because their format matches. Four-, five-, seven- and nine-digit inputs are rejected. The field uses a six-digit placeholder and neutral instructions that match either delivered length. Prepared signup/recovery email templates retain `{{ .Token }}` and use length-neutral wording; these repository files are not automatically applied to the hosted templates.
+
+The regression suite exercises six-digit signup and recovery, both lengths with leading zeroes through the actual SDK's controlled transport, invalid formats, provider rejection, cooldowns and recovery grants. Remaining live checks: save/confirm the hosted length setting, verify a freshly delivered six-digit signup code, then complete logout/password login and password recovery. Once six-digit delivery is evidenced and previously issued eight-digit codes have expired, the compatibility allowance can be removed in a follow-up.
+
 ## Eight-digit OTP correction — 2026-09-12
 
 A fresh owner-selected signup returned HTTP 200, and a read-only Auth query confirmed a new, unverified user with a confirmation-send timestamp. The owner confirmed that the delivered email contained **eight digits**. The page still required six digits in its input pattern, minimum/maximum length and JavaScript validator. Browser validity inspection found a pattern mismatch, and no verification request was logged. The frontend format gate was therefore blocking verification before Supabase could check the code.
@@ -50,14 +60,14 @@ The available Supabase connector can inspect projects and databases but does not
 ## Implemented behavior
 
 - Email and password signup, with name, adult self-declaration and platonic-boundaries acceptance.
-- Signup email confirmation using a typed 8-digit code and `verifyOtp` with `type: 'email'`.
+- Signup email confirmation using a typed email code and `verifyOtp` with `type: 'email'`; six digits are the target, with eight-digit compatibility during the provider transition above.
 - Email/password login, server-validated session restoration, and sign-out on this device.
 - Recovery uses `resetPasswordForEmail`, then `verifyOtp` with `type: 'recovery'`, then `updateUser({ password })`. It never substitutes passwordless login for password recovery.
 - Recovery uses a separate in-memory SDK client. Tokens are not copied into application state, URLs, or persisted recovery storage. Leaving/reloading the page requires a fresh recovery flow.
 - A verified recovery grant is consumed after a successful change and expires in this UI after ten minutes. Supabase enforces the actual token validity.
 - The page requests global sign-out after password changes and discards its local sessions. If revocation fails, the page reports that the password changed but sign-out was incomplete. Already-issued access tokens can remain valid until their configured expiry; do not advertise instant session revocation.
 - The SDK stores normal sign-in session tokens in browser storage under `sathivo.auth.v1`. Recovery uses a distinct, nonpersistent storage key.
-- Eight-digit format validation, password confirmation, safe errors, duplicate-submit prevention, a 60-second resend cooldown and handling of provider rate-limit errors.
+- Six- or eight-digit format validation, password confirmation, safe errors, duplicate-submit prevention, a 60-second resend cooldown and handling of provider rate-limit errors.
 
 The browser cooldown, declared age and feature flag are **not server access controls**. User metadata is editable and is used only for a display name and self-declaration. It grants no customer/companion/admin privileges and does not prove age or identity. No application table or role permission is exposed in this stage.
 
@@ -68,7 +78,7 @@ Use an authorized project configuration connection or the Supabase Dashboard. Re
 1. Check the current email provider, email confirmation setting, URL configuration, OTP settings, signup restrictions and rate limits.
 2. Connect an owner-controlled email sender with a verified sending domain and a suitable SMTP provider. Do not create a paid subscription or buy a domain without the owner's authorization. The built-in sender is limited to testing and cannot be assumed to deliver to public customers.
 3. Enable email/password authentication and require email confirmation. Keep anonymous sign-in disabled. Set the password minimum to at least 12 characters. The frontend's password rule alone cannot enforce this against direct API requests.
-4. Keep email OTP length aligned with the current eight-digit frontend and delivered codes. Review the actual expiry (proposed: 10 minutes) and server-enforced sending/verification rate limits. Set up abuse protection appropriate for public enrollment. If CAPTCHA is enabled, implement and test its token handoff before opening forms.
+4. Set hosted **Email OTP length** to **6** for the owner's requested rollout, and confirm fresh signup/recovery email delivery. The frontend supports both six and existing eight digits during the transition. Review the actual expiry (proposed: 10 minutes) and server-enforced sending/verification rate limits. Set up abuse protection appropriate for public enrollment. If CAPTCHA is enabled, implement and test its token handoff before opening forms.
 5. Apply `supabase/templates/confirmation.html` to **Confirm signup**, and `supabase/templates/recovery.html` to **Reset password**. Both use `{{ .Token }}` rather than a confirmation link. Suggested subjects: “Verify your Sathivo email” and “Reset your Sathivo password”. These files are prepared templates, not proof they have been applied.
 6. Set the Site URL to `https://milanmiliyan5.github.io/sathivo-website/` and allow the account page `https://milanmiliyan5.github.io/sathivo-website/account.html` as needed. Do not leave localhost as the production fallback or add broad redirect wildcards. The implemented flow uses typed codes and does not consume tokens from redirect URLs.
 7. Publish the actual account privacy policy, support contact, and account deletion process. Define how the 18+ requirement will be enforced before opening marketplace participation; email verification and a checkbox are not age verification.
@@ -96,6 +106,7 @@ The initial implementation sent no test email or signup request; subsequent real
 - [Custom SMTP](https://supabase.com/docs/guides/auth/auth-smtp)
 - [Email template change for new Free projects](https://supabase.com/changelog/46599-changes-to-email-template-customisation-on-free-tier)
 - [OTP verification](https://supabase.com/docs/reference/javascript/auth-verifyotp)
+- [Supported email OTP length](https://supabase.com/docs/guides/local-development/cli/config#auth.email.otp_length)
 - [Password reset](https://supabase.com/docs/reference/javascript/auth-resetpasswordforemail)
 
 ## Next application-data stage

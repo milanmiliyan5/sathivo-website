@@ -1,6 +1,6 @@
-import { authConfig } from './auth-config.js?v=20260912-3';
-import { createAuthFlow } from './auth-flow.js?v=20260912-3';
-import { createAuthFetch } from './auth-transport.js?v=20260912-3';
+import { authConfig } from './auth-config.js?v=20260925-1';
+import { createAuthFlow } from './auth-flow.js?v=20260925-1';
+import { createAuthFetch } from './auth-transport.js?v=20260925-1';
 
 const panels = [...document.querySelectorAll('[data-panel]')];
 const tabs = document.querySelector('#account-tabs');
@@ -116,7 +116,7 @@ function bindForm(id, task, loadingMessage) {
     event.preventDefault();
     if (busy) return;
     if (!form.reportValidity()) {
-      if (id === '#otp-form') announce('Enter the 8-digit code from your email.', 'error', true);
+      if (id === '#otp-form') announce('Enter the 6- or 8-digit code from your email.', 'error', true);
       return;
     }
     // Capture values before the fieldset becomes disabled.
@@ -219,7 +219,7 @@ const initialRoute = location.hash.slice(1);
 const hadTokenUrl = /access_token|refresh_token|token_hash|[?&]code=/.test(location.hash + location.search);
 if (location.search || hadTokenUrl) history.replaceState(null, '', location.pathname + '#login');
 showPanel(publicRoutes.has(initialRoute) ? initialRoute : 'login', { focus: false });
-if (hadTokenUrl) announce('Use an 8-digit email code on this page. Request a fresh code to continue.', 'info');
+if (hadTokenUrl) announce('Use the verification code from your email on this page. Request a fresh code to continue.', 'info');
 
 async function initialize() {
   if (!authConfig.accountsEnabled) return;
