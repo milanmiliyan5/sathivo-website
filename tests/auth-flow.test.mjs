@@ -7,6 +7,7 @@ import { createAuthFlow, normalizeEmail, validatePassword } from '../js/auth-flo
 import { createAuthFetch } from '../js/auth-transport.js';
 
 const user = { id: 'test-user', email: 'hello@example.com', email_confirmed_at: '2026-09-08T00:00:00Z', user_metadata: { display_name: 'Asha' } };
+const signupUser = { ...user, email_confirmed_at: null, identities: [{ id: 'test-email-identity', provider: 'email' }] };
 const session = { user, access_token: 'test-token-never-used-on-network' };
 const password = 'river-cloud-papaya-48';
 const validSignup = { name: ' Asha ', email: ' Hello@Example.com ', password, confirmation: password, adult: true, boundaries: true };
@@ -16,7 +17,7 @@ function setup(enabled = true) {
   const calls = [];
   const mock = label => Object.fromEntries(['signUp', 'signInWithPassword', 'getSession', 'getUser', 'resend', 'resetPasswordForEmail', 'verifyOtp', 'updateUser', 'signOut'].map(method => [method, async args => {
     calls.push({ client: label, method, args });
-    const data = method === 'signUp' ? { user, session: null }
+    const data = method === 'signUp' ? { user: signupUser, session: null }
       : method === 'getSession' ? { session: null }
         : method === 'getUser' ? { user }
           : method === 'verifyOtp' ? { user, session } : {};
@@ -70,6 +71,44 @@ test('unexpected automatic email confirmation does not enter the account screen'
   await assert.rejects(flow.signup(validSignup), { code: 'confirmation_required' });
   assert.equal(calls.at(-1).method, 'signOut');
   assert.equal(flow.getChallenge(), null);
+});
+
+test('explicit duplicate signup errors offer password sign-in without an OTP challenge', async () => {
+  for (const code of ['user_already_exists', 'email_exists']) {
+    const { flow, auth, calls } = setup();
+    auth.signUp = async () => ({ error: { code, status: 422, message: '<script>private provider detail</script>' } });
+    const result = await flow.signup(validSignup);
+    assert.equal(result.kind, 'sign-in');
+    assert.equal(result.email, user.email);
+    assert.match(result.message, /already exists/);
+    assert.ok(!result.message.includes('private provider detail'));
+    assert.equal(flow.getChallenge(), null);
+    await assert.rejects(flow.verify('123456'), { code: 'no_challenge' });
+    assert.equal(calls.length, 0, 'Never auto-login, resend, or look up the user');
+  }
+});
+
+test('sanitized signup responses offer sign-in without claiming verification or email delivery', async () => {
+  const { flow, auth, calls } = setup();
+  auth.signUp = async () => ({ data: { user: { ...signupUser, identities: [] }, session: null }, error: null });
+  const result = await flow.signup(validSignup);
+  assert.equal(result.kind, 'sign-in');
+  assert.equal(result.email, user.email);
+  assert.match(result.message, /may already have an account/);
+  assert.match(result.message, /Verify my email/);
+  assert.equal(flow.getChallenge(), null);
+  assert.equal(flow.resendSeconds(), 60);
+  await assert.rejects(flow.resend(), { code: 'no_challenge' });
+  await assert.rejects(flow.changePassword(password, password), { code: 'recovery_expired' });
+  assert.equal(calls.length, 0);
+});
+
+test('missing identity fields are not treated as proof of an existing account', async () => {
+  for (const identities of [undefined, null]) {
+    const { flow, auth } = setup();
+    auth.signUp = async () => ({ data: { user: { ...signupUser, identities }, session: null }, error: null });
+    assert.deepEqual(await flow.signup(validSignup), { kind: 'signup', email: user.email });
+  }
 });
 
 test('signup verifies an email OTP while signup resend never starts a passwordless signup', async () => {
@@ -253,11 +292,14 @@ test('the vendored SDK sends the expected signup, resend, verify and recovery HT
   const context = vm.createContext({ URL, console, setTimeout, clearTimeout, setInterval, clearInterval, fetch, Headers, Request, Response, AbortController, TextEncoder, TextDecoder, WebSocket: globalThis.WebSocket, crypto: globalThis.crypto });
   vm.runInContext(source, context);
   const requests = [];
+  let signupReply = signupUser;
+  let signupError = null;
   const fetchImpl = async (input, init) => {
     const path = new URL(input).pathname;
     requests.push({ path, method: init.method, body: JSON.parse(init.body ?? '{}') });
+    if (path.endsWith('/signup') && signupError) return new Response(JSON.stringify(signupError), { status: 422, headers: { 'Content-Type': 'application/json', 'X-Supabase-Api-Version': '2024-01-01' } });
     if (path.endsWith('/verify')) return new Response(JSON.stringify({ code: 'otp_expired', msg: 'Token has expired or is invalid' }), { status: 403, headers: { 'Content-Type': 'application/json' } });
-    const body = path.endsWith('/signup') ? { ...user, email_confirmed_at: null, identities: [] } : {};
+    const body = path.endsWith('/signup') ? signupReply : {};
     return new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } });
   };
   const client = storageKey => context.supabase.createClient('https://auth.example.com', 'public-fixture-key', {
@@ -292,6 +334,17 @@ test('the vendored SDK sends the expected signup, resend, verify and recovery HT
     assert.equal(requests.at(-1).body.token, token);
   }
   assert.ok(requests.every(request => request.method === 'POST'));
+  now += 60_000;
+  signupReply = { ...signupUser, identities: [] };
+  const beforeDuplicate = requests.length;
+  assert.equal((await flow.signup(validSignup)).kind, 'sign-in');
+  assert.equal(requests.length, beforeDuplicate + 1);
+  assert.equal(requests.at(-1).path, '/auth/v1/signup');
+  assert.equal(flow.getChallenge(), null);
+  now += 60_000;
+  signupError = { code: 'user_already_exists', msg: 'User already registered' };
+  assert.equal((await flow.signup(validSignup)).kind, 'sign-in');
+  assert.equal(flow.getChallenge(), null);
 });
 
 test('recovery grants expire and canceling a flow removes the grant', async () => {

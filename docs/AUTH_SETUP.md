@@ -1,5 +1,15 @@
 # Sathivo account activation
 
+## Existing-account signup guidance — 2026-09-26
+
+The owner tried creating an account with an already verified address and waited on the OTP screen. The flow previously treated every non-session signup success as an email-verification challenge, including Supabase's sanitized response for an existing account.
+
+Release `20260926-1` handles explicit signup errors `user_already_exists` / `email_exists` by offering password sign-in with a fixed “account already exists” message. A successful response with an explicitly empty `user.identities` array offers sign-in with conditional wording (“may already have an account”). Supabase also sanitizes identities for invited accounts, so the UI does not claim that this response proves registration, verification, or a signed-in session. The visible “Verify my email” path remains available. Missing identity fields are not treated as proof of a duplicate.
+
+The sign-in form keeps the submitted email and clears all password/code fields. The signup password is never reused for an automatic login or to change an existing password. Choosing Forgot password or Verify my email carries the email forward. Signup and OTP screens also put existing-account guidance above the form so a neutral resend response does not leave the sign-in options below the fold. New unverified signup responses still follow the existing OTP verification flow.
+
+No account-lookup endpoint, privileged key, database query, or hard-coded user address was added to the public application. Rate limits, confirmation settings, six/eight-digit support, recovery verification and the homepage remain unchanged. Regression checks include duplicate errors, sanitized success, missing identity fields and actual vendored-SDK response handling through a controlled transport. Live duplicate-signup acceptance still needs an owner-operated request; automated checks do not prove real email delivery.
+
 ## Six-digit rollout preparation — 2026-09-25
 
 The owner requested six-digit email codes after completing verification. A read-only Auth check confirmed that the selected test account's email was verified at 14:00:01 UTC on 25 September, with a sign-in at the same time. This establishes successful real signup confirmation and an initial authenticated session. It does not establish logout/password login or successful password recovery.

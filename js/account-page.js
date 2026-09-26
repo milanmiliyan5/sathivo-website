@@ -1,6 +1,6 @@
-import { authConfig } from './auth-config.js?v=20260925-1';
-import { createAuthFlow } from './auth-flow.js?v=20260925-1';
-import { createAuthFetch } from './auth-transport.js?v=20260925-1';
+import { authConfig } from './auth-config.js?v=20260926-1';
+import { createAuthFlow } from './auth-flow.js?v=20260926-1';
+import { createAuthFetch } from './auth-transport.js?v=20260926-1';
 
 const panels = [...document.querySelectorAll('[data-panel]')];
 const tabs = document.querySelector('#account-tabs');
@@ -130,7 +130,15 @@ bindForm('#login-form', async values => {
 }, 'Signing you in…');
 
 bindForm('#signup-form', async values => {
-  renderOtp(await flow.signup({ ...values, adult: values.adult === 'on', boundaries: values.boundaries === 'on' }));
+  const result = await flow.signup({ ...values, adult: values.adult === 'on', boundaries: values.boundaries === 'on' });
+  if (result.kind === 'sign-in') {
+    document.querySelector('#login-email').value = result.email;
+    showPanel('login');
+    clearSecrets();
+    announce(result.message, 'info', true);
+    return;
+  }
+  renderOtp(result);
 }, 'Preparing your email verification…');
 
 bindForm('#recovery-form', async values => {
@@ -164,7 +172,7 @@ resendButton.addEventListener('click', () => void run(async () => {
   document.querySelector('#otp-code').value = '';
   announce(flow.getChallenge()?.kind === 'recovery'
     ? 'Request completed. Eligible accounts receive a reset code; use the latest email and check spam too.'
-    : 'Request completed. Already verified? No signup code will be sent. Use “Sign in with password” below, or reset your password.', 'info', true);
+    : 'Request completed. Already verified? No signup code will be sent. Choose “Sign in with password” or “Forgot password?” above.', 'info', true);
 }, 'Requesting another code…'));
 
 signoutButton.addEventListener('click', () => void run(async () => {
@@ -191,9 +199,12 @@ document.querySelectorAll('[data-route]').forEach(link => {
   link.addEventListener('click', event => {
     event.preventDefault();
     if (busy) return;
-    const pendingEmail = flow?.getChallenge()?.email;
+    const pendingEmail = flow?.getChallenge()?.email
+      || (activePanel === 'signup' ? document.querySelector('#signup-email').value.trim() : '')
+      || (activePanel === 'login' ? document.querySelector('#login-email').value.trim() : '');
     if (pendingEmail && link.dataset.route === 'login') document.querySelector('#login-email').value = pendingEmail;
     if (pendingEmail && link.dataset.route === 'forgot') document.querySelector('#recovery-email').value = pendingEmail;
+    if (pendingEmail && link.dataset.route === 'verify-email') document.querySelector('#verification-email').value = pendingEmail;
     clearSecrets();
     // Immediately clear the recovery grant before changing screens.
     if (flow) void flow.cancelChallenge();

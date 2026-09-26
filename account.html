@@ -11,7 +11,7 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="account.css">
-  <script type="module" src="js/account-page.js?v=20260925-1"></script>
+  <script type="module" src="js/account-page.js?v=20260926-1"></script>
 </head>
 <body class="account-page">
   <a class="skip-link" href="#account-main">Skip to account</a>
@@ -46,6 +46,7 @@
 
       <section data-panel="signup" aria-labelledby="signup-title" hidden>
         <p class="eyebrow">LET'S START WITH HELLO</p><h2 id="signup-title" tabindex="-1">A little more <em>connection.</em></h2><p class="panel-intro">One account for your Sathivo journey.</p>
+        <div class="account-notice"><strong>Already have an account?</strong><p>You only need to create it once. <a class="form-link" href="#login" data-route="login">Sign in with your existing password</a> or <a class="form-link" href="#forgot" data-route="forgot">reset your password</a>.</p></div>
         <form id="signup-form" novalidate><fieldset disabled>
           <label for="signup-name">Your name</label><input id="signup-name" name="name" autocomplete="name" minlength="2" maxlength="60" required placeholder="What should we call you?">
           <label for="signup-email">Email address</label><input id="signup-email" name="email" type="email" autocomplete="username" maxlength="254" required placeholder="you@example.com">
@@ -75,9 +76,9 @@
 
       <section data-panel="otp" aria-labelledby="otp-title" hidden>
         <a class="form-link panel-back" href="#login" data-route="login">← Back to sign in</a><p class="eyebrow" id="otp-eyebrow">CHECK YOUR EMAIL</p><h2 id="otp-title" tabindex="-1">A code. Then <em>you're in.</em></h2><p class="panel-intro" id="otp-explanation"></p><p class="email-destination" id="otp-destination"></p>
+        <div id="signup-code-help" class="account-notice" hidden><strong>Already have a verified account?</strong><p>No new signup code is sent. Sign in with your existing password to continue.</p><p><a class="form-link" href="#login" data-route="login">Sign in with password</a> · <a class="form-link" href="#forgot" data-route="forgot">Forgot password?</a></p></div>
         <form id="otp-form" novalidate><fieldset disabled><label for="otp-code">Email verification code</label><input class="otp-input" id="otp-code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}([0-9]{2})?" minlength="6" maxlength="8" aria-describedby="otp-hint" required placeholder="000000"><p class="field-hint" id="otp-hint">Enter every digit from your email. Check spam too. Never share this code.</p><button class="button button-primary form-submit" type="submit">Verify code</button></fieldset></form>
         <button id="resend-code" class="form-link resend-code" type="button" disabled>Resend code</button><span id="resend-countdown" class="field-hint"></span>
-        <div id="signup-code-help" class="panel-note" hidden><p>Already used an email confirmation link? You can sign in now. Signup verification is only needed once.</p><p><a class="form-link" href="#login" data-route="login">Sign in with password</a> · <a class="form-link" href="#forgot" data-route="forgot">Forgot password?</a></p></div>
       </section>
 
       <section data-panel="new-password" aria-labelledby="password-title" hidden>

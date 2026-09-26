@@ -41,6 +41,9 @@ function providerError(error, context) {
   }
   if (error?.code === 'email_address_invalid') return new AuthFlowError('email', 'Use a real email address that can receive messages.');
   if (error?.code === 'email_address_not_authorized') return new AuthFlowError('email_delivery', 'Email delivery is not available for this address right now. Please try again later.');
+  if (context === 'signup' && ['user_already_exists', 'email_exists'].includes(error?.code)) {
+    return new AuthFlowError('already_registered', 'An account with this email already exists. Sign in with your existing password, or choose “Forgot password?” below.');
+  }
   if (['signup', 'send'].includes(context) && error?.status >= 500) {
     return new AuthFlowError('email_delivery', 'The email request could not be completed. Please try again later.');
   }
@@ -101,6 +104,11 @@ export function createAuthFlow({ auth, recoveryAuth, enabled, clock = Date.now }
     resendAt = clock() + 60_000;
     return { ...challenge };
   };
+  const signInAfterSignup = (email, message) => {
+    challenge = null;
+    recoveryUntil = 0;
+    return { kind: 'sign-in', email, message };
+  };
 
   return {
     getChallenge: () => challenge && { ...challenge },
@@ -114,7 +122,8 @@ export function createAuthFlow({ auth, recoveryAuth, enabled, clock = Date.now }
       if (adult !== true) fail('adult', 'Sathivo is for adults aged 18 or older.');
       if (boundaries !== true) fail('boundaries', 'Please agree to the platonic-only community boundaries.');
       const address = normalizeEmail(email);
-      const data = await send(() => auth.signUp({
+      let data;
+      try { data = await send(() => auth.signUp({
         email: address,
         password: validatePassword(password, confirmation),
         options: { data: {
@@ -123,11 +132,21 @@ export function createAuthFlow({ auth, recoveryAuth, enabled, clock = Date.now }
           adult_declaration: true,
           community_rules_version: '2026-09-08',
         } },
-      }), 'signup');
+      }), 'signup'); }
+      catch (error) {
+        if (error.code === 'already_registered') return signInAfterSignup(address, error.message);
+        throw error;
+      }
       // This flow requires server-side email confirmation. Fail closed if disabled.
       if (data?.session) {
         await auth.signOut({ scope: 'local' });
         fail('confirmation_required', 'Email verification is not ready yet. Please try again later.');
+      }
+      // Supabase can return a sanitized user with no identities for an existing
+      // account (also for an invite). This is guidance, never proof of sign-in.
+      if (Array.isArray(data?.user?.identities) && data.user.identities.length === 0) {
+        deferEmailRequests();
+        return signInAfterSignup(address, 'This email may already have an account. Sign in with your existing password, or choose “Forgot password?” below. If you still need to verify your email, choose “Verify my email”.');
       }
       return startChallenge('signup', address);
     },
