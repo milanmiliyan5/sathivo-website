@@ -126,7 +126,9 @@ function bindForm(id, task, loadingMessage) {
 }
 
 bindForm('#login-form', async values => {
-  renderAccount(await flow.login(values));
+  await flow.login(values);
+  clearSecrets();
+  window.location.replace(new URL('./', window.location.href).href);
 }, 'Signing you in…');
 
 bindForm('#signup-form', async values => {
