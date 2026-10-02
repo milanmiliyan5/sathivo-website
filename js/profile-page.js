@@ -1,3 +1,4 @@
+import { setupPublishing } from './listing-publish.js?v=20261002-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 const $ = id => document.getElementById(id);
 const form = $('profile-form');
@@ -78,6 +79,7 @@ async function init(){
     }else{$('display_name').value=user.user_metadata?.display_name||'';}
     $('fields').disabled=false;message(p?'Your saved profile. Make it feel like you.':'Let’s create your free profile.');
     if(avatarPath)await showPhoto(avatarPath);
+    await setupPublishing({client,user,isDirty:()=>dirty});
     client.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){dirty=false;location.replace('account.html');}});
   }catch(error){message(error.message||'Profile services are unavailable. Please refresh.',true);}
 }

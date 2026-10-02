@@ -66,7 +66,7 @@ document.querySelectorAll('[data-experience]').forEach(button => {
     const experience = experiences[button.dataset.experience];
     openDialog(button, 'EXPLORE AN EXPERIENCE · 18+ ONLY', experience.title, [
       paragraph(experience.text),
-      statusBox('Companion discovery is coming soon', 'Live profiles and bookings are not available yet. No booking or payment is being taken on this website.'),
+      statusBox('Companion discovery is open', 'Use Find a companion on the homepage to browse published profiles. Bookings and payments are not open yet.'),
       paragraph(experience.boundary, 'dialog-boundary')
     ]);
   });
