@@ -5,14 +5,17 @@ Website and account integration for an India-wide, adults-only, strictly platoni
 ## Current release
 
 - Responsive homepage with rose, plum, and soft cream styling.
-- Hero, experiences, how it works, why Sathivo, safety, companion section, FAQ, and footer.
-- Nine experience detail dialogs, working mobile navigation, community guidance, and a website privacy notice.
-- Keyboard-accessible native dialogs and FAQ disclosure controls, visible focus, skip navigation, and reduced-motion support.
-- No fictional profiles, testimonials, verification badges, or booking counts.
-- Separate account page with signup, email verification, password login, logout, and recovery OTP integration.
-- Connected Supabase project; account forms enabled for owner-authorized live testing after owner-confirmed Resend/Custom SMTP setup.
-
-This is a working informational website, **not a live marketplace**. Account integration is enabled for testing, but actual inbox delivery and end-to-end account acceptance are not yet verified. Companion applications, profiles, booking, payments, age/identity verification, and reporting are not implemented. The UI explains the current availability. Companions' own rates and platform fees are not collected or processed here.
+- Supabase email/password authentication with email OTP verification and password recovery.
+- Private member profile editor with photo upload and India location hierarchy.
+- Explicit opt-in public companion listings with filters and public detail pages.
+- Free booking-request flow: customer sends an experience/date/time request; companion can accept or decline; customer can cancel; companion can mark accepted bookings completed.
+- Participant-only booking chat with realtime updates.
+- Account notifications for booking and message events.
+- Blocking and safety reports with RLS-protected data.
+- Completed-booking reviews and safe public rating aggregates.
+- Moderation backend and admin page are implemented; an owner/moderator account still needs to be explicitly authorized in `platform_admins`.
+- Sathivo does not process payments. Current monetization direction is advertising only. Ad placements/config are prepared but disabled until a real approved publisher ID is connected.
+- Identity/age verification is not implemented; profiles remain clearly self-described.
 
 ## Files
 
