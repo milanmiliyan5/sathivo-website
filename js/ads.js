@@ -1,0 +1,1 @@
+import {adsConfig} from './ads-config.js?v=20261003-1';document.querySelectorAll('[data-ad-slot]').forEach(slot=>{if(!adsConfig.enabled||!adsConfig.publisherId){slot.hidden=true;return}slot.hidden=false;slot.textContent='Advertisement';});
