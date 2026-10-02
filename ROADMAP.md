@@ -2,7 +2,9 @@
 
 ## Current status
 
-The public homepage is in place, including the Indian cafe hero image. The owner enabled GitHub Pages from main at the repository root. A separate account preview and Supabase authentication integration have now been added. The owner has confirmed Resend/Custom SMTP setup. Account forms are being activated for real signup, login and recovery acceptance testing; those live checks are not complete yet. Discovery, companion profiles, bookings, payments, and moderation are not implemented yet.
+Core V1 marketplace functionality is implemented: authentication, profiles, public companion discovery, free booking requests, accept/decline/cancel/complete status flow, participant-only chat, notifications, report/block, completed-booking reviews, moderation schema/admin UI, and ad-ready placements. Sathivo does not process payments.
+
+Remaining launch dependencies are external/configuration items rather than core marketplace code: explicitly authorize the owner/moderator account, connect an approved ad-network publisher ID, enable leaked-password protection in Supabase Auth, finalize public legal/support/account-deletion operations, decide whether to add third-party identity/age verification, and verify the final custom-domain deployment.
 
 ## Confirmed product decisions
 
@@ -13,7 +15,7 @@ The public homepage is in place, including the Indian cafe hero image. The owner
 - Use the same canonical location records for customers and companions. Companions may select nearby service cities.
 - Online experiences do not require a city selection.
 - Email address and password for normal login. Forgot password -> OTP to the verified account email -> verification -> new password.
-- Companions set their own prices. Platform fees, pricing units, payments, cancellation rules, and payouts are not finalized.
+- Sathivo booking requests are free in the current release. Sathivo does not process booking payments, commissions, payouts, subscriptions, or boosts. Monetization direction is advertising only.
 - Preserve the premium rose/plum design, responsive layout, and existing working behavior. Inspect current repository files before each edit. Make changes directly in GitHub; the owner should not copy and paste code.
 
 ## Implementation order
@@ -26,9 +28,9 @@ The public homepage is in place, including the Indian cafe hero image. The owner
 | 4 | Find a Companion page | In-person/online choice, location/activity/gender/language/budget filters; anonymous browsing; truthful empty states |
 | 5 | Companion application and editable profile | Photo, bio, languages, experiences, rates, availability, home and service cities persisted |
 | 6 | Administration and moderation | Proposed owner review before profile visibility; approval, rejection, suspension, reports, and access controls |
-| 7 | Booking requests and account dashboards | Activity/date/time/duration, companion acceptance or rejection, status tracking, cancellation and completion |
-| 8 | Booking communication and notifications | Proposed in-platform coordination with reporting/blocking and limited contact-data exposure |
-| 9 | Monetization and payments | Owner chooses fee and payment/refund/payout rules; test transaction and failure handling before real payments |
+| 7 | Booking requests and account dashboards | Implemented: request, accept/decline, cancel, complete and booking list |n, companion acceptance or rejection, status tracking, cancellation and completion |
+| 8 | Booking communication and notifications | Implemented: participant-only chat, realtime refresh and account notifications |n-platform coordination with reporting/blocking and limited contact-data exposure |
+| 9 | Monetization | Payment processing intentionally excluded. Ad-ready placements exist; real publisher credentials are still required |ner chooses fee and payment/refund/payout rules; test transaction and failure handling before real payments |
 | 10 | Launch preparation | Publish service/privacy/cancellation policies and support route; define verification; check privacy boundaries, real user flows, mobile layouts, and launch configuration |
 
 Stages 6, 8, and the detailed commercial/operational rules are proposed plans to discuss with the owner, not settled policies. An 18+ statement or email OTP is not identity/age verification. Do not publish verification or other protection claims before they exist.
