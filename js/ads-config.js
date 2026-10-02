@@ -1,0 +1,1 @@
+export const adsConfig={enabled:false,provider:'adsense',publisherId:'',note:'Enable only after Sathivo has an approved ad-network publisher ID.'};
