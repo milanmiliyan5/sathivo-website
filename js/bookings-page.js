@@ -1,4 +1,5 @@
 import {authConfig} from './auth-config.js?v=20260926-1';
+import {sendBookingPush} from './push-events.js?v=20261004-1';
 const $=id=>document.getElementById(id); let client,user,rows=[],filter='all';
 const fmt=d=>new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d));
 const el=(t,x,c)=>{const n=document.createElement(t);if(x!==undefined)n.textContent=x;if(c)n.className=c;return n};
@@ -15,7 +16,7 @@ function card(r){const mine=r.customer_id===user.id,other=mine?r.companion_displ
  if(a.childNodes.length)n.append(a);return n}
 function render(){const list=rows.filter(visible);$('bookings').replaceChildren(...list.map(card));$('empty').hidden=list.length>0;$('status').textContent=list.length?list.length+' booking'+(list.length===1?'':'s')+'.':''}
 async function load(){const {data,error}=await client.from('booking_requests').select('*').order('created_at',{ascending:false});if(error)throw error;rows=data||[];$('filters').hidden=false;render()}
-async function update(id,status){$('status').textContent='Updating…';const {error}=await client.from('booking_requests').update({status}).eq('id',id);if(error){$('status').textContent=error.message;return}await load()}
+async function update(id,status){$('status').textContent='Updating…';const {error}=await client.from('booking_requests').update({status}).eq('id',id);if(error){$('status').textContent=error.message;return}if(['cancelled','completed'].includes(status)){ $('status').textContent='Sending notification…';await sendBookingPush(client,id,status)}await load()}
 async function submitReview(r,form){const rating=Number(form.querySelector('select').value),comment=form.querySelector('textarea').value.trim();const {error}=await client.from('booking_reviews').insert({booking_id:r.id,reviewer_id:user.id,companion_id:r.companion_id,rating,comment});if(error){$('status').textContent=error.code==='23505'?'You already reviewed this booking.':error.message;return}form.replaceWith(el('p','Thanks for your review.','launch-note'))}
 async function init(){try{if(!globalThis.supabase)throw Error('Services unavailable');client=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'sathivo.auth.v1'}});const u=await client.auth.getUser();user=u.data.user;if(!user){location.replace('account.html#login');return}document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));render()});await load();client.channel('bookings:'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_requests'},()=>void load()).subscribe()}catch(e){$('status').textContent=e.message||'Could not load bookings.'}}
 void init();
