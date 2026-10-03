@@ -1,0 +1,201 @@
+/* Sathivo site-wide responsive layer — loaded last on every page. */
+html{overflow-x:hidden}
+body{overflow-x:hidden}
+img,svg,video,canvas{max-width:100%}
+input,select,textarea,button{max-width:100%}
+input,select,textarea{font-size:16px}
+.site-header .container{min-width:0}
+.brand{flex-shrink:0}
+.button{max-width:100%;text-align:center}
+.text-link{max-width:100%}
+
+/* Utility/page headers */
+.directory-nav,.profile-nav,.account-nav,.marketplace-nav{min-width:0}
+.directory-nav>div,.marketplace-nav nav,.profile-nav>span{min-width:0}
+.page-head h1,.directory h1,.detail-copy h1,.profile-layout h1,.account-story h1,.chat-head h1{overflow-wrap:anywhere}
+.booking-card,.detail-card,.profile-card,.account-card,.filters,.booking-form{min-width:0}
+
+/* Tablet */
+@media(max-width:900px){
+  .container{width:min(100% - 40px,1200px)}
+  .section{padding-block:64px}
+  .site-header{backdrop-filter:blur(10px)}
+  .directory-nav,.profile-nav,.marketplace-nav,.account-nav{padding-block:16px;min-height:70px}
+  .directory-nav>div,.profile-nav>span{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+  .marketplace-nav{align-items:center}
+  /* Marketplace pages do not have the homepage hamburger, so keep their nav visible. */
+  .marketplace-nav nav{display:flex!important;position:static!important;inset:auto!important;background:transparent!important;box-shadow:none!important;border:0!important;padding:0!important;gap:12px!important;flex-direction:row!important;align-items:center!important;justify-content:flex-end;flex-wrap:wrap}
+  .marketplace-nav nav>a:not(.button){padding:7px 4px!important;font-size:.78rem}
+  .marketplace-shell{padding-block:32px 56px}
+  .page-head h1{font-size:clamp(2.25rem,7vw,3.6rem)}
+  .chat-shell{padding-block:30px 56px}
+  .booking-card{padding:18px}
+  .detail-copy{padding:30px}
+}
+
+/* Phones */
+@media(max-width:640px){
+  :root{--radius:16px}
+  html{scroll-padding-top:78px}
+  body{font-size:15px;line-height:1.6}
+  .container{width:calc(100% - 28px)}
+  .section{padding-block:52px}
+  .brand{font-size:1.65rem}
+  .brand-mark{font-size:1.95rem;margin-right:6px}
+  .button{min-height:48px;padding:12px 18px;gap:12px;border-radius:9px}
+  .eyebrow{font-size:.61rem;letter-spacing:.11em}
+  h2{font-size:clamp(1.9rem,9vw,2.3rem)}
+  dialog{padding:26px 20px;width:calc(100% - 24px);max-height:88dvh}
+
+  /* Homepage */
+  .nav-wrap{height:68px}
+  .menu-toggle{width:44px;height:44px}
+  .nav-wrap nav{top:68px;padding:14px}
+  .nav-wrap nav>a:not(.button){padding:11px 8px}
+  .hero{padding-block:30px 26px;gap:28px}
+  .hero h1{font-size:clamp(2.75rem,13vw,4rem)}
+  .hero-actions{display:grid;grid-template-columns:1fr;align-items:stretch;width:100%;gap:10px}
+  .hero-actions .button,.hero-actions .text-link{width:100%;justify-content:center}
+  .hero-assurance{gap:7px 0}
+  .hero-assurance>span+span:before{margin-inline:7px}
+  .hero-photo-wrap{border-radius:92px 92px 16px 16px}
+  .moment-tag{max-width:78%;left:0}
+  .photo-caption{left:20px;right:18px}
+  .values-strip>.container{grid-template-columns:1fr 1fr}
+  .section-heading{margin-bottom:24px}
+  .more-experiences button{flex:1 1 calc(50% - 9px);justify-content:space-between}
+  .why-grid{grid-template-columns:1fr}
+  .safety-section{margin-inline:14px;width:auto;padding:28px 20px}
+  .become-section{padding-block:54px}
+  .companion-note{transform:none}
+  .faq-layout{grid-template-columns:1fr!important;gap:30px}
+  .footer-main{flex-direction:column;gap:32px}
+  .footer-links{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+  .footer-bottom{flex-direction:column;align-items:flex-start}
+
+  /* Directory + companion detail */
+  .directory{padding-block:28px 48px}
+  .directory-nav{gap:12px}
+  .directory-nav>div{gap:11px;font-size:.72rem;line-height:1.3}
+  .directory-nav>div a{padding:8px 0}
+  .directory h1{font-size:clamp(2.35rem,11vw,3.4rem);line-height:1.08}
+  .launch-note{padding:13px 14px;margin-block:20px}
+  .filters{grid-template-columns:1fr!important;padding:17px;gap:13px;border-radius:16px}
+  .filters label{margin-bottom:5px}
+  .filters select{min-height:48px}
+  .filters .button{width:100%}
+  .companion-grid{grid-template-columns:1fr!important}
+  .companion-card{border-radius:17px}
+  .portrait{height:235px}
+  .card-copy{padding:20px}
+  .pagination{justify-content:space-between;gap:8px}
+  .pagination .button{min-width:0;flex:1;padding-inline:10px}
+  #page-label{font-size:.75rem;white-space:nowrap}
+  .detail-card{grid-template-columns:1fr!important;border-radius:18px;margin-top:20px}
+  .detail-card>.portrait{height:min(92vw,390px)!important;min-height:0!important;max-height:none!important}
+  .detail-copy{padding:21px!important}
+  .detail-copy h1{font-size:2.4rem!important}
+  .detail-copy h2{font-size:1.25rem;margin-top:22px}
+  .tags{gap:6px}
+  .tags span{font-size:.7rem;padding:5px 9px}
+  .booking-form{margin-top:24px;padding:18px!important;border-radius:16px}
+  .booking-form h2{font-size:1.45rem}
+  .booking-form .booking-grid{grid-template-columns:1fr!important;gap:13px}
+  .booking-form .booking-field.full{grid-column:auto!important}
+  .booking-form input,.booking-form select,.booking-form textarea{min-height:48px;padding:12px}
+  .booking-form textarea{min-height:96px}
+  .booking-form .booking-submit-row{display:grid!important;grid-template-columns:1fr;gap:10px}
+  .booking-form button{width:100%;min-width:0!important}
+
+  /* Profile */
+  .profile-nav{align-items:flex-start}
+  .profile-nav>span{font-size:.73rem;text-align:right;max-width:54%}
+  .profile-layout{grid-template-columns:1fr!important;gap:24px;padding-block:28px 46px}
+  .profile-layout>aside h1{font-size:2.7rem}
+  .profile-note{padding:18px;margin-block:20px}
+  .profile-card{padding:19px!important;border-radius:18px}
+  .profile-card legend{font-size:1.3rem}
+  .profile-card h2{font-size:1.35rem;margin-top:26px}
+  .profile-card input:not([type=checkbox]),.profile-card select,.profile-card textarea{min-height:48px;padding:11px 12px}
+  .two-col{grid-template-columns:1fr!important;gap:0!important}
+  .photo-row{align-items:flex-start;flex-direction:column}
+  .photo-row img{width:76px;height:76px}
+  .choices{gap:8px}
+  .choices label{font-size:.78rem;padding:8px 11px}
+  #publication{padding:15px!important;border-radius:14px!important}
+  #publication .button{width:100%}
+
+  /* Account/auth */
+  .account-nav{gap:10px}
+  .account-back{font-size:.7rem;line-height:1.35;text-align:right}
+  .account-layout{width:calc(100% - 28px)!important;padding-block:24px 42px;gap:20px}
+  .account-story h1{font-size:2.05rem!important}
+  .account-story>p:not(.eyebrow){font-size:.82rem}
+  .account-card{padding:21px 17px!important;border-radius:17px}
+  .account-card h2{font-size:1.8rem}
+  .account-tabs a{font-size:.78rem}
+  .account-card input:not([type=checkbox]){height:50px}
+  .password-field button{min-width:54px}
+  .account-card .otp-input{font-size:1.35rem;letter-spacing:.18em!important;padding-inline:8px}
+  .next-chapter{padding:15px}
+  .next-chapter .button{width:100%;margin-top:10px}
+  .account-footer{width:calc(100% - 28px);flex-direction:column}
+
+  /* Bookings / notifications / admin */
+  .marketplace-nav{display:grid;grid-template-columns:1fr;gap:10px;padding-block:12px}
+  .marketplace-nav .brand{justify-self:start}
+  .marketplace-nav nav{width:100%;justify-content:flex-start!important;overflow-x:auto;flex-wrap:nowrap!important;gap:4px!important;padding-bottom:3px!important;scrollbar-width:none}
+  .marketplace-nav nav::-webkit-scrollbar{display:none}
+  .marketplace-nav nav>a:not(.button){white-space:nowrap;border:1px solid var(--line);border-radius:999px;padding:7px 11px!important;background:#fff}
+  .marketplace-shell{padding-block:28px 48px}
+  .page-head h1{font-size:2.55rem;line-height:1.08}
+  .booking-tabs{margin:22px -2px 16px;gap:7px}
+  .booking-tabs button{min-height:42px;padding:8px 13px}
+  .booking-card{padding:16px;border-radius:15px}
+  .booking-top{flex-direction:column!important;gap:8px}
+  .booking-meta{gap:6px 10px;font-size:.78rem}
+  .booking-actions{display:grid;grid-template-columns:1fr;width:100%}
+  .booking-actions .button,.booking-actions a{width:100%}
+  .review-form select,.review-form textarea{width:100%;min-height:46px}
+  .review-form .button{width:100%}
+  .admin-actions{display:grid;grid-template-columns:1fr 1fr;width:100%}
+  .admin-actions .button{width:100%}
+  .ad-slot{min-height:70px}
+
+  /* Chat */
+  .chat-shell{width:calc(100% - 28px);padding-block:26px 44px}
+  .chat-head h1{font-size:2.35rem}
+  .safety-strip{padding:12px 13px;font-size:.8rem}
+  .messages{margin-block:18px}
+  .message{max-width:88%!important;font-size:.9rem}
+  .message-form{bottom:0;padding:12px 0 calc(12px + env(safe-area-inset-bottom));z-index:5}
+  .message-form textarea{min-height:82px;font-size:16px}
+  .message-form .button{width:100%}
+  .safety-actions{display:grid;grid-template-columns:1fr}
+  .safety-actions .button,.safety-actions .text-link{width:100%;justify-content:center}
+
+  /* Generic footer */
+  .directory-footer{width:calc(100% - 28px);padding-block:22px;font-size:.72rem}
+}
+
+/* Very small phones */
+@media(max-width:390px){
+  .container{width:calc(100% - 22px)}
+  .brand{font-size:1.52rem}
+  .brand-mark{font-size:1.82rem}
+  .announcement span{display:none}
+  .hero h1{font-size:2.72rem}
+  .hero-description{font-size:.88rem}
+  .values-strip>.container{grid-template-columns:1fr}
+  .more-experiences button{flex-basis:100%}
+  .directory-nav{align-items:flex-start}
+  .directory-nav>div{justify-content:flex-end;max-width:55%}
+  .profile-nav>span{max-width:58%}
+  .detail-copy{padding:17px!important}
+  .booking-form{padding:15px!important}
+  .account-layout,.account-footer,.chat-shell,.directory-footer{width:calc(100% - 22px)!important}
+  .account-card{padding:19px 14px!important}
+  .account-card h2{font-size:1.68rem}
+  .page-head h1{font-size:2.25rem}
+  .admin-actions{grid-template-columns:1fr}
+}
