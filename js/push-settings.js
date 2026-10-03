@@ -15,9 +15,10 @@ function base64UrlToUint8Array(value){
 }
 function setUI(message,tone='info',enabled=false){
  boxes.forEach(box=>{
-  const status=box.querySelector('[data-push-status]'),button=box.querySelector('[data-push-toggle]');
+  const status=box.querySelector('[data-push-status]'),button=box.querySelector('[data-push-toggle]'),test=box.querySelector('[data-push-test]');
   if(status){status.textContent=message;status.dataset.tone=tone}
   if(button){button.textContent=enabled?'Turn off device notifications':'Enable device notifications';button.dataset.enabled=String(enabled);button.disabled=false}
+  if(test){test.hidden=!enabled;test.disabled=false}
  });
 }
 async function registration(){return navigator.serviceWorker.register('./sw.js',{scope:'./'})}
@@ -49,6 +50,16 @@ async function enable(){
  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:base64UrlToUint8Array(VAPID_PUBLIC_KEY)});
  await registerSubscription(sub);setUI('Device notifications are on for this browser.','success',true);
 }
+async function testPush(){
+ try{
+  setUI('Sending a test notification…','info',true);
+  const {data,error}=await client.functions.invoke('send-booking-push',{body:{event:'test'}});
+  if(error)throw error;
+  const sent=Number(data?.sent||0);
+  if(sent>0)setUI('Test notification sent. Check your browser/Windows notification area.','success',true);
+  else setUI('No registered device was found yet. Turn notifications off and on once, then test again.','error',true);
+ }catch(error){setUI(error.message||'Test notification failed.','error',true)}
+}
 async function disable(){
  try{
   const sub=await getSubscription();
@@ -63,7 +74,7 @@ async function init(){
  if(!globalThis.supabase){setUI('Notification services could not load.','error',false);return}
  client=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'sathivo.auth.v1'}});
  const u=await client.auth.getUser();currentUser=u.data.user||null;
- boxes.forEach(box=>box.querySelector('[data-push-toggle]')?.addEventListener('click',()=>void(box.querySelector('[data-push-toggle]').dataset.enabled==='true'?disable():enable())));
+ boxes.forEach(box=>{box.querySelector('[data-push-toggle]')?.addEventListener('click',()=>void(box.querySelector('[data-push-toggle]').dataset.enabled==='true'?disable():enable()));box.querySelector('[data-push-test]')?.addEventListener('click',()=>void testPush())});
  client.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;void sync()});
  await sync();
  window.sathivoPushUnregister=async()=>{
