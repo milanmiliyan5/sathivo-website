@@ -4,6 +4,8 @@ import {sendMessagePush} from './push-events.js?v=20261004-2';
 const $=id=>document.getElementById(id);
 let client,user,booking,otherId,messageChannel,bookingChannel;
 let mediaViewer=null,viewerImage=null,viewerBlobUrl=null,viewerIsOnce=false;
+let selectedPhotoFile=null,selectedPhotoPreviewUrl=null;
+const messageBlobUrls=new Set();
 
 const el=(t,x,c)=>{const n=document.createElement(t);if(x!==undefined)n.textContent=x;if(c)n.className=c;return n};
 const fmt=d=>new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d));
@@ -69,12 +71,15 @@ async function openViewOnce(r){
 }
 async function normalImageFrame(r){
  const frame=el('button',undefined,'chat-photo-frame chat-photo-button');frame.type='button';frame.setAttribute('aria-label','Open photo full screen');
- const loading=el('span','Loading photo…','chat-photo-loading');frame.append(loading);
- const {data,error}=await client.storage.from('booking-chat-photos').createSignedUrl(r.photo_path,300);
- if(error||!data?.signedUrl){loading.textContent='Photo unavailable.';frame.disabled=true;return frame}
- const img=document.createElement('img');img.className='chat-photo';img.alt='Shared booking photo';img.loading='lazy';img.draggable=false;img.src=data.signedUrl;
- img.onload=()=>frame.replaceChildren(img);img.onerror=()=>{loading.textContent='Photo unavailable.'};
- frame.onclick=()=>void showNormalPhoto(data.signedUrl);
+ try{
+  const {data,error}=await client.storage.from('booking-chat-photos').download(r.photo_path);
+  if(error||!data)throw error||new Error('Photo unavailable');
+  const url=URL.createObjectURL(data);messageBlobUrls.add(url);
+  const img=document.createElement('img');img.className='chat-photo';img.alt='Shared booking photo';img.loading='lazy';img.draggable=false;img.src=url;
+  frame.append(img);frame.onclick=()=>void showNormalPhoto(url);
+ }catch{
+  frame.append(el('span','Photo unavailable.','chat-photo-loading'));frame.disabled=true;
+ }
  return frame;
 }
 async function messageNode(r){
@@ -123,20 +128,38 @@ async function loadBooking(){
  $('chat-title').textContent='Chat with '+(other||'your Sathivo connection');
  $('booking-summary').textContent=booking.category+' · '+fmt(booking.requested_for)+' · '+booking.status;syncComposer();
 }
-async function sendPhoto(file){
- const ps=$('photo-status');if(booking.status!=='accepted'){ps.textContent='Photo sharing opens after the request is accepted.';return}
+function clearPhotoDraft(){
+ selectedPhotoFile=null;
+ if(selectedPhotoPreviewUrl){URL.revokeObjectURL(selectedPhotoPreviewUrl);selectedPhotoPreviewUrl=null}
+ const input=$('photo-input');if(input)input.value='';
+ const draft=$('photo-draft');if(draft)draft.hidden=true;
+ const preview=$('photo-draft-image');if(preview)preview.removeAttribute('src');
+ const once=$('view-once');if(once)once.checked=false;
+ const message=$('message');if(message){message.maxLength=2000;message.placeholder='Write a message…'}
+ const ps=$('photo-status');if(ps)ps.textContent='';
+}
+function stagePhoto(file){
+ const ps=$('photo-status'),types=['image/jpeg','image/png','image/webp'];
+ if(!types.includes(file.type)){ps.textContent='Please choose a JPG, PNG or WebP image.';clearPhotoDraft();return}
+ if(file.size>5*1024*1024){ps.textContent='Photo must be 5 MB or smaller.';clearPhotoDraft();return}
+ clearPhotoDraft();selectedPhotoFile=file;selectedPhotoPreviewUrl=URL.createObjectURL(file);
+ $('photo-draft-image').src=selectedPhotoPreviewUrl;$('photo-draft').hidden=false;
+ $('message').maxLength=1000;$('message').placeholder='Add a caption…';
+ ps.textContent='Photo ready. Add a caption, choose View once if you want, then tap Send.';
+}
+async function sendStagedPhoto(){
+ const file=selectedPhotoFile,ps=$('photo-status');if(!file)return false;
+ if(booking.status!=='accepted'){ps.textContent='Photo sharing opens after the request is accepted.';return false}
  const types={'image/jpeg':'jpg','image/png':'png','image/webp':'webp'};
- if(!types[file.type]){ps.textContent='Please choose a JPG, PNG or WebP image.';return}
- if(file.size>5*1024*1024){ps.textContent='Photo must be 5 MB or smaller.';return}
- const viewOnce=$('view-once')?.checked===true;
- ps.textContent=viewOnce?'Uploading view-once photo…':'Uploading photo…';
+ const viewOnce=$('view-once')?.checked===true,caption=$('message').value.trim().slice(0,1000);
+ ps.textContent=viewOnce?'Sending view-once photo…':'Sending photo…';
  const path=booking.id+'/'+user.id+'/'+crypto.randomUUID()+'.'+types[file.type];
  const up=await client.storage.from('booking-chat-photos').upload(path,file,{contentType:file.type,cacheControl:'60',upsert:false});
- if(up.error){ps.textContent=up.error.message;return}
- const msg=await client.from('booking_messages').insert({booking_id:booking.id,sender_id:user.id,message_type:'image',photo_path:path,body:'',view_once:viewOnce}).select('id').single();
- if(msg.error){await client.storage.from('booking-chat-photos').remove([path]);ps.textContent=msg.error.message;return}
- ps.textContent=viewOnce?'View-once photo sent.':'Photo sent.';$('photo-input').value='';if($('view-once'))$('view-once').checked=false;
- void sendMessagePush(client,booking.id,msg.data.id);
+ if(up.error){ps.textContent=up.error.message;return false}
+ const msg=await client.from('booking_messages').insert({booking_id:booking.id,sender_id:user.id,message_type:'image',photo_path:path,body:caption,view_once:viewOnce}).select('id').single();
+ if(msg.error){await client.storage.from('booking-chat-photos').remove([path]);ps.textContent=msg.error.message;return false}
+ clearPhotoDraft();$('message').value='';$('photo-status').textContent=viewOnce?'View-once photo sent.':'Photo sent.';
+ void sendMessagePush(client,booking.id,msg.data.id);return true;
 }
 async function report(){
  const reason=prompt('Reason: safety, harassment, sexual-content, scam, fake-profile, spam, or other');if(!reason)return;
@@ -170,9 +193,14 @@ async function init(){try{
  booking={id};await loadBooking();$('safety-actions').hidden=false;protectPrivateMedia();await loadMessages();
  messageChannel=client.channel('booking-messages:'+booking.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'booking_messages',filter:'booking_id=eq.'+booking.id},()=>void loadMessages()).subscribe();
  bookingChannel=client.channel('booking-status:'+booking.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'booking_requests',filter:'id=eq.'+booking.id},()=>void loadBooking()).subscribe();
- $('message-form').onsubmit=async e=>{e.preventDefault();if(booking.status!=='accepted')return;const body=$('message').value.trim();if(!body)return;const {data,error}=await client.from('booking_messages').insert({booking_id:booking.id,sender_id:user.id,message_type:'text',body}).select('id').single();if(error){$('status').textContent=error.message;return}$('message').value='';void sendMessagePush(client,booking.id,data.id)};
- $('photo-input').onchange=e=>{const file=e.target.files?.[0];if(file)void sendPhoto(file)};
+ $('message-form').onsubmit=async e=>{e.preventDefault();if(booking.status!=='accepted')return;const sendButton=$('send-message');if(sendButton)sendButton.disabled=true;try{
+  if(selectedPhotoFile){await sendStagedPhoto();return}
+  const body=$('message').value.trim();if(!body)return;
+  const {data,error}=await client.from('booking_messages').insert({booking_id:booking.id,sender_id:user.id,message_type:'text',body}).select('id').single();if(error){$('status').textContent=error.message;return}$('message').value='';void sendMessagePush(client,booking.id,data.id)
+ }finally{if(sendButton)sendButton.disabled=false}};
+ $('photo-input').onchange=e=>{const file=e.target.files?.[0];if(file)stagePhoto(file)};
+ $('remove-photo').onclick=()=>clearPhotoDraft();
  $('report-user').onclick=()=>void report();$('block-user').onclick=()=>void block();
  }catch(e){$('status').textContent=e.message||'Could not load chat.'}}
-window.addEventListener('pagehide',()=>{closeViewer();if(messageChannel)void client.removeChannel(messageChannel);if(bookingChannel)void client.removeChannel(bookingChannel)});
+window.addEventListener('pagehide',()=>{closeViewer();clearPhotoDraft();for(const url of messageBlobUrls)URL.revokeObjectURL(url);messageBlobUrls.clear();if(messageChannel)void client.removeChannel(messageChannel);if(bookingChannel)void client.removeChannel(bookingChannel)});
 void init();
