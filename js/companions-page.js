@@ -1,7 +1,7 @@
 import {authConfig} from './auth-config.js?v=20260926-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
 const $=id=>document.getElementById(id), directory=!!$('filters');
-const fields='public_id,display_name,bio,location_id,languages,interests,categories,meeting_mode,availability,photo_path';
+const fields='public_id,display_name,bio,location_id,languages,interests,categories,meeting_mode,availability,photo_path,safety_id,joined_at,email_verified_at,adult_confirmed,boundaries_accepted';
 let client,locations=[],page=0,request=0,currentUser=null;
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
 function opts(id,rows,title){$(id).replaceChildren(new Option(title,''));rows.forEach(([v,t])=>$(id).add(new Option(t,String(v))));}
@@ -11,9 +11,11 @@ function districts(){opts('district',[...new Set(locations.filter(r=>!$('state')
 function locationName(id){const r=locations.find(r=>r.id===id);return r?[r.city,r.district,r.state].join(' · '):'Location unavailable';}
 function tags(row){const n=el('div',undefined,'tags');[{'online':'Online','in-person':'In person','both':'Online & in person'}[row.meeting_mode],...row.categories].forEach(v=>n.append(el('span',v)));return n;}
 function portrait(row){const initial=row.display_name.slice(0,1).toUpperCase(),n=el('div',initial,'portrait');if(row.photo_path)void client.storage.from('listing-photos').createSignedUrl(row.photo_path,60).then(({data,error})=>{if(error||!data)return;const img=el('img');img.alt=row.display_name+' — profile photo';img.loading='lazy';img.src=data.signedUrl;img.onerror=()=>n.replaceChildren(document.createTextNode(initial));n.replaceChildren(img);});return n;}
-function card(row){const n=el('article',undefined,'companion-card'),copy=el('div',undefined,'card-copy');copy.append(el('h2',row.display_name),el('p',locationName(row.location_id)),tags(row),el('p',row.bio.length>150?row.bio.slice(0,147)+'…':row.bio));const link=el('a','Get to know '+row.display_name+' ↗','text-link');link.href='companion.html?id='+encodeURIComponent(row.public_id);copy.append(link);n.append(portrait(row),copy);return n;}
+function trustChips(row,compact=false){const n=el('div',undefined,'trust-chips'+(compact?' compact':''));if(row.email_verified_at)n.append(el('span','✓ Email verified'));if(row.adult_confirmed)n.append(el('span','18+ self-declared'));if(row.boundaries_accepted)n.append(el('span','Platonic boundaries'));return n;}
+function card(row){const n=el('article',undefined,'companion-card'),copy=el('div',undefined,'card-copy');copy.append(el('h2',row.display_name),el('p',locationName(row.location_id)),trustChips(row,true),tags(row),el('p',row.bio.length>150?row.bio.slice(0,147)+'…':row.bio));const link=el('a','Get to know '+row.display_name+' ↗','text-link');link.href='companion.html?id='+encodeURIComponent(row.public_id);copy.append(link);n.append(portrait(row),copy);return n;}
 async function list(){
- const seq=++request;$('results').replaceChildren();$('empty').hidden=true;$('retry').hidden=true;$('previous').disabled=$('next').disabled=true;$('status').textContent='Finding good company…';
+ const seq=++request;$('empty').hidden=true;$('retry').hidden=true;$('previous').disabled=$('next').disabled=true;$('status').textContent='Finding good company…';
+ $('results').replaceChildren(...Array.from({length:6},()=>{const n=el('article',undefined,'companion-card companion-skeleton');n.innerHTML='<div class="portrait skeleton-block"></div><div class="card-copy"><i></i><i></i><i></i><i></i></div>';return n}));
  let q=client.from('companion_listings').select(fields).eq('published',true).eq('moderation_status','active').order('public_id').range(page*24,page*24+24);
  if($('city').value)q=q.eq('location_id',Number($('city').value));else if($('state').value||$('district').value)q=q.in('location_id',matching().map(r=>r.id));
  if($('category').value)q=q.contains('categories',[$('category').value]);
@@ -48,7 +50,13 @@ async function detail(){
  const id=new URL(location.href).searchParams.get('id');
  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id||'')){$('status').textContent='Invalid profile link. Browse companions to choose a profile.';return;}
  try{const {data:r,error}=await client.from('companion_listings').select(fields).eq('published',true).eq('moderation_status','active').eq('public_id',id).maybeSingle();if(error)throw error;if(!r){$('status').textContent='This profile is unavailable or has been hidden by its owner.';return;}
- const copy=el('div',undefined,'detail-copy');copy.append(el('p','GOOD COMPANY, ON YOUR TERMS','eyebrow'),el('h1',r.display_name),el('p',locationName(r.location_id)),tags(r));
+ const copy=el('div',undefined,'detail-copy');copy.append(el('p','GOOD COMPANY, ON YOUR TERMS','eyebrow'),el('h1',r.display_name),el('p',locationName(r.location_id)),trustChips(r),tags(r));
+ const trust=el('section',undefined,'profile-trust-panel');trust.append(el('strong','Trust & account details'));
+ const trustGrid=el('div',undefined,'profile-trust-grid');
+ trustGrid.append(el('span',r.email_verified_at?'✓ Email verified':'Email verification unavailable'),el('span',r.adult_confirmed?'18+ self-declared':'Age declaration missing'),el('span',r.boundaries_accepted?'Platonic boundaries accepted':'Boundaries declaration missing'));
+ if(r.joined_at)trustGrid.append(el('span','Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(r.joined_at))));
+ if(r.safety_id)trustGrid.append(el('span','Safety ID '+r.safety_id));
+ trust.append(trustGrid);copy.append(trust);
  for(const [t,v] of [['About me',r.bio],['Languages',r.languages],['Interests & vibe',r.interests],['Usual availability',r.availability]])if(v)copy.append(el('h2',t),el('p',v));
  const rating=await client.from('companion_rating_public').select('review_count,average_rating').eq('public_id',r.public_id).maybeSingle();if(!rating.error&&rating.data?.review_count>0){const x=rating.data;copy.append(el('h2','Completed-booking rating'),el('p',x.average_rating+' / 5 · '+x.review_count+' review'+(Number(x.review_count)===1?'':'s')));}
  copy.append(el('p','Self-described profile. Identity and age have not been verified. Availability is a preference, not a confirmed booking.','launch-note'),el('p','18+ and strictly platonic. Respect boundaries and choose public places for in-person meetings.'),bookingForm(r));
