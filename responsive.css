@@ -205,3 +205,6 @@ input,select,textarea{font-size:16px}
 @media(max-width:390px){.message-compose-actions{grid-template-columns:1fr}}
 
 @media(max-width:640px){.marketplace-nav nav>.request-bell,.directory-nav>div>.request-bell{padding:0!important;min-width:36px!important}.directory-nav>div>.request-bell{min-width:38px!important}}
+
+.notification-link{position:relative;display:inline-flex!important;align-items:center;gap:6px}.notification-badge{min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:#a72f58;color:#fff;display:inline-grid;place-items:center;font-size:.61rem;font-weight:700;line-height:1}.notification-badge[hidden]{display:none!important}
+@media(max-width:640px){.notification-link{padding-right:10px!important}.notification-badge{min-width:18px;height:18px;font-size:.58rem}}
