@@ -211,3 +211,15 @@ input,select,textarea{font-size:16px}
 
 .push-settings-card{margin:18px 0 22px;padding:17px 18px;border:1px solid var(--line);border-radius:14px;background:#fbf3f6;display:grid;gap:9px}.push-settings-card strong{font-size:.9rem}.push-settings-card p{margin:0;color:var(--muted);font-size:.78rem;line-height:1.55}.push-settings-card p[data-tone=success]{color:#32603e}.push-settings-card p[data-tone=error]{color:#8a3047}.push-settings-card .button{justify-self:start;min-height:44px}
 @media(max-width:640px){.push-settings-card{padding:15px}.push-settings-card .button{width:100%;justify-self:stretch}}
+
+.chat-header-badge{min-width:19px;height:19px;padding:0 5px;border-radius:999px;background:#6f2b55;color:#fff;display:inline-grid;place-items:center;font-size:.61rem;font-weight:700;line-height:1}.chat-header-badge[hidden]{display:none!important}
+.mobile-bottom-nav{display:none}
+@media(max-width:640px){
+ body{padding-bottom:calc(74px + env(safe-area-inset-bottom))}
+ .mobile-bottom-nav{position:fixed;left:8px;right:8px;bottom:8px;z-index:9500;display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:7px max(6px,env(safe-area-inset-right)) calc(7px + env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left));background:rgba(255,252,250,.96);border:1px solid rgba(112,40,66,.13);border-radius:20px;box-shadow:0 12px 38px rgba(58,24,40,.18);backdrop-filter:blur(18px)}
+ .mobile-bottom-nav a{position:relative;min-width:0;display:grid;place-items:center;gap:1px;padding:6px 2px;border-radius:13px;color:var(--muted);text-decoration:none}
+ .mobile-bottom-nav a[aria-current=page]{background:#f8e8ef;color:var(--plum)}
+ .mobile-nav-icon{font-size:1.12rem;line-height:1}.mobile-bottom-nav small{font-size:.57rem;font-weight:700;white-space:nowrap}
+ .mobile-nav-badge{position:absolute;top:1px;right:11px;min-width:17px;height:17px;padding:0 4px;border-radius:999px;background:#a72f58;color:white;border:2px solid #fff9fb;display:grid;place-items:center;font-size:.52rem;font-weight:800}.mobile-nav-badge[hidden]{display:none!important}
+ .directory-footer,.account-footer,.profile-footer{padding-bottom:96px!important}
+}
