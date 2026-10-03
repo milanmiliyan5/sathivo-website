@@ -19,7 +19,30 @@ categories.forEach(value=>{
   input.type='checkbox';input.name='categories';input.value=value;
   label.append(input,document.createTextNode(value));$('categories').append(label);
 });
-form.addEventListener('input',()=>{dirty=true;});
+function updateCompleteness(){
+ const values=[
+  $('display_name').value.trim().length>=2,
+  $('bio').value.trim().length>=20,
+  $('location_id').value!=='',
+  $('languages').value.trim().length>=2,
+  $('interests').value.trim().length>0,
+  [...form.querySelectorAll('[name=categories]')].some(x=>x.checked),
+  $('availability').value.trim().length>0,
+  !!avatarPath||!!$('photo').files[0],
+  form.elements.adult_confirmed.checked,
+  form.elements.boundaries_accepted.checked
+ ];
+ const pct=Math.round(values.filter(Boolean).length/values.length*100);
+ $('profile-percent').textContent=pct+'%';$('profile-progress-bar').style.width=pct+'%';
+ $('profile-progress-copy').textContent=pct===100?'Profile complete — ready to shine.':pct>=70?'Almost there. A few details will make your profile stronger.':'Add a few more details to help people understand your vibe.';
+}
+function showSystemInfo(p){
+ $('safety-id').textContent=p?.safety_id||'Assigned after first save';
+ $('email-trust').textContent=p?.email_verified_at?'✓ Email verified':'Email verification pending';
+ $('joined-date').textContent=p?.joined_at?'Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(p.joined_at)):'';
+}
+form.addEventListener('input',()=>{dirty=true;updateCompleteness();});
+form.addEventListener('change',()=>updateCompleteness());
 window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
 async function showPhoto(path) {
   const {data,error}=await client.storage.from('profile-photos').createSignedUrl(path,300);
@@ -52,10 +75,10 @@ form.addEventListener('submit',async event=>{
     const file=$('photo').files[0];
     if(file){const blob=await photoBlob(file);const path=user.id+'/avatar.webp';const upload=await client.storage.from('profile-photos').upload(path,blob,{upsert:true,contentType:'image/webp'});if(upload.error)throw Error('Photo upload failed. Check your connection and try again.');avatarPath=path;}
     row.avatar_path=avatarPath;
-    const {data,error}=await client.from('member_profiles').upsert(row,{onConflict:'user_id'}).select('user_id').single();
+    const {data,error}=await client.from('member_profiles').upsert(row,{onConflict:'user_id'}).select('user_id,safety_id,joined_at,email_verified_at').single();
     if(error||!data)throw Error('Profile could not be saved. Check your connection and try again.');
-    dirty=false;$('photo').value='';message('Your profile is saved. You can come back and edit it anytime.');
-    if(avatarPath)await showPhoto(avatarPath);
+    dirty=false;$('photo').value='';showSystemInfo(data);message('Your profile is saved. You can come back and edit it anytime.');
+    if(avatarPath)await showPhoto(avatarPath);updateCompleteness();
   }catch(error){message(error.message||'Could not save your profile. Please try again.',true);}
   finally{$('fields').disabled=false;$('profile-status').focus();}
 });
@@ -75,10 +98,10 @@ async function init(){
       if(loc){$('state').value=loc.state;districts();$('district').value=loc.district;cities();$('location_id').value=String(loc.id);}
       form.querySelectorAll('[name=categories]').forEach(input=>input.checked=p.categories.includes(input.value));
       form.elements.adult_confirmed.checked=p.adult_confirmed;form.elements.boundaries_accepted.checked=p.boundaries_accepted;
-      avatarPath=p.avatar_path;
-    }else{$('display_name').value=user.user_metadata?.display_name||'';}
+      avatarPath=p.avatar_path;showSystemInfo(p);
+    }else{$('display_name').value=user.user_metadata?.display_name||'';showSystemInfo(null);}
     $('fields').disabled=false;message(p?'Your saved profile. Make it feel like you.':'Let’s create your free profile.');
-    if(avatarPath)await showPhoto(avatarPath);
+    if(avatarPath)await showPhoto(avatarPath);updateCompleteness();
     await setupPublishing({client,user,isDirty:()=>dirty});
     client.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){dirty=false;location.replace('account.html');}});
   }catch(error){message(error.message||'Profile services are unavailable. Please refresh.',true);}
