@@ -7,10 +7,10 @@ function card(r){const mine=r.customer_id===user.id,other=mine?r.companion_displ
  const top=el('div',undefined,'booking-top'),left=el('div');left.append(el('h2',other||'Sathivo member'),el('div',undefined,'booking-meta'));left.lastChild.append(el('span',r.category),el('span',r.meeting_mode==='in-person'?'In person':'Online'),el('span',fmt(r.requested_for)),el('span',r.duration_minutes+' min'));top.append(left,el('span',r.status,'status-pill'));n.append(top);
  if(r.note)n.append(el('p',r.note,'booking-note'));
  const a=el('div',undefined,'booking-actions');
- if(r.status==='pending'&&!mine){for(const [label,status] of [['Accept','accepted'],['Decline','declined']]){const b=el('button',label,'button '+(status==='accepted'?'button-primary':'button-outline'));b.onclick=()=>update(r.id,status);a.append(b)}}
+ if(r.status==='pending'&&!mine){const review=el('a','Review request ↗','button button-primary');review.href='requests.html?id='+encodeURIComponent(r.id);a.append(review)}
  if(['pending','accepted'].includes(r.status)&&mine){const b=el('button','Cancel request','button button-outline');b.onclick=()=>update(r.id,'cancelled');a.append(b)}
  if(r.status==='accepted'&&!mine){const b=el('button','Mark completed','button button-primary');b.onclick=()=>update(r.id,'completed');a.append(b)}
- if(['pending','accepted'].includes(r.status)){const c=el('a','Open chat ↗','button button-outline');c.href='chat.html?booking='+encodeURIComponent(r.id);a.append(c)}
+ if(r.status==='accepted'){const c=el('a','Open chat & photos ↗','button button-outline');c.href='chat.html?booking='+encodeURIComponent(r.id);a.append(c)}
  if(r.status==='completed'&&mine){const review=el('form',undefined,'review-form');review.innerHTML='<strong>Leave a review</strong><select aria-label="Rating"><option value="5">5 — Excellent</option><option value="4">4 — Very good</option><option value="3">3 — Good</option><option value="2">2 — Fair</option><option value="1">1 — Poor</option></select><textarea maxlength="600" rows="2" placeholder="Optional comment"></textarea><button class="button button-outline" type="submit">Submit review</button>';review.onsubmit=e=>{e.preventDefault();void submitReview(r,review)};n.append(review)}
  if(a.childNodes.length)n.append(a);return n}
 function render(){const list=rows.filter(visible);$('bookings').replaceChildren(...list.map(card));$('empty').hidden=list.length>0;$('status').textContent=list.length?list.length+' booking'+(list.length===1?'':'s')+'.':''}
