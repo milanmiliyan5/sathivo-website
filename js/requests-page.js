@@ -1,4 +1,5 @@
 import {authConfig} from './auth-config.js?v=20260926-1';
+import {sendBookingPush} from './push-events.js?v=20261004-1';
 const $=id=>document.getElementById(id);let client,user,rows=[],filter='pending',channel;
 const fmt=d=>new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d));
 const el=(t,x,c)=>{const n=document.createElement(t);if(x!==undefined)n.textContent=x;if(c)n.className=c;return n};
@@ -22,7 +23,7 @@ function render(){
  const id=new URL(location.href).searchParams.get('id');if(id){const target=document.getElementById('request-'+id);if(target){target.classList.add('request-highlight');setTimeout(()=>target.scrollIntoView({behavior:'smooth',block:'center'}),50)}}
 }
 async function load(){const {data,error}=await client.from('booking_requests').select('*').eq('companion_id',user.id).order('created_at',{ascending:false});if(error)throw error;rows=data||[];$('request-filters').hidden=false;render()}
-async function update(id,status){$('status').textContent=status==='accepted'?'Accepting request…':'Updating request…';const {error}=await client.from('booking_requests').update({status}).eq('id',id);if(error){$('status').textContent=error.message;return}if(status==='accepted'){location.href='chat.html?booking='+encodeURIComponent(id);return}await load()}
+async function update(id,status){$('status').textContent=status==='accepted'?'Accepting request…':'Updating request…';const {error}=await client.from('booking_requests').update({status}).eq('id',id);if(error){$('status').textContent=error.message;return}$('status').textContent='Sending notification…';await sendBookingPush(client,id,status);if(status==='accepted'){location.href='chat.html?booking='+encodeURIComponent(id);return}await load()}
 async function markLinkedNotification(){const id=new URL(location.href).searchParams.get('id');if(!id)return;await client.from('notifications').update({read_at:new Date().toISOString()}).eq('user_id',user.id).eq('link','requests.html?id='+id).is('read_at',null)}
 async function init(){try{
  if(!globalThis.supabase)throw Error('Services unavailable');client=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'sathivo.auth.v1'}});
