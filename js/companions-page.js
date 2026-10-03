@@ -1,4 +1,5 @@
 import {authConfig} from './auth-config.js?v=20260926-1';
+import {sendBookingPush} from './push-events.js?v=20261004-1';
 const $=id=>document.getElementById(id), directory=!!$('filters');
 const fields='public_id,display_name,bio,location_id,languages,interests,categories,meeting_mode,availability,photo_path';
 let client,locations=[],page=0,request=0,currentUser=null;
@@ -39,7 +40,7 @@ function bookingForm(r){
  );
  form.append(grid);
  const row=el('div',undefined,'booking-submit-row'),b=el('button','Send request ↗','button button-primary'),status=el('p','', 'field-hint');b.type='submit';row.append(b,status);form.append(row);
- form.onsubmit=async e=>{e.preventDefault();const chosen=new Date(when.value);if(!when.value||Number.isNaN(chosen.getTime())||chosen<=new Date()){status.textContent='Please choose a future date and time.';when.focus();return}b.disabled=true;status.textContent='Sending request…';try{const iso=chosen.toISOString();const {data,error}=await client.rpc('create_booking_request',{p_companion_public_id:r.public_id,p_category:category.value,p_meeting_mode:mode.value,p_requested_for:iso,p_duration_minutes:Number(duration.value),p_note:note.value.trim()});if(error)throw error;status.textContent='Request sent. Opening your bookings…';location.href='bookings.html?id='+encodeURIComponent(data)}catch(err){status.textContent=err.message||'Could not send request.';b.disabled=false;}};
+ form.onsubmit=async e=>{e.preventDefault();const chosen=new Date(when.value);if(!when.value||Number.isNaN(chosen.getTime())||chosen<=new Date()){status.textContent='Please choose a future date and time.';when.focus();return}b.disabled=true;status.textContent='Sending request…';try{const iso=chosen.toISOString();const {data,error}=await client.rpc('create_booking_request',{p_companion_public_id:r.public_id,p_category:category.value,p_meeting_mode:mode.value,p_requested_for:iso,p_duration_minutes:Number(duration.value),p_note:note.value.trim()});if(error)throw error;status.textContent='Request sent. Notifying the companion…';await sendBookingPush(client,data,'request');status.textContent='Request sent. Opening your bookings…';location.href='bookings.html?id='+encodeURIComponent(data)}catch(err){status.textContent=err.message||'Could not send request.';b.disabled=false;}};
  wrap.append(form);return wrap;
 }
 async function detail(){
