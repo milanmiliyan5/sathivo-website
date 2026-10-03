@@ -178,6 +178,7 @@ resendButton.addEventListener('click', () => void run(async () => {
 }, 'Requesting another code…'));
 
 signoutButton.addEventListener('click', () => void run(async () => {
+  if (typeof window.sathivoPushUnregister === 'function') await window.sathivoPushUnregister();
   await flow.logout();
   clearSecrets();
   document.querySelector('#account-name').textContent = 'friend';
