@@ -20,17 +20,25 @@ async function list(){
  try{const {data,error}=await q;if(seq!==request)return;if(error)throw error;const rows=data.slice(0,24);$('results').replaceChildren(...rows.map(card));$('empty').hidden=rows.length>0;$('status').textContent=rows.length?rows.length+' companions on this page.':'No matching companions yet.';$('previous').disabled=page===0;$('next').disabled=data.length<=24;$('page-label').textContent='Page '+(page+1);}catch{if(seq!==request)return;$('status').textContent='Could not load companions. Please try again.';$('retry').hidden=false;}
 }
 function bookingForm(r){
- const wrap=el('section',undefined,'booking-form');wrap.append(el('h2','Send a booking request'),el('p','Free to request. Sathivo does not process payments.'));
+ const wrap=el('section',undefined,'booking-form');
+ wrap.append(el('h2','Send a booking request'),el('p','Choose the plan that works for you. Your companion can accept or decline the request.'));
  if(!currentUser){const a=el('a','Sign in to send a request ↗','button button-primary');a.href='account.html#login';wrap.append(a);return wrap;}
- const form=document.createElement('form');
+ const form=document.createElement('form'),grid=el('div',undefined,'booking-grid');
  const category=document.createElement('select');category.required=true;r.categories.forEach(v=>category.add(new Option(v,v)));
  const mode=document.createElement('select');mode.required=true;if(['online','both'].includes(r.meeting_mode))mode.add(new Option('Online','online'));if(['in-person','both'].includes(r.meeting_mode))mode.add(new Option('In person — public place','in-person'));
  const when=document.createElement('input');when.type='datetime-local';when.required=true;when.min=new Date(Date.now()+30*60*1000).toISOString().slice(0,16);
  const duration=document.createElement('select');[30,60,90,120,180].forEach(v=>duration.add(new Option(v+' minutes',String(v))));duration.value='60';
- const note=document.createElement('textarea');note.maxLength=1000;note.rows=3;note.placeholder='Optional note about the plan. Keep contact details and exact addresses private.';
- for(const [label,input] of [['Experience',category],['Meeting type',mode],['Preferred date & time',when],['Duration',duration],['Note',note]]){const l=el('label',label);l.append(input);form.append(l)}
- const b=el('button','Send request ↗','button button-primary');b.type='submit';form.append(b);
- const status=el('p','', 'field-hint');form.append(status);
+ const note=document.createElement('textarea');note.maxLength=1000;note.rows=3;note.placeholder='Example: Coffee and a relaxed conversation around 5 PM.';
+ const field=(label,input,full=false,helper='')=>{const box=el('div',undefined,'booking-field'+(full?' full':'')),lab=el('label',label);lab.append(input);box.append(lab);if(helper)box.append(el('small',helper,'booking-helper'));return box;};
+ grid.append(
+   field('Experience',category),
+   field('Meeting type',mode),
+   field('Preferred date & time',when,false,'Choose a future time that suits you.'),
+   field('Duration',duration),
+   field('Note to companion',note,true,'Optional. Do not share phone numbers, payment details or your exact home address.')
+ );
+ form.append(grid);
+ const row=el('div',undefined,'booking-submit-row'),b=el('button','Send request ↗','button button-primary'),status=el('p','', 'field-hint');b.type='submit';row.append(b,status);form.append(row);
  form.onsubmit=async e=>{e.preventDefault();b.disabled=true;status.textContent='Sending request…';try{const iso=new Date(when.value).toISOString();const {data,error}=await client.rpc('create_booking_request',{p_companion_public_id:r.public_id,p_category:category.value,p_meeting_mode:mode.value,p_requested_for:iso,p_duration_minutes:Number(duration.value),p_note:note.value.trim()});if(error)throw error;status.textContent='Request sent. Opening your bookings…';location.href='bookings.html?id='+encodeURIComponent(data)}catch(err){status.textContent=err.message||'Could not send request.';b.disabled=false;}};
  wrap.append(form);return wrap;
 }
