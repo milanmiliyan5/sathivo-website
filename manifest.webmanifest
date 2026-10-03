@@ -1,0 +1,10 @@
+{
+  "name":"Sathivo",
+  "short_name":"Sathivo",
+  "description":"Strictly platonic companionship for adults 18+.",
+  "start_url":"./",
+  "scope":"./",
+  "display":"standalone",
+  "background_color":"#fffcfa",
+  "theme_color":"#702842"
+}
