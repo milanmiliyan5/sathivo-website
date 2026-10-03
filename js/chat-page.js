@@ -90,11 +90,13 @@ async function messageNode(r){
    card.append(el('span','◉','view-once-icon'));
    const copy=el('div');copy.append(el('strong','View once photo'));
    if(mine){
-    copy.append(el('small',r.viewed_at?'Opened by recipient':'Sent privately'));
-    const preview=el('button','Preview','view-once-action');preview.type='button';
-    const signed=await client.storage.from('booking-chat-photos').createSignedUrl(r.photo_path,180);
-    if(signed.error||!signed.data?.signedUrl)preview.disabled=true;else preview.onclick=()=>void showNormalPhoto(signed.data.signedUrl);
-    card.append(copy,preview);
+    if(r.viewed_at){
+     copy.append(el('small','Opened · cannot be viewed again'));
+     card.append(copy,el('span','Opened','view-once-state'));
+    }else{
+     copy.append(el('small','Sent · recipient can open once'));
+     card.append(copy,el('span','Sent','view-once-state'));
+    }
    }else if(r.viewed_at){
     copy.append(el('small','Opened · cannot be viewed again'));card.append(copy,el('span','Opened','view-once-state'));
    }else{
