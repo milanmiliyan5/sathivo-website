@@ -26,7 +26,7 @@ function bookingForm(r){
  const form=document.createElement('form'),grid=el('div',undefined,'booking-grid');
  const category=document.createElement('select');category.required=true;r.categories.forEach(v=>category.add(new Option(v,v)));
  const mode=document.createElement('select');mode.required=true;if(['online','both'].includes(r.meeting_mode))mode.add(new Option('Online','online'));if(['in-person','both'].includes(r.meeting_mode))mode.add(new Option('In person — public place','in-person'));
- const when=document.createElement('input');when.type='datetime-local';when.required=true;when.min=new Date(Date.now()+30*60*1000).toISOString().slice(0,16);
+ const when=document.createElement('input');when.type='datetime-local';when.required=true;const minDate=new Date(Date.now()+30*60*1000);const pad=n=>String(n).padStart(2,'0');when.min=`${minDate.getFullYear()}-${pad(minDate.getMonth()+1)}-${pad(minDate.getDate())}T${pad(minDate.getHours())}:${pad(minDate.getMinutes())}`;
  const duration=document.createElement('select');[30,60,90,120,180].forEach(v=>duration.add(new Option(v+' minutes',String(v))));duration.value='60';
  const note=document.createElement('textarea');note.maxLength=1000;note.rows=3;note.placeholder='Example: Coffee and a relaxed conversation around 5 PM.';
  const field=(label,input,full=false,helper='')=>{const box=el('div',undefined,'booking-field'+(full?' full':'')),lab=el('label',label);lab.append(input);box.append(lab);if(helper)box.append(el('small',helper,'booking-helper'));return box;};
@@ -39,7 +39,7 @@ function bookingForm(r){
  );
  form.append(grid);
  const row=el('div',undefined,'booking-submit-row'),b=el('button','Send request ↗','button button-primary'),status=el('p','', 'field-hint');b.type='submit';row.append(b,status);form.append(row);
- form.onsubmit=async e=>{e.preventDefault();b.disabled=true;status.textContent='Sending request…';try{const iso=new Date(when.value).toISOString();const {data,error}=await client.rpc('create_booking_request',{p_companion_public_id:r.public_id,p_category:category.value,p_meeting_mode:mode.value,p_requested_for:iso,p_duration_minutes:Number(duration.value),p_note:note.value.trim()});if(error)throw error;status.textContent='Request sent. Opening your bookings…';location.href='bookings.html?id='+encodeURIComponent(data)}catch(err){status.textContent=err.message||'Could not send request.';b.disabled=false;}};
+ form.onsubmit=async e=>{e.preventDefault();const chosen=new Date(when.value);if(!when.value||Number.isNaN(chosen.getTime())||chosen<=new Date()){status.textContent='Please choose a future date and time.';when.focus();return}b.disabled=true;status.textContent='Sending request…';try{const iso=chosen.toISOString();const {data,error}=await client.rpc('create_booking_request',{p_companion_public_id:r.public_id,p_category:category.value,p_meeting_mode:mode.value,p_requested_for:iso,p_duration_minutes:Number(duration.value),p_note:note.value.trim()});if(error)throw error;status.textContent='Request sent. Opening your bookings…';location.href='bookings.html?id='+encodeURIComponent(data)}catch(err){status.textContent=err.message||'Could not send request.';b.disabled=false;}};
  wrap.append(form);return wrap;
 }
 async function detail(){
