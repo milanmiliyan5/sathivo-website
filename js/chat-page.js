@@ -1,4 +1,5 @@
 import {authConfig} from './auth-config.js?v=20260926-1';
+import {sendMessagePush} from './push-events.js?v=20261004-2';
 const $=id=>document.getElementById(id);let client,user,booking,otherId,messageChannel,bookingChannel;
 const el=(t,x,c)=>{const n=document.createElement(t);if(x!==undefined)n.textContent=x;if(c)n.className=c;return n};
 const fmt=d=>new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d));
@@ -32,9 +33,9 @@ async function sendPhoto(file){
  ps.textContent='Uploading photo…';const path=booking.id+'/'+user.id+'/'+crypto.randomUUID()+'.'+types[file.type];
  const up=await client.storage.from('booking-chat-photos').upload(path,file,{contentType:file.type,upsert:false});
  if(up.error){ps.textContent=up.error.message;return}
- const msg=await client.from('booking_messages').insert({booking_id:booking.id,sender_id:user.id,message_type:'image',photo_path:path,body:''});
+ const msg=await client.from('booking_messages').insert({booking_id:booking.id,sender_id:user.id,message_type:'image',photo_path:path,body:''}).select('id').single();
  if(msg.error){await client.storage.from('booking-chat-photos').remove([path]);ps.textContent=msg.error.message;return}
- ps.textContent='Photo sent.';$('photo-input').value='';
+ ps.textContent='Photo sent.';$('photo-input').value='';void sendMessagePush(client,booking.id,msg.data.id);
 }
 async function report(){const reason=prompt('Reason: safety, harassment, sexual-content, scam, fake-profile, spam, or other');if(!reason)return;const allowed=['safety','harassment','sexual-content','scam','fake-profile','spam','other'];if(!allowed.includes(reason)){alert('Please use one of the listed reasons.');return}const details=prompt('Brief details (optional)')||'';const {error}=await client.from('user_reports').insert({reporter_id:user.id,reported_user_id:otherId,booking_id:booking.id,reason,details});$('status').textContent=error?error.message:'Report submitted for review.'}
 async function block(){if(!confirm('Block this user? You will no longer be able to message each other.'))return;const {error}=await client.from('user_blocks').insert({blocker_id:user.id,blocked_id:otherId});$('status').textContent=error?(error.code==='23505'?'User is already blocked.':error.message):'User blocked.';if(!error)$('message-form').hidden=true}
@@ -45,7 +46,7 @@ async function init(){try{
  booking={id};await loadBooking();$('safety-actions').hidden=false;await loadMessages();
  messageChannel=client.channel('booking-messages:'+booking.id).on('postgres_changes',{event:'INSERT',schema:'public',table:'booking_messages',filter:'booking_id=eq.'+booking.id},()=>void loadMessages()).subscribe();
  bookingChannel=client.channel('booking-status:'+booking.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'booking_requests',filter:'id=eq.'+booking.id},()=>void loadBooking()).subscribe();
- $('message-form').onsubmit=async e=>{e.preventDefault();if(booking.status!=='accepted')return;const body=$('message').value.trim();if(!body)return;const {error}=await client.from('booking_messages').insert({booking_id:booking.id,sender_id:user.id,message_type:'text',body});if(error){$('status').textContent=error.message;return}$('message').value=''};
+ $('message-form').onsubmit=async e=>{e.preventDefault();if(booking.status!=='accepted')return;const body=$('message').value.trim();if(!body)return;const {data,error}=await client.from('booking_messages').insert({booking_id:booking.id,sender_id:user.id,message_type:'text',body}).select('id').single();if(error){$('status').textContent=error.message;return}$('message').value='';void sendMessagePush(client,booking.id,data.id)};
  $('photo-input').onchange=e=>{const file=e.target.files?.[0];if(file)void sendPhoto(file)};
  $('report-user').onclick=()=>void report();$('block-user').onclick=()=>void block();
  }catch(e){$('status').textContent=e.message||'Could not load chat.'}}
