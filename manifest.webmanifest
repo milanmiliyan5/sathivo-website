@@ -1,4 +1,5 @@
 {
+  "id":"./",
   "name":"Sathivo",
   "short_name":"Sathivo",
   "description":"Strictly platonic companionship for adults 18+.",
@@ -6,5 +7,30 @@
   "scope":"./",
   "display":"standalone",
   "background_color":"#fffcfa",
-  "theme_color":"#702842"
+  "theme_color":"#702842",
+  "icons":[
+    {
+      "src":"assets/favicon.svg",
+      "sizes":"any",
+      "type":"image/svg+xml",
+      "purpose":"any"
+    }
+  ],
+  "shortcuts":[
+    {
+      "name":"Find company",
+      "short_name":"Explore",
+      "url":"companions.html"
+    },
+    {
+      "name":"Chats",
+      "short_name":"Chats",
+      "url":"chats.html"
+    },
+    {
+      "name":"Requests",
+      "short_name":"Requests",
+      "url":"requests.html"
+    }
+  ]
 }
