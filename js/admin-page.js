@@ -7,7 +7,7 @@ const fmt=d=>d?new Intl.DateTimeFormat('en-IN',{dateStyle:'medium'}).format(new 
 
 function metric(id,value){const n=$(id);if(n)n.textContent=nf.format(Number(value||0))}
 async function loadStats(){
-  const {data,error}=await client.rpc('admin_dashboard_stats');
+  const {data,error}=await client.functions.invoke('admin-dashboard-stats');
   if(error){$('metrics-updated').textContent='Dashboard refresh failed';return}
   const row=Array.isArray(data)?data[0]:data;
   if(!row)return;

@@ -10,7 +10,7 @@ alter table public.member_profiles
   add constraint member_profiles_gender_check
   check (gender is null or gender in ('male','female','other','prefer_not_to_say'));
 
-create or replace function public.admin_dashboard_stats()
+create or replace function public.admin_dashboard_stats_server()
 returns table(
   total_accounts bigint,
   bookings_today bigint,
@@ -19,18 +19,10 @@ returns table(
   female_users bigint,
   gender_other_or_unset bigint
 )
-language plpgsql
+language sql
 security definer
 set search_path = ''
-as $$
-begin
-  if auth.uid() is null or not exists (
-    select 1 from public.platform_admins pa where pa.user_id = auth.uid()
-  ) then
-    raise exception 'Not authorized' using errcode = '42501';
-  end if;
-
-  return query
+as $
   with genders as (
     select u.id, coalesce(mp.gender, nullif(u.raw_user_meta_data ->> 'gender','')) as gender
     from auth.users u
@@ -49,9 +41,9 @@ begin
   select s.total_accounts,s.bookings_today,s.total_bookings,s.male_users,s.female_users,
          greatest(s.total_accounts-s.male_users-s.female_users,0::bigint)
   from stats s;
-end;
-$$;
+$;
 
-revoke all on function public.admin_dashboard_stats() from public;
-revoke all on function public.admin_dashboard_stats() from anon;
-grant execute on function public.admin_dashboard_stats() to authenticated;
+revoke all on function public.admin_dashboard_stats_server() from public;
+revoke all on function public.admin_dashboard_stats_server() from anon;
+revoke all on function public.admin_dashboard_stats_server() from authenticated;
+grant execute on function public.admin_dashboard_stats_server() to service_role;
