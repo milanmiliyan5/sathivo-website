@@ -116,7 +116,7 @@ function bindForm(id, task, loadingMessage) {
     event.preventDefault();
     if (busy) return;
     if (!form.reportValidity()) {
-      if (id === '#otp-form') announce('Enter the 6- or 8-digit code from your email.', 'error', true);
+      if (id === '#otp-form') announce('Enter the 6-digit code from your email.', 'error', true);
       return;
     }
     // Capture values before the fieldset becomes disabled.
