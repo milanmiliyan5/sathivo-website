@@ -22,6 +22,7 @@ categories.forEach(value=>{
 function updateCompleteness(){
  const values=[
   $('display_name').value.trim().length>=2,
+  $('gender').value!=='',
   $('bio').value.trim().length>=20,
   $('location_id').value!=='',
   $('languages').value.trim().length>=2,
@@ -64,7 +65,7 @@ form.addEventListener('submit',async event=>{
   event.preventDefault();if(!user||!form.reportValidity())return;
   const values=new FormData(form);
   const row={user_id:user.id};
-  for(const name of ['display_name','profile_kind','bio','languages','interests','meeting_mode','availability']) row[name]=String(values.get(name)||'').trim();
+  for(const name of ['display_name','profile_kind','gender','bio','languages','interests','meeting_mode','availability']) row[name]=String(values.get(name)||'').trim();
   if(row.display_name.length<2||row.languages.length<2){message('Enter your name and languages (at least 2 characters).',true);return;}
   row.location_id=Number(values.get('location_id'));row.categories=values.getAll('categories');
   row.adult_confirmed=values.get('adult_confirmed')==='on';row.boundaries_accepted=values.get('boundaries_accepted')==='on';
@@ -93,7 +94,7 @@ async function init(){
     locations=loc.data;states();districts();
     const p=profile.data;
     if(p){
-      for(const name of ['display_name','profile_kind','bio','languages','interests','meeting_mode','availability'])$(name).value=p[name]||'';
+      for(const name of ['display_name','profile_kind','gender','bio','languages','interests','meeting_mode','availability'])$(name).value=p[name]||'';
       const loc=locations.find(r=>r.id===p.location_id);
       if(loc){$('state').value=loc.state;districts();$('district').value=loc.district;cities();$('location_id').value=String(loc.id);}
       form.querySelectorAll('[name=categories]').forEach(input=>input.checked=p.categories.includes(input.value));

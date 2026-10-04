@@ -13,7 +13,7 @@ Website and account integration for an India-wide, adults-only, strictly platoni
 - Account notifications for booking and message events.
 - Blocking and safety reports with RLS-protected data.
 - Completed-booking reviews and safe public rating aggregates.
-- Moderation backend and admin page are implemented; an owner/moderator account still needs to be explicitly authorized in `platform_admins`.
+- Moderation backend and admin page are implemented; the owner account is authorized in `platform_admins`. The admin overview shows total accounts, today's bookings, total bookings, profile gender counts, and live website presence.
 - Sathivo does not process payments. Current monetization direction is advertising only. Ad placements/config are prepared but disabled until a real approved publisher ID is connected.
 - Identity/age verification is not implemented; profiles remain clearly self-described.
 

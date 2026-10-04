@@ -4,7 +4,7 @@
 
 Core V1 marketplace functionality is implemented: authentication, profiles, public companion discovery, free booking requests, accept/decline/cancel/complete status flow, participant-only chat, notifications, report/block, completed-booking reviews, moderation schema/admin UI, and ad-ready placements. Sathivo does not process payments.
 
-Remaining launch dependencies are external/configuration items rather than core marketplace code: explicitly authorize the owner/moderator account, connect an approved ad-network publisher ID, enable leaked-password protection in Supabase Auth, finalize public legal/support/account-deletion operations, decide whether to add third-party identity/age verification, and verify the final custom-domain deployment.
+Remaining launch dependencies are external/configuration items rather than core marketplace code: connect an approved ad-network publisher ID, enable leaked-password protection in Supabase Auth, finalize public legal/support/account-deletion operations, decide whether to add third-party identity/age verification, and verify the final custom-domain deployment. The owner admin account is authorized and the admin overview includes live operational counters.
 
 ## Confirmed product decisions
 
