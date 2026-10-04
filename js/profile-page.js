@@ -1,4 +1,4 @@
-import { setupPublishing } from './listing-publish.js?v=20261002-1';
+import { setupPublishing } from './listing-publish.js?v=20261005-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 const $ = id => document.getElementById(id);
 const form = $('profile-form');
@@ -19,6 +19,8 @@ categories.forEach(value=>{
   input.type='checkbox';input.name='categories';input.value=value;
   label.append(input,document.createTextNode(value));$('categories').append(label);
 });
+function isCompanionKind(){return ['companion','both'].includes($('profile_kind').value)}
+function syncRateField(){const companion=isCompanionKind();$('hourly-rate-field').hidden=!companion;$('hourly_rate').required=companion;if(!companion)$('hourly_rate').value='';updateCompleteness()}
 function updateCompleteness(){
  const values=[
   $('display_name').value.trim().length>=2,
@@ -33,6 +35,7 @@ function updateCompleteness(){
   form.elements.adult_confirmed.checked,
   form.elements.boundaries_accepted.checked
  ];
+ if(isCompanionKind())values.push(Number($('hourly_rate').value)>=1);
  const pct=Math.round(values.filter(Boolean).length/values.length*100);
  $('profile-percent').textContent=pct+'%';$('profile-progress-bar').style.width=pct+'%';
  $('profile-progress-copy').textContent=pct===100?'Profile complete — ready to shine.':pct>=70?'Almost there. A few details will make your profile stronger.':'Add a few more details to help people understand your vibe.';
@@ -43,7 +46,7 @@ function showSystemInfo(p){
  $('joined-date').textContent=p?.joined_at?'Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(p.joined_at)):'';
 }
 form.addEventListener('input',()=>{dirty=true;updateCompleteness();});
-form.addEventListener('change',()=>updateCompleteness());
+form.addEventListener('change',e=>{if(e.target.id==='profile_kind')syncRateField();else updateCompleteness();});
 window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
 async function showPhoto(path) {
   const {data,error}=await client.storage.from('profile-photos').createSignedUrl(path,300);
@@ -66,6 +69,8 @@ form.addEventListener('submit',async event=>{
   const values=new FormData(form);
   const row={user_id:user.id};
   for(const name of ['display_name','profile_kind','gender','bio','languages','interests','meeting_mode','availability']) row[name]=String(values.get(name)||'').trim();
+  const rateRaw=String(values.get('hourly_rate')||'').trim();row.hourly_rate=['companion','both'].includes(row.profile_kind)?Number(rateRaw):null;
+  if(['companion','both'].includes(row.profile_kind)&&(!Number.isInteger(row.hourly_rate)||row.hourly_rate<1||row.hourly_rate>100000)){message('Set a valid hourly companionship rate between ₹1 and ₹1,00,000.',true);$('hourly_rate').focus();return;}
   if(row.display_name.length<2||row.languages.length<2){message('Enter your name and languages (at least 2 characters).',true);return;}
   row.location_id=Number(values.get('location_id'));row.categories=values.getAll('categories');
   row.adult_confirmed=values.get('adult_confirmed')==='on';row.boundaries_accepted=values.get('boundaries_accepted')==='on';
@@ -95,12 +100,14 @@ async function init(){
     const p=profile.data;
     if(p){
       for(const name of ['display_name','profile_kind','gender','bio','languages','interests','meeting_mode','availability'])$(name).value=p[name]||'';
+      $('hourly_rate').value=p.hourly_rate||'';
       const loc=locations.find(r=>r.id===p.location_id);
       if(loc){$('state').value=loc.state;districts();$('district').value=loc.district;cities();$('location_id').value=String(loc.id);}
       form.querySelectorAll('[name=categories]').forEach(input=>input.checked=p.categories.includes(input.value));
       form.elements.adult_confirmed.checked=p.adult_confirmed;form.elements.boundaries_accepted.checked=p.boundaries_accepted;
       avatarPath=p.avatar_path;showSystemInfo(p);
     }else{$('display_name').value=user.user_metadata?.display_name||'';showSystemInfo(null);}
+    syncRateField();
     $('fields').disabled=false;message(p?'Your saved profile. Make it feel like you.':'Let’s create your free profile.');
     if(avatarPath)await showPhoto(avatarPath);updateCompleteness();
     await setupPublishing({client,user,isDirty:()=>dirty});
