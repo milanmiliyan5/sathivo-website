@@ -226,3 +226,6 @@ input,select,textarea{font-size:16px}
 
 /* On phones, Requests/Chats counts live only in the bottom nav to avoid duplicate badges. */
 @media(max-width:640px){.site-header .chat-header-badge,.site-header .request-badge{display:none!important}}
+
+.footer-legal-inline{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:10px}.footer-legal-inline a{font-size:.68rem;color:var(--muted);text-decoration:underline;text-underline-offset:3px}
+@media(max-width:640px){.footer-legal-inline{justify-content:flex-start;gap:10px 12px}}

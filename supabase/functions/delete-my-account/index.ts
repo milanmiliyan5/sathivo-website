@@ -22,15 +22,20 @@ function serverKey() {
   return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 }
 
-async function removeChatMedia(admin, bookingId, userId) {
+async function removeBookingMedia(admin, bookingId) {
   const bucket = admin.storage.from("booking-chat-photos");
-  const prefix = bookingId + "/" + userId;
-  const { data, error } = await bucket.list(prefix, { limit: 1000 });
-  if (error) throw error;
-  const paths = (data ?? []).filter((item) => item.name).map((item) => prefix + "/" + item.name);
-  if (paths.length) {
-    const { error: removeError } = await bucket.remove(paths);
-    if (removeError) throw removeError;
+  const { data: folders, error: folderError } = await bucket.list(bookingId, { limit: 1000 });
+  if (folderError) throw folderError;
+  for (const folder of folders ?? []) {
+    if (!folder.name) continue;
+    const prefix = bookingId + "/" + folder.name;
+    const { data: files, error: fileError } = await bucket.list(prefix, { limit: 1000 });
+    if (fileError) throw fileError;
+    const paths = (files ?? []).filter((item) => item.name).map((item) => prefix + "/" + item.name);
+    if (paths.length) {
+      const { error: removeError } = await bucket.remove(paths);
+      if (removeError) throw removeError;
+    }
   }
 }
 
@@ -67,7 +72,7 @@ Deno.serve(async (req) => {
     if (bookingError) throw bookingError;
 
     for (const booking of bookings ?? []) {
-      await removeChatMedia(admin, booking.id, user.id);
+      await removeBookingMedia(admin, booking.id);
     }
 
     for (const bucketName of ["profile-photos", "listing-photos"]) {
