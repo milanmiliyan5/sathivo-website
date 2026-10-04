@@ -30,20 +30,18 @@ function serverKey() {
   return "";
 }
 
-async function exactCount(query: any) {
-  const { count, error } = await query;
-  if (error) throw error;
-  return Number(count ?? 0);
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (req.method !== "POST") return Response.json({ error: "Method not allowed" }, { status: 405, headers: corsHeaders });
+  if (req.method !== "POST") {
+    return Response.json({ error: "Method not allowed" }, { status: 405, headers: corsHeaders });
+  }
 
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (!token) return Response.json({ error: "Sign in required" }, { status: 401, headers: corsHeaders });
+    if (!token) {
+      return Response.json({ error: "Sign in required" }, { status: 401, headers: corsHeaders });
+    }
 
     const url = Deno.env.get("SUPABASE_URL") ?? "";
     const userClient = createClient(url, publishableKey(), {
@@ -53,7 +51,9 @@ Deno.serve(async (req) => {
 
     const { data: userData, error: userError } = await userClient.auth.getUser(token);
     const user = userData.user;
-    if (userError || !user) return Response.json({ error: "Invalid session" }, { status: 401, headers: corsHeaders });
+    if (userError || !user) {
+      return Response.json({ error: "Invalid session" }, { status: 401, headers: corsHeaders });
+    }
 
     const { data: adminRow, error: adminError } = await userClient
       .from("platform_admins")
@@ -61,40 +61,26 @@ Deno.serve(async (req) => {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (adminError || !adminRow) return Response.json({ error: "Admin access required" }, { status: 403, headers: corsHeaders });
+    if (adminError || !adminRow) {
+      return Response.json({ error: "Admin access required" }, { status: 403, headers: corsHeaders });
+    }
 
     const key = serverKey();
     if (!key) throw new Error("Server key unavailable");
 
-    const admin = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-    const { data: baseData, error: baseError } = await admin.rpc("admin_dashboard_stats_server");
-    if (baseError) throw baseError;
-    const base = Array.isArray(baseData) ? baseData[0] : baseData;
+    const admin = createClient(url, key, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
 
-    const [pendingBookings,acceptedBookings,declinedBookings,cancelledBookings,completedBookings,publishedCompanions,openReports,openSupport] = await Promise.all([
-      exactCount(admin.from("booking_requests").select("*", { count: "exact", head: true }).eq("status", "pending")),
-      exactCount(admin.from("booking_requests").select("*", { count: "exact", head: true }).eq("status", "accepted")),
-      exactCount(admin.from("booking_requests").select("*", { count: "exact", head: true }).eq("status", "declined")),
-      exactCount(admin.from("booking_requests").select("*", { count: "exact", head: true }).eq("status", "cancelled")),
-      exactCount(admin.from("booking_requests").select("*", { count: "exact", head: true }).eq("status", "completed")),
-      exactCount(admin.from("companion_listings").select("*", { count: "exact", head: true }).eq("published", true).eq("moderation_status", "active")),
-      exactCount(admin.from("user_reports").select("*", { count: "exact", head: true }).eq("status", "open")),
-      exactCount(admin.from("support_requests").select("*", { count: "exact", head: true }).in("status", ["open", "reviewed"])),
-    ]);
+    const { data, error } = await admin.rpc("admin_dashboard_stats_server_v2");
+    if (error) throw error;
 
-    return Response.json({
-      ...(base ?? {}),
-      pending_bookings: pendingBookings,
-      accepted_bookings: acceptedBookings,
-      declined_bookings: declinedBookings,
-      cancelled_bookings: cancelledBookings,
-      completed_bookings: completedBookings,
-      published_companions: publishedCompanions,
-      open_reports: openReports,
-      open_support: openSupport,
-    }, { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const row = Array.isArray(data) ? data[0] : data;
+    return Response.json(row ?? {}, {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   } catch (error) {
-    console.error(error);
+    console.error(error instanceof Error ? error.message : JSON.stringify(error));
     return Response.json({ error: "Could not load admin statistics" }, { status: 500, headers: corsHeaders });
   }
 });
