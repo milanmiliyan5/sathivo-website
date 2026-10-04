@@ -7,18 +7,18 @@ function visible(r){if(filter==='all')return true;if(filter==='closed')return ['
 function card(r){
  const n=el('article',undefined,'booking-card request-card');n.id='request-'+r.id;
  const top=el('div',undefined,'booking-top'),identity=el('div',undefined,'request-identity'),avatar=el('span',(r.customer_display_name||'S').trim().slice(0,1).toUpperCase(),'request-avatar'),left=el('div');
- left.append(el('h2',r.customer_display_name||'Sathivo member'),el('div',undefined,'booking-meta'));left.lastChild.append(el('span',r.category),el('span',r.meeting_mode==='in-person'?'In person':'Online'),el('span',fmt(r.requested_for)),el('span',r.duration_minutes+' min'));identity.append(avatar,left);top.append(identity,el('span',r.status,'status-pill'));n.append(top);
+ left.append(el('h2',r.customer_display_name||'Sathivo member'),el('div',undefined,'booking-meta'));left.lastChild.append(el('span',r.category),el('span',r.meeting_mode==='in-person'?'In person':'Online'),el('span',fmt(r.requested_for)),el('span',r.duration_minutes+' min'));const price=el('div',undefined,'deal-box');if(r.listed_hourly_rate)price.append(el('span','Listed ₹'+Number(r.listed_hourly_rate).toLocaleString('en-IN')+'/hr'));if(r.offered_hourly_rate)price.append(el('strong','Customer offer ₹'+Number(r.offered_hourly_rate).toLocaleString('en-IN')+'/hr'));if(r.agreed_hourly_rate)price.append(el('strong','Agreed ₹'+Number(r.agreed_hourly_rate).toLocaleString('en-IN')+'/hr','deal-agreed'));left.append(price);identity.append(avatar,left);top.append(identity,el('span',r.status,'status-pill'));n.append(top);
  if(r.note)n.append(el('p',r.note,'booking-note'));
  const a=el('div',undefined,'booking-actions');
  if(r.status==='pending'){
-  const accept=el('button','Accept request','button button-primary'),decline=el('button','Decline request','button button-outline');
+  const accept=el('button',r.offered_hourly_rate?'Accept ₹'+Number(r.offered_hourly_rate).toLocaleString('en-IN')+'/hr':'Accept request','button button-primary'),decline=el('button','Decline request','button button-outline');
   accept.onclick=()=>{n.classList.add('request-accepting');accept.disabled=decline.disabled=true;void update(r.id,'accepted')};
   decline.onclick=()=>{if(confirm('Decline this booking request?')){accept.disabled=decline.disabled=true;void update(r.id,'declined')}};a.append(accept,decline);
  }else if(r.status==='accepted'){
   const chat=el('a','Open chat & photos ↗','button button-primary');chat.href='chat.html?booking='+encodeURIComponent(r.id);
   const done=el('button','Mark completed','button button-outline');done.onclick=()=>void update(r.id,'completed');a.append(chat,done);
  }
- if(a.childNodes.length)n.append(a);return n;
+ if(a.childNodes.length)n.append(a);if(r.status==='accepted'&&r.agreed_hourly_rate)n.append(el('p','Deal recorded at ₹'+Number(r.agreed_hourly_rate).toLocaleString('en-IN')+'/hour. Coordinate details in chat. Payment stays outside Sathivo.','payment-note'));return n;
 }
 function render(){
  const list=rows.filter(visible);$('requests').replaceChildren(...list.map(card));$('empty').hidden=list.length>0;$('status').textContent=list.length?(String(list.length)+' request'+(list.length===1?'':'s')+' here.'):'';
