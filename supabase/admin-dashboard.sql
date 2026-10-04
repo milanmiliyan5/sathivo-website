@@ -31,15 +31,20 @@ begin
   end if;
 
   return query
-  with stats as (
+  with genders as (
+    select u.id, coalesce(mp.gender, nullif(u.raw_user_meta_data ->> 'gender','')) as gender
+    from auth.users u
+    left join public.member_profiles mp on mp.user_id = u.id
+  ),
+  stats as (
     select
-      (select count(*)::bigint from auth.users) as total_accounts,
+      (select count(*)::bigint from genders) as total_accounts,
       (select count(*)::bigint from public.booking_requests br
         where (br.created_at at time zone 'Asia/Kolkata')::date =
               (now() at time zone 'Asia/Kolkata')::date) as bookings_today,
       (select count(*)::bigint from public.booking_requests) as total_bookings,
-      (select count(*)::bigint from public.member_profiles mp where mp.gender = 'male') as male_users,
-      (select count(*)::bigint from public.member_profiles mp where mp.gender = 'female') as female_users
+      (select count(*)::bigint from genders g where g.gender = 'male') as male_users,
+      (select count(*)::bigint from genders g where g.gender = 'female') as female_users
   )
   select s.total_accounts,s.bookings_today,s.total_bookings,s.male_users,s.female_users,
          greatest(s.total_accounts-s.male_users-s.female_users,0::bigint)

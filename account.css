@@ -22,10 +22,10 @@
 .panel-intro{color:var(--muted);font-size:.875rem;margin:15px 0 23px}
 .account-card fieldset{border:0;margin:0;padding:0;min-width:0}
 .account-card label:not(.check-label){display:block;font-size:.8rem;font-weight:600;margin:18px 0 7px}
-.account-card input:not([type=checkbox]){font:inherit;font-size:1rem;color:var(--ink);background:#fffdfc;border:1px solid #d9cbd1;border-radius:9px;width:100%;height:49px;padding:11px 13px;min-width:0}
+.account-card input:not([type=checkbox]),.account-card select{font:inherit;font-size:1rem;color:var(--ink);background:#fffdfc;border:1px solid #d9cbd1;border-radius:9px;width:100%;height:49px;padding:11px 13px;min-width:0}
 .account-card input::placeholder{color:#97858e;font-size:.85rem}
-.account-card input:focus-visible,.account-boundaries summary:focus-visible{outline:3px solid #9e527c;outline-offset:3px}
-.account-card input:disabled{background:#f7f4f5;color:var(--muted);cursor:not-allowed}
+.account-card input:focus-visible,.account-card select:focus-visible,.account-boundaries summary:focus-visible{outline:3px solid #9e527c;outline-offset:3px}
+.account-card input:disabled,.account-card select:disabled{background:#f7f4f5;color:var(--muted);cursor:not-allowed}
 .account-card button:disabled{opacity:.55;transform:none;box-shadow:none;cursor:not-allowed}
 .password-field{position:relative;display:flex;align-items:center}
 .password-field input{padding-right:65px!important}

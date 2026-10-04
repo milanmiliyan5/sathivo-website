@@ -10,7 +10,7 @@ const user = { id: 'test-user', email: 'hello@example.com', email_confirmed_at: 
 const signupUser = { ...user, email_confirmed_at: null, identities: [{ id: 'test-email-identity', provider: 'email' }] };
 const session = { user, access_token: 'test-token-never-used-on-network' };
 const password = 'river-cloud-papaya-48';
-const validSignup = { name: ' Asha ', email: ' Hello@Example.com ', password, confirmation: password, adult: true, boundaries: true };
+const validSignup = { name: ' Asha ', email: ' Hello@Example.com ', password, confirmation: password, gender: 'female', adult: true, boundaries: true };
 
 function setup(enabled = true) {
   let now = 1_000;
@@ -62,7 +62,7 @@ test('signup uses email and password; metadata grants no role or verified age', 
   assert.equal(calls[0].method, 'signUp');
   assert.equal(calls[0].args.email, user.email);
   assert.equal(calls[0].args.password, password);
-  assert.deepEqual(calls[0].args.options.data, { display_name: 'Asha', adult_declaration: true, community_rules_version: '2026-09-08' });
+  assert.deepEqual(calls[0].args.options.data, { display_name: 'Asha', gender: 'female', adult_declaration: true, community_rules_version: '2026-09-08' });
 });
 
 test('unexpected automatic email confirmation does not enter the account screen', async () => {

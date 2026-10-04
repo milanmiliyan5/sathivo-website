@@ -114,11 +114,13 @@ export function createAuthFlow({ auth, recoveryAuth, enabled, clock = Date.now }
     getChallenge: () => challenge && { ...challenge },
     resendSeconds: () => Math.max(0, Math.ceil((resendAt - clock()) / 1000)),
     deferEmailRequests,
-    async signup({ name, email, password, confirmation, adult, boundaries }) {
+    async signup({ name, email, password, confirmation, gender, adult, boundaries }) {
       requireEnabled();
       requireSendWindow();
       const displayName = String(name ?? '').trim();
       if (displayName.length < 2 || displayName.length > 60) fail('name', 'Enter your name using 2–60 characters.');
+      const normalizedGender = String(gender ?? '').trim();
+      if (normalizedGender && !['male','female','other','prefer_not_to_say'].includes(normalizedGender)) fail('gender', 'Choose a valid gender option.');
       if (adult !== true) fail('adult', 'Sathivo is for adults aged 18 or older.');
       if (boundaries !== true) fail('boundaries', 'Please agree to the platonic-only community boundaries.');
       const address = normalizeEmail(email);
@@ -128,6 +130,7 @@ export function createAuthFlow({ auth, recoveryAuth, enabled, clock = Date.now }
         password: validatePassword(password, confirmation),
         options: { data: {
           display_name: displayName,
+          ...(normalizedGender ? { gender: normalizedGender } : {}),
           // A self-declaration, never an age/identity verification or permission.
           adult_declaration: true,
           community_rules_version: '2026-09-08',
