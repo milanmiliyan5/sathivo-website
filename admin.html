@@ -8,9 +8,9 @@
   <title>Sathivo Admin Dashboard</title>
   <link rel="icon" href="assets/favicon.svg">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="admin-dashboard.css?v=20261005-1">
+  <link rel="stylesheet" href="admin-dashboard.css?v=20261005-2">
   <script defer src="assets/vendor/supabase-2.116.0.js"></script>
-  <script type="module" src="js/admin-page.js?v=20261005-1"></script>
+  <script type="module" src="js/admin-page.js?v=20261005-2"></script>
 </head>
 <body class="admin-body">
   <div class="admin-app">
@@ -24,30 +24,18 @@
       </div>
 
       <nav class="sidebar-nav" aria-label="Admin navigation">
-        <a class="sidebar-link is-active" href="#overview" data-section="overview">
-          <span class="sidebar-icon">⌂</span><span>Dashboard</span>
-        </a>
-        <a class="sidebar-link" href="#users-section" data-section="users-section">
-          <span class="sidebar-icon">♙</span><span>Users</span>
-        </a>
-        <a class="sidebar-link" href="#support-section" data-section="support-section">
-          <span class="sidebar-icon">?</span><span>Support</span>
-        </a>
-        <a class="sidebar-link" href="#reports-section" data-section="reports-section">
-          <span class="sidebar-icon">!</span><span>Reports</span>
-        </a>
-        <a class="sidebar-link" href="#listings-section" data-section="listings-section">
-          <span class="sidebar-icon">◇</span><span>Companions</span>
-        </a>
+        <a class="sidebar-link is-active" href="#overview" data-section="overview"><span class="sidebar-icon">⌂</span><span>Dashboard</span></a>
+        <a class="sidebar-link" href="#users-section" data-section="users-section"><span class="sidebar-icon">♙</span><span>Users</span></a>
+        <a class="sidebar-link" href="#bookings-section" data-section="bookings-section"><span class="sidebar-icon">▣</span><span>Bookings</span></a>
+        <a class="sidebar-link" href="#support-section" data-section="support-section"><span class="sidebar-icon">?</span><span>Support</span></a>
+        <a class="sidebar-link" href="#reports-section" data-section="reports-section"><span class="sidebar-icon">!</span><span>Reports</span></a>
+        <a class="sidebar-link" href="#listings-section" data-section="listings-section"><span class="sidebar-icon">◇</span><span>Companions</span></a>
       </nav>
 
       <div class="sidebar-footer">
         <div class="admin-mini-card">
           <span class="online-dot" aria-hidden="true"></span>
-          <div>
-            <strong>Administrator</strong>
-            <span id="admin-email">Checking access…</span>
-          </div>
+          <div><strong>Administrator</strong><span id="admin-email">Checking access…</span></div>
         </div>
         <button class="sidebar-logout" id="admin-logout" type="button">Log out</button>
       </div>
@@ -62,7 +50,7 @@
           <div>
             <span class="topbar-kicker">SATHIVO ADMIN</span>
             <h1>Dashboard</h1>
-            <p>Live platform overview and moderation controls.</p>
+            <p>Live platform overview, bookings and moderation controls.</p>
           </div>
         </div>
         <div class="topbar-actions">
@@ -77,59 +65,48 @@
         <section id="admin-content" hidden>
           <section class="dashboard-section" id="overview" aria-labelledby="overview-title">
             <div class="section-heading">
-              <div>
-                <h2 id="overview-title">Overview</h2>
-                <p>Current Sathivo platform activity.</p>
-              </div>
+              <div><h2 id="overview-title">Overview</h2><p>Current Sathivo platform activity.</p></div>
               <small id="metrics-updated">Loading…</small>
             </div>
 
             <div class="metric-grid">
-              <article class="metric-card">
-                <div class="metric-card-top"><span>Total Accounts</span><span class="metric-icon">U</span></div>
-                <strong id="metric-accounts">—</strong>
-                <small>All registered accounts</small>
-              </article>
-              <article class="metric-card">
-                <div class="metric-card-top"><span>Bookings Today</span><span class="metric-icon">T</span></div>
-                <strong id="metric-today-bookings">—</strong>
-                <small>Today · India time</small>
-              </article>
-              <article class="metric-card">
-                <div class="metric-card-top"><span>Total Bookings</span><span class="metric-icon">B</span></div>
-                <strong id="metric-total-bookings">—</strong>
-                <small>All booking requests</small>
-              </article>
-              <article class="metric-card">
-                <div class="metric-card-top"><span>Male Users</span><span class="metric-icon">M</span></div>
-                <strong id="metric-male">—</strong>
-                <small>Saved profile gender</small>
-              </article>
-              <article class="metric-card">
-                <div class="metric-card-top"><span>Female Users</span><span class="metric-icon">F</span></div>
-                <strong id="metric-female">—</strong>
-                <small>Saved profile gender</small>
-              </article>
-              <article class="metric-card metric-online">
-                <div class="metric-card-top"><span>Online Now</span><span class="metric-icon"><i></i></span></div>
-                <strong id="metric-online">0</strong>
-                <small>Unique active browsers</small>
-              </article>
+              <article class="metric-card"><div class="metric-card-top"><span>Total Accounts</span><span class="metric-icon">U</span></div><strong id="metric-accounts">—</strong><small>All registered accounts</small></article>
+              <article class="metric-card"><div class="metric-card-top"><span>Bookings Today</span><span class="metric-icon">T</span></div><strong id="metric-today-bookings">—</strong><small>Today · India time</small></article>
+              <article class="metric-card"><div class="metric-card-top"><span>Total Bookings</span><span class="metric-icon">B</span></div><strong id="metric-total-bookings">—</strong><small>All booking requests</small></article>
+              <article class="metric-card metric-online"><div class="metric-card-top"><span>Online Now</span><span class="metric-icon"><i></i></span></div><strong id="metric-online">0</strong><small>Unique active browsers</small></article>
+
+              <article class="metric-card"><div class="metric-card-top"><span>Pending</span><span class="metric-icon">P</span></div><strong id="metric-pending">—</strong><small>Pending bookings</small></article>
+              <article class="metric-card"><div class="metric-card-top"><span>Accepted</span><span class="metric-icon">A</span></div><strong id="metric-accepted">—</strong><small>Accepted bookings</small></article>
+              <article class="metric-card"><div class="metric-card-top"><span>Completed</span><span class="metric-icon">C</span></div><strong id="metric-completed">—</strong><small>Completed bookings</small></article>
+              <article class="metric-card"><div class="metric-card-top"><span>Cancelled</span><span class="metric-icon">X</span></div><strong id="metric-cancelled">—</strong><small>Cancelled bookings</small></article>
+
+              <article class="metric-card"><div class="metric-card-top"><span>Male Users</span><span class="metric-icon">M</span></div><strong id="metric-male">—</strong><small>Saved profile gender</small></article>
+              <article class="metric-card"><div class="metric-card-top"><span>Female Users</span><span class="metric-icon">F</span></div><strong id="metric-female">—</strong><small>Saved profile gender</small></article>
+              <article class="metric-card"><div class="metric-card-top"><span>Published Companions</span><span class="metric-icon">PC</span></div><strong id="metric-published-companions">—</strong><small>Public active listings</small></article>
+              <article class="metric-card"><div class="metric-card-top"><span>Open Reports</span><span class="metric-icon">!</span></div><strong id="metric-open-reports">—</strong><small>Needs safety review</small></article>
             </div>
             <p id="gender-note" class="metric-note"></p>
           </section>
 
+          <section class="data-panel dashboard-section activity-panel" id="activity-section">
+            <div class="panel-head">
+              <div><p class="panel-kicker">LIVE FEED</p><h2>Recent Activity</h2><p class="panel-note">Latest signups, bookings, support and reports.</p></div>
+            </div>
+            <div id="recent-activity" class="activity-list"></div>
+          </section>
+
           <section class="data-panel dashboard-section" id="users-section">
             <div class="panel-head">
-              <div>
-                <p class="panel-kicker">MEMBERS</p>
-                <h2>Users</h2>
-                <p id="user-count" class="panel-note"></p>
+              <div><p class="panel-kicker">MEMBERS</p><h2>Users</h2><p id="user-count" class="panel-note"></p></div>
+              <div class="filter-row">
+                <label class="search-box"><span>⌕</span><input id="user-search" type="search" placeholder="Search user, Safety ID or internal ID" aria-label="Search users"></label>
+                <select id="user-gender-filter" class="filter-select" aria-label="Filter users by gender">
+                  <option value="all">All genders</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option><option value="prefer_not_to_say">Prefer not to say</option><option value="unset">Not set</option>
+                </select>
+                <select id="user-type-filter" class="filter-select" aria-label="Filter users by profile type">
+                  <option value="all">All types</option><option value="customer">Customer</option><option value="companion">Companion</option><option value="both">Both</option>
+                </select>
               </div>
-              <label class="search-box">
-                <span>⌕</span>
-                <input id="user-search" type="search" placeholder="Search name, Safety ID or internal ID" aria-label="Search users">
-              </label>
             </div>
             <div class="table-wrap">
               <table class="admin-table">
@@ -139,12 +116,35 @@
             </div>
           </section>
 
+          <section class="data-panel dashboard-section" id="bookings-section">
+            <div class="panel-head">
+              <div><p class="panel-kicker">BOOKINGS</p><h2>Booking Requests</h2><p id="booking-count" class="panel-note"></p></div>
+              <div class="filter-row">
+                <label class="search-box"><span>⌕</span><input id="booking-search" type="search" placeholder="Search booking, customer or companion" aria-label="Search bookings"></label>
+                <select id="booking-status-filter" class="filter-select" aria-label="Filter bookings by status">
+                  <option value="all">All statuses</option><option value="pending">Pending</option><option value="accepted">Accepted</option><option value="completed">Completed</option><option value="declined">Declined</option><option value="cancelled">Cancelled</option>
+                </select>
+                <select id="booking-mode-filter" class="filter-select" aria-label="Filter bookings by mode">
+                  <option value="all">All modes</option><option value="online">Online</option><option value="in-person">In person</option>
+                </select>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="admin-table booking-table">
+                <thead><tr><th>Booking ID</th><th>Customer</th><th>Companion</th><th>Service</th><th>Mode</th><th>Requested For</th><th>Status</th><th>Created</th></tr></thead>
+                <tbody id="bookings"></tbody>
+              </table>
+            </div>
+          </section>
+
           <section class="data-panel dashboard-section" id="support-section">
             <div class="panel-head">
-              <div>
-                <p class="panel-kicker">CUSTOMER CARE</p>
-                <h2>Support Requests</h2>
-                <p class="panel-note">Latest user support submissions.</p>
+              <div><p class="panel-kicker">CUSTOMER CARE</p><h2>Support Requests</h2><p id="support-count" class="panel-note"></p></div>
+              <div class="filter-row">
+                <label class="search-box compact-search"><span>⌕</span><input id="support-search" type="search" placeholder="Search support" aria-label="Search support requests"></label>
+                <select id="support-status-filter" class="filter-select" aria-label="Filter support by status">
+                  <option value="all">All statuses</option><option value="open">Open</option><option value="reviewed">Reviewed</option><option value="resolved">Resolved</option><option value="closed">Closed</option>
+                </select>
               </div>
             </div>
             <div class="table-wrap">
@@ -157,15 +157,17 @@
 
           <section class="data-panel dashboard-section" id="reports-section">
             <div class="panel-head">
-              <div>
-                <p class="panel-kicker">TRUST & SAFETY</p>
-                <h2>Reports</h2>
-                <p class="panel-note">Review open and recent safety reports.</p>
+              <div><p class="panel-kicker">TRUST & SAFETY</p><h2>Reports</h2><p id="report-count" class="panel-note"></p></div>
+              <div class="filter-row">
+                <label class="search-box compact-search"><span>⌕</span><input id="report-search" type="search" placeholder="Search reports" aria-label="Search reports"></label>
+                <select id="report-status-filter" class="filter-select" aria-label="Filter reports by status">
+                  <option value="all">All statuses</option><option value="open">Open</option><option value="reviewed">Reviewed</option><option value="actioned">Actioned</option><option value="dismissed">Dismissed</option>
+                </select>
               </div>
             </div>
             <div class="table-wrap">
               <table class="admin-table">
-                <thead><tr><th>Reason</th><th>Details</th><th>Status</th><th>Action</th></tr></thead>
+                <thead><tr><th>Reason</th><th>Details</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody id="reports"></tbody>
               </table>
             </div>
@@ -173,15 +175,17 @@
 
           <section class="data-panel dashboard-section" id="listings-section">
             <div class="panel-head">
-              <div>
-                <p class="panel-kicker">MARKETPLACE</p>
-                <h2>Companion Listings</h2>
-                <p class="panel-note">Moderate public companion profiles.</p>
+              <div><p class="panel-kicker">MARKETPLACE</p><h2>Companion Listings</h2><p id="listing-count" class="panel-note"></p></div>
+              <div class="filter-row">
+                <label class="search-box compact-search"><span>⌕</span><input id="listing-search" type="search" placeholder="Search companion" aria-label="Search companion listings"></label>
+                <select id="listing-status-filter" class="filter-select" aria-label="Filter companion listings by status">
+                  <option value="all">All statuses</option><option value="active">Active</option><option value="suspended">Suspended</option>
+                </select>
               </div>
             </div>
             <div class="table-wrap">
               <table class="admin-table">
-                <thead><tr><th>Companion</th><th>Bio</th><th>Status</th><th>Action</th></tr></thead>
+                <thead><tr><th>Companion</th><th>Bio</th><th>Published</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody id="listings"></tbody>
               </table>
             </div>
