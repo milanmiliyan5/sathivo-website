@@ -1,5 +1,5 @@
 import { authConfig } from './auth-config.js?v=20260926-1';
-import { createAuthFlow } from './auth-flow.js?v=20260926-1';
+import { createAuthFlow } from './auth-flow.js?v=20261004-1';
 import { createAuthFetch } from './auth-transport.js?v=20260926-1';
 
 const panels = [...document.querySelectorAll('[data-panel]')];
