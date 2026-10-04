@@ -73,3 +73,13 @@ Sathivo now publishes Privacy Policy, Terms of Use, Safety & Community Guideline
 - OTP frontend: exactly 6 digits. A fresh live signup should be used to confirm the hosted Auth email is also issuing 6-digit OTPs.
 - Public legal/support/delete-account flows: implemented.
 - Remaining launch gate: live two-account end-to-end testing across signup, profile, discovery, booking, chat/photos, push, completion, review, reporting, support and account deletion.
+
+
+## Companion pricing and negotiation — 2026-10-05
+
+- Companion/Both profiles can set a custom INR hourly companionship rate before publishing.
+- Public listings show the companion's hourly rate.
+- Customers can send a different hourly offer with a booking request.
+- If the companion accepts, the customer offer is locked as the agreed hourly rate for that booking.
+- Sathivo records the listed/offer/agreed rates only for coordination. It does not collect, hold, settle or refund booking payments.
+- Users arrange any lawful cash/UPI/direct payment themselves outside Sathivo. UPI PINs, OTPs and banking credentials must never be shared.
