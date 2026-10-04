@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#702842">
+  <meta name="robots" content="index,follow">
+  <meta name="description" content="Share feedback and ideas to help improve Sathivo.">
+  <title>Feedback — Sathivo</title>
+  <link rel="icon" href="assets/favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="legal.css?v=20261005-2">
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to feedback</a>
+<header class="site-header"><div class="container legal-header">
+  <a class="brand" href="./"><span class="brand-mark" aria-hidden="true">♡</span>sathivo<span class="brand-period">.</span></a>
+  <div class="legal-top-links"><a href="./">Home</a><a href="support.html">Support</a><a href="account.html">Account</a></div>
+</div></header>
+
+<main id="main" class="container legal-shell">
+  <div class="legal-hero">
+    <p class="eyebrow">SATHIVO FEEDBACK</p>
+    <h1>Help us make Sathivo <em>better.</em></h1>
+    <p>Share a suggestion, report a website bug, or tell us what you liked.</p>
+  </div>
+
+  <div class="support-layout">
+    <section class="legal-panel">
+      <h2>Send feedback</h2>
+      <p id="feedback-status" class="legal-status" role="status" aria-live="polite">Your feedback goes directly to the Sathivo admin dashboard.</p>
+
+      <form id="feedback-form" class="legal-form" novalidate>
+        <label for="feedback-email">Email address</label>
+        <input id="feedback-email" name="email" type="email" autocomplete="email" maxlength="254" required>
+        <small class="field-hint">Used only to identify your account or reply if needed.</small>
+
+        <label for="feedback-type">Feedback type</label>
+        <select id="feedback-type" name="feedback_type" required>
+          <option value="">Choose one</option>
+          <option value="suggestion">Suggestion / new idea</option>
+          <option value="bug">Website problem / bug</option>
+          <option value="experience">My Sathivo experience</option>
+          <option value="compliment">Something I liked</option>
+          <option value="other">Other</option>
+        </select>
+
+        <fieldset class="feedback-rating">
+          <legend>How would you rate Sathivo?</legend>
+          <div class="rating-options" role="radiogroup" aria-label="Rating out of 5">
+            <label><input type="radio" name="rating" value="1" required><span>★</span><small>1</small></label>
+            <label><input type="radio" name="rating" value="2"><span>★</span><small>2</small></label>
+            <label><input type="radio" name="rating" value="3"><span>★</span><small>3</small></label>
+            <label><input type="radio" name="rating" value="4"><span>★</span><small>4</small></label>
+            <label><input type="radio" name="rating" value="5"><span>★</span><small>5</small></label>
+          </div>
+        </fieldset>
+
+        <label for="feedback-message">Your feedback</label>
+        <textarea id="feedback-message" name="message" minlength="10" maxlength="3000" rows="7" placeholder="Tell us what should improve, what went wrong, or what you liked…" required></textarea>
+
+        <div class="form-trap" aria-hidden="true">
+          <label for="feedback-website">Website</label>
+          <input id="feedback-website" name="website" tabindex="-1" autocomplete="off">
+        </div>
+
+        <p class="field-hint">Do not send passwords, OTP codes, payment PINs, card details or government ID numbers.</p>
+        <button class="button button-primary" type="submit">Send feedback ↗</button>
+      </form>
+    </section>
+
+    <aside class="legal-panel support-help">
+      <h2>What happens next?</h2>
+      <p>Your feedback is stored privately and visible to authorized Sathivo admins.</p>
+      <p>Admins can mark it reviewed, resolved or closed from the dashboard.</p>
+      <a href="support.html"><strong>Need direct help?</strong><span>Use Sathivo Support →</span></a>
+      <a href="safety.html"><strong>Safety issue?</strong><span>Use safety/reporting options →</span></a>
+    </aside>
+  </div>
+</main>
+
+<script defer src="assets/vendor/supabase-2.116.0.js"></script>
+<script type="module" src="js/feedback-page.js?v=20261005-1"></script>
+<footer class="legal-footer"><div class="container legal-footer-inner"><div><strong>Sathivo</strong><span>18+ only · Strictly platonic</span></div><div class="legal-footer-links"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="safety.html">Safety & Guidelines</a><a href="support.html">Support</a><a href="feedback.html">Feedback</a><a href="delete-account.html">Delete account</a></div></div></footer>
+</body>
+</html>
