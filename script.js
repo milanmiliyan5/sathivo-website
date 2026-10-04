@@ -66,7 +66,7 @@ document.querySelectorAll('[data-experience]').forEach(button => {
     const experience = experiences[button.dataset.experience];
     openDialog(button, 'EXPLORE AN EXPERIENCE · 18+ ONLY', experience.title, [
       paragraph(experience.text),
-      statusBox('Companion discovery is open', 'Use Find a companion on the homepage to browse published profiles. Bookings and payments are not open yet.'),
+      statusBox('Companion discovery is open', 'Use Find a companion to browse published profiles, see hourly rates and send a booking request with your own offer. Sathivo does not collect payment.'),
       paragraph(experience.boundary, 'dialog-boundary')
     ]);
   });
@@ -75,8 +75,8 @@ document.querySelectorAll('[data-info]').forEach(button => {
   button.addEventListener('click', () => {
     if (button.dataset.info === 'companion') {
       openDialog(button, 'BECOME A SATHIVO COMPANION', 'Your company can mean a lot.', [
-        paragraph('We’re preparing a space where adults can offer strictly platonic companionship, choose their availability, and set their own rates.'),
-        statusBox('Applications are not open yet', 'Profile creation and applications will be available in a future release. This page does not collect personal information or register you as a companion.'),
+        paragraph('Adults can offer strictly platonic companionship, choose their availability and set their own hourly rates.'),
+        statusBox('Companion profiles are open', 'Create your profile, set your hourly companionship rate and publish when ready. Customers can send an offer; you choose whether to accept.'),
         paragraph('You must be 18 or older and agree to our boundaries. Sexual services, escort services, and sexual offers are strictly prohibited.', 'dialog-boundary')
       ]);
     } else if (button.dataset.info === 'guidelines') {
