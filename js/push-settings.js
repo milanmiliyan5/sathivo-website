@@ -1,5 +1,5 @@
 import {authConfig} from './auth-config.js?v=20260926-1';
-const VAPID_PUBLIC_KEY='BDDfRYmprtMMmGXd8MfxNCETnK3pOBsSeDf6782GteQGB6l0PLrBGWqbcQFAPpkVCKdkw_aUgtzWVFuJkUeGMus';
+const VAPID_PUBLIC_KEY='BKZgH_Qwry4r7h6n5YfFFsB_PslPCB_QNmavbjs4dxSnZe1YbmOiDJWsBOjnQcDBHUIcYEtHY6apcDVBUQrdYLs';
 let client,currentUser=null;
 async function ensureSdk(){
  if(globalThis.supabase?.createClient)return;
@@ -22,9 +22,26 @@ function setUI(message,tone='info',enabled=false){
  });
 }
 async function registration(){return navigator.serviceWorker.register('./sw.js',{scope:'./'})}
+function subscriptionUsesCurrentKey(sub){
+ const raw=sub?.options?.applicationServerKey;
+ if(!raw)return false;
+ const actual=new Uint8Array(raw),expected=base64UrlToUint8Array(VAPID_PUBLIC_KEY);
+ return actual.length===expected.length&&actual.every((value,index)=>value===expected[index]);
+}
 async function getSubscription(){
  if(!('serviceWorker' in navigator)||!('PushManager' in window))return null;
- const reg=await registration();return (await reg.pushManager.getSubscription())||null;
+ const reg=await registration();
+ let sub=await reg.pushManager.getSubscription();
+ if(sub&&!subscriptionUsesCurrentKey(sub)){
+  if(currentUser){try{await client.functions.invoke('push-subscription',{body:{action:'unregister',endpoint:sub.endpoint}})}catch{}}
+  try{await sub.unsubscribe()}catch{}
+  sub=null;
+  if(Notification.permission==='granted'){
+   sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:base64UrlToUint8Array(VAPID_PUBLIC_KEY)});
+   await registerSubscription(sub);
+  }
+ }
+ return sub||null;
 }
 async function registerSubscription(sub){
  if(!currentUser||!sub)return;
@@ -46,7 +63,7 @@ async function enable(){
  let permission=Notification.permission;if(permission==='default')permission=await Notification.requestPermission();
  if(permission!=='granted'){setUI('Notification permission was not allowed. You can enable it later from browser/site settings.','error',false);return}
  setUI('Turning on device notifications…','info',false);
- const reg=await registration();let sub=await reg.pushManager.getSubscription();
+ const reg=await registration();let sub=await getSubscription();
  if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:base64UrlToUint8Array(VAPID_PUBLIC_KEY)});
  await registerSubscription(sub);setUI('Device notifications are on for this browser.','success',true);
 }

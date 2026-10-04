@@ -122,18 +122,18 @@ test('signup verifies an email OTP while signup resend never starts a passwordle
   assert.deepEqual(calls.at(-1).args, { email: user.email, token: '123456', type: 'email' });
 });
 
-test('the OTP form supports six-digit rollout and existing eight-digit codes without truncation', async () => {
+test('the OTP form accepts exactly six digits', async () => {
   const html = await readFile(new URL('../account.html', import.meta.url), 'utf8');
   const input = html.match(/<input\b[^>]*\bid="otp-code"[^>]*>/)?.[0];
   assert.ok(input, 'The shared signup/recovery OTP field must exist');
   const attribute = name => input.match(new RegExp(`\\b${name}="([^"]*)"`))?.[1];
   const pattern = new RegExp(`^(?:${attribute('pattern')})$`);
   assert.equal(attribute('minlength'), '6');
-  assert.equal(attribute('maxlength'), '8');
+  assert.equal(attribute('maxlength'), '6');
   assert.equal(attribute('autocomplete'), 'one-time-code');
   assert.equal(attribute('placeholder'), '000000');
-  for (const token of ['', '1234', '12345', '1234567', '123456789', 'abc123', 'abcdefgh', '１２３４５６']) assert.ok(!pattern.test(token));
-  for (const token of ['012345', '01234567']) {
+  for (const token of ['', '1234', '12345', '1234567', '12345678', '123456789', 'abc123', 'abcdefgh', '１２３４５６']) assert.ok(!pattern.test(token));
+  for (const token of ['012345']) {
     assert.ok(pattern.test(token));
     for (const kind of ['signup', 'recovery']) {
       const { flow, calls } = setup();
@@ -190,7 +190,7 @@ test('invalid OTP format, a missing challenge and a wrong code cannot authorize 
   for (const token of ['', '1234', '12345', '1234567', '123456789', '123 45', '1234 678', 'abcdef', 'abcdefgh', '１２３４５６', '１２３４５６７８']) await assert.rejects(flow.verify(token), { code: 'otp' });
   assert.equal(calls.filter(c => c.method === 'verifyOtp').length, 0);
   recoveryAuth.verifyOtp = async () => ({ error: { code: 'otp_expired', status: 403 } });
-  for (const token of ['123456', '12345678']) {
+  for (const token of ['123456']) {
     await assert.rejects(flow.verify(token), { code: 'invalid_code' });
     await assert.rejects(flow.changePassword(password, password), { code: 'recovery_expired' });
   }
@@ -318,7 +318,7 @@ test('the vendored SDK sends the expected signup, resend, verify and recovery HT
   assert.equal(requests.at(-1).path, '/auth/v1/resend');
   assert.equal(requests.at(-1).body.type, 'signup');
   assert.equal(requests.at(-1).body.email, user.email);
-  for (const token of ['012345', '01234567']) {
+  for (const token of ['012345']) {
     await assert.rejects(flow.verify(token), { code: 'invalid_code' });
     assert.equal(requests.at(-1).path, '/auth/v1/verify');
     assert.equal(requests.at(-1).body.type, 'email');
@@ -329,7 +329,7 @@ test('the vendored SDK sends the expected signup, resend, verify and recovery HT
   await flow.requestRecovery(user.email);
   assert.equal(requests.at(-1).path, '/auth/v1/recover');
   assert.equal(requests.at(-1).body.email, user.email);
-  for (const token of ['012345', '01234567']) {
+  for (const token of ['012345']) {
     await assert.rejects(flow.verify(token), { code: 'invalid_code' });
     assert.equal(requests.at(-1).body.type, 'recovery');
     assert.equal(requests.at(-1).body.token, token);

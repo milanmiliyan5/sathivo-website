@@ -1,5 +1,9 @@
 # Sathivo account activation
 
+## Six-digit-only frontend — 2026-10-04
+
+The Sathivo account UI and validator now accept exactly six ASCII digits for signup verification and password recovery. The previous temporary eight-digit compatibility path has been removed. Supabase's current hosted email-template documentation describes `{{ .Token }}` as a six-digit OTP. The hosted Auth generator is a project-level platform setting and must remain aligned with six digits; changing that hosted setting requires Dashboard/Management API access and is not performed by database SQL.
+
 ## Existing-account signup guidance — 2026-09-26
 
 The owner tried creating an account with an already verified address and waited on the OTP screen. The flow previously treated every non-session signup success as an email-verification challenge, including Supabase's sanitized response for an existing account.

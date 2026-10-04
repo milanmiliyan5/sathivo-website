@@ -28,9 +28,7 @@ export function validatePassword(value, confirmation = value) {
 
 function normalizeOtp(value) {
   const token = String(value ?? '').trim();
-  // Support six-digit rollout and existing eight-digit emails. Supabase verifies
-  // the complete token; never shorten a code to match the preferred length.
-  if (!/^\d{6}(?:\d{2})?$/.test(token)) fail('otp', 'Enter the 6- or 8-digit code from your email.');
+  if (!/^\d{6}$/.test(token)) fail('otp', 'Enter the 6-digit code from your email.');
   return token;
 }
 
