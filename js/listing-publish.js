@@ -22,8 +22,9 @@ export async function setupPublishing({client,user,isDirty}) {
   if(error||!p)throw Error('Save your profile first.');
   if(!['companion','both'].includes(p.profile_kind))throw Error('Choose Become a companion or Both, then save.');
   if(p.bio.trim().length<20||!p.categories.length)throw Error('Save a bio of at least 20 characters and select at least one category.');
+  if(!Number.isInteger(p.hourly_rate)||p.hourly_rate<1||p.hourly_rate>100000)throw Error('Set and save your hourly companionship rate before publishing.');
   const row={user_id:user.id,published:true,photo_path:null};
-  for(const k of ['display_name','bio','location_id','languages','interests','categories','meeting_mode','availability'])row[k]=p[k];
+  for(const k of ['display_name','bio','location_id','languages','interests','categories','meeting_mode','availability','hourly_rate'])row[k]=p[k];
   // Hide before replacing the public photo so a failed update cannot expose a new photo on an old listing.
   const hidden=await client.from('companion_listings').update({published:false}).eq('user_id',user.id);
   if(hidden.error)throw Error('Could not prepare publication. Try again.');
