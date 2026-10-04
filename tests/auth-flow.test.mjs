@@ -53,6 +53,7 @@ test('signup requires the adult declaration and boundaries before any API call',
   await assert.rejects(flow.signup({ ...validSignup, adult: false }), { code: 'adult' });
   await assert.rejects(flow.signup({ ...validSignup, boundaries: false }), { code: 'boundaries' });
   await assert.rejects(flow.signup({ ...validSignup, name: '' }), { code: 'name' });
+  await assert.rejects(flow.signup({ ...validSignup, gender: '' }), { code: 'gender' });
   assert.equal(calls.length, 0);
 });
 

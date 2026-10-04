@@ -120,7 +120,7 @@ export function createAuthFlow({ auth, recoveryAuth, enabled, clock = Date.now }
       const displayName = String(name ?? '').trim();
       if (displayName.length < 2 || displayName.length > 60) fail('name', 'Enter your name using 2–60 characters.');
       const normalizedGender = String(gender ?? '').trim();
-      if (normalizedGender && !['male','female','other','prefer_not_to_say'].includes(normalizedGender)) fail('gender', 'Choose a valid gender option.');
+      if (!['male','female','other','prefer_not_to_say'].includes(normalizedGender)) fail('gender', 'Choose a gender option to continue.');
       if (adult !== true) fail('adult', 'Sathivo is for adults aged 18 or older.');
       if (boundaries !== true) fail('boundaries', 'Please agree to the platonic-only community boundaries.');
       const address = normalizeEmail(email);
