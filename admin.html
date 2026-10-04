@@ -1,3 +1,194 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex"><title>Sathivo admin</title><link rel="icon" href="assets/favicon.svg"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="marketplace.css?v=20261004-8"><script defer src="assets/vendor/supabase-2.116.0.js"></script><script type="module" src="js/admin-page.js?v=20261004-4"></script><link rel="stylesheet" href="responsive.css?v=20261004-8"><script type="module" src="js/mobile-nav.js?v=20261004-1"></script><script type="module" src="js/header-requests.js?v=20261004-2"></script><script type="module" src="js/header-notifications.js?v=20261004-3"></script></head>
-<body><header class="site-header"><div class="container marketplace-nav"><a class="brand" href="./"><span class="brand-mark">♡</span>sathivo<span class="brand-period">.</span></a><nav><a href="requests.html">Requests</a><a href="bookings.html">Bookings</a><a href="chats.html">Chats</a><a href="notifications.html">Notifications</a><a href="account.html">Account</a></nav></div></header><main class="container marketplace-shell"><section class="page-head"><p class="eyebrow">MODERATION</p><h1>Sathivo admin</h1><p>Only database-authorized admins can view or act here.</p></section><p id="status" role="status" aria-live="polite">Checking access…</p><section id="admin-content" hidden><section class="admin-overview" aria-labelledby="overview-title"><div class="admin-dashboard-head"><div><h2 id="overview-title">Overview</h2><p>Simple live snapshot of Sathivo.</p></div><small id="metrics-updated">Loading…</small></div><div class="admin-stat-grid"><article class="admin-stat-card"><span>Total accounts</span><strong id="metric-accounts">—</strong><small>Accounts created</small></article><article class="admin-stat-card"><span>Bookings today</span><strong id="metric-today-bookings">—</strong><small>Today · India time</small></article><article class="admin-stat-card"><span>Total bookings</span><strong id="metric-total-bookings">—</strong><small>All booking requests</small></article><article class="admin-stat-card"><span>Male users</span><strong id="metric-male">—</strong><small>Saved profile gender</small></article><article class="admin-stat-card"><span>Female users</span><strong id="metric-female">—</strong><small>Saved profile gender</small></article><article class="admin-stat-card admin-stat-online"><span><i></i> Online now</span><strong id="metric-online">0</strong><small>Unique active browsers</small></article></div><p id="gender-note" class="admin-metric-note"></p></section><section class="admin-users"><div class="admin-section-head"><div><h2>Users & Safety IDs</h2><p id="user-count" class="booking-note"></p></div><input id="user-search" type="search" placeholder="Search name, STV ID or internal ID" aria-label="Search users"></div><div id="users" class="booking-list"></div></section><h2>Support requests</h2><div id="support-requests" class="booking-list"></div><h2>Open reports</h2><div id="reports" class="booking-list"></div><h2>Companion listings</h2><div id="listings" class="booking-list"></div></section></main></body></html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="theme-color" content="#111827">
+  <title>Sathivo Admin Dashboard</title>
+  <link rel="icon" href="assets/favicon.svg">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="admin-dashboard.css?v=20261005-1">
+  <script defer src="assets/vendor/supabase-2.116.0.js"></script>
+  <script type="module" src="js/admin-page.js?v=20261005-1"></script>
+</head>
+<body class="admin-body">
+  <div class="admin-app">
+    <aside class="admin-sidebar" id="admin-sidebar">
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-mark">S</div>
+        <div>
+          <strong>Sathivo</strong>
+          <span>Admin Panel</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav" aria-label="Admin navigation">
+        <a class="sidebar-link is-active" href="#overview" data-section="overview">
+          <span class="sidebar-icon">⌂</span><span>Dashboard</span>
+        </a>
+        <a class="sidebar-link" href="#users-section" data-section="users-section">
+          <span class="sidebar-icon">♙</span><span>Users</span>
+        </a>
+        <a class="sidebar-link" href="#support-section" data-section="support-section">
+          <span class="sidebar-icon">?</span><span>Support</span>
+        </a>
+        <a class="sidebar-link" href="#reports-section" data-section="reports-section">
+          <span class="sidebar-icon">!</span><span>Reports</span>
+        </a>
+        <a class="sidebar-link" href="#listings-section" data-section="listings-section">
+          <span class="sidebar-icon">◇</span><span>Companions</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="admin-mini-card">
+          <span class="online-dot" aria-hidden="true"></span>
+          <div>
+            <strong>Administrator</strong>
+            <span id="admin-email">Checking access…</span>
+          </div>
+        </div>
+        <button class="sidebar-logout" id="admin-logout" type="button">Log out</button>
+      </div>
+    </aside>
+
+    <div class="sidebar-backdrop" id="sidebar-backdrop" hidden></div>
+
+    <div class="admin-main">
+      <header class="admin-topbar">
+        <div class="topbar-left">
+          <button class="mobile-menu-btn" id="sidebar-toggle" type="button" aria-label="Open admin menu" aria-expanded="false">☰</button>
+          <div>
+            <span class="topbar-kicker">SATHIVO ADMIN</span>
+            <h1>Dashboard</h1>
+            <p>Live platform overview and moderation controls.</p>
+          </div>
+        </div>
+        <div class="topbar-actions">
+          <span class="live-badge"><i></i> Live</span>
+          <button class="refresh-btn" id="refresh-dashboard" type="button">↻ Refresh</button>
+        </div>
+      </header>
+
+      <main class="admin-content">
+        <div id="status" class="admin-status" role="status" aria-live="polite">Checking admin access…</div>
+
+        <section id="admin-content" hidden>
+          <section class="dashboard-section" id="overview" aria-labelledby="overview-title">
+            <div class="section-heading">
+              <div>
+                <h2 id="overview-title">Overview</h2>
+                <p>Current Sathivo platform activity.</p>
+              </div>
+              <small id="metrics-updated">Loading…</small>
+            </div>
+
+            <div class="metric-grid">
+              <article class="metric-card">
+                <div class="metric-card-top"><span>Total Accounts</span><span class="metric-icon">U</span></div>
+                <strong id="metric-accounts">—</strong>
+                <small>All registered accounts</small>
+              </article>
+              <article class="metric-card">
+                <div class="metric-card-top"><span>Bookings Today</span><span class="metric-icon">T</span></div>
+                <strong id="metric-today-bookings">—</strong>
+                <small>Today · India time</small>
+              </article>
+              <article class="metric-card">
+                <div class="metric-card-top"><span>Total Bookings</span><span class="metric-icon">B</span></div>
+                <strong id="metric-total-bookings">—</strong>
+                <small>All booking requests</small>
+              </article>
+              <article class="metric-card">
+                <div class="metric-card-top"><span>Male Users</span><span class="metric-icon">M</span></div>
+                <strong id="metric-male">—</strong>
+                <small>Saved profile gender</small>
+              </article>
+              <article class="metric-card">
+                <div class="metric-card-top"><span>Female Users</span><span class="metric-icon">F</span></div>
+                <strong id="metric-female">—</strong>
+                <small>Saved profile gender</small>
+              </article>
+              <article class="metric-card metric-online">
+                <div class="metric-card-top"><span>Online Now</span><span class="metric-icon"><i></i></span></div>
+                <strong id="metric-online">0</strong>
+                <small>Unique active browsers</small>
+              </article>
+            </div>
+            <p id="gender-note" class="metric-note"></p>
+          </section>
+
+          <section class="data-panel dashboard-section" id="users-section">
+            <div class="panel-head">
+              <div>
+                <p class="panel-kicker">MEMBERS</p>
+                <h2>Users</h2>
+                <p id="user-count" class="panel-note"></p>
+              </div>
+              <label class="search-box">
+                <span>⌕</span>
+                <input id="user-search" type="search" placeholder="Search name, Safety ID or internal ID" aria-label="Search users">
+              </label>
+            </div>
+            <div class="table-wrap">
+              <table class="admin-table">
+                <thead><tr><th>User</th><th>Safety ID</th><th>Type</th><th>Gender</th><th>Email</th><th>Joined</th><th>Internal ID</th></tr></thead>
+                <tbody id="users"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="data-panel dashboard-section" id="support-section">
+            <div class="panel-head">
+              <div>
+                <p class="panel-kicker">CUSTOMER CARE</p>
+                <h2>Support Requests</h2>
+                <p class="panel-note">Latest user support submissions.</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="admin-table">
+                <thead><tr><th>Subject</th><th>Category</th><th>Email</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="support-requests"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="data-panel dashboard-section" id="reports-section">
+            <div class="panel-head">
+              <div>
+                <p class="panel-kicker">TRUST & SAFETY</p>
+                <h2>Reports</h2>
+                <p class="panel-note">Review open and recent safety reports.</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="admin-table">
+                <thead><tr><th>Reason</th><th>Details</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="reports"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="data-panel dashboard-section" id="listings-section">
+            <div class="panel-head">
+              <div>
+                <p class="panel-kicker">MARKETPLACE</p>
+                <h2>Companion Listings</h2>
+                <p class="panel-note">Moderate public companion profiles.</p>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="admin-table">
+                <thead><tr><th>Companion</th><th>Bio</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="listings"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+  </div>
+</body>
+</html>
