@@ -127,7 +127,7 @@ async function loadBooking(){
  const {data,error}=await client.from('booking_requests').select('*').eq('id',booking.id).single();if(error)throw error;
  booking=data;otherId=user.id===booking.customer_id?booking.companion_id:booking.customer_id;
  const other=user.id===booking.customer_id?booking.companion_display_name:booking.customer_display_name;
- $('chat-title').textContent=other||'Sathivo chat';$('booking-summary').textContent=booking.category+' · '+fmt(booking.requested_for)+' · '+booking.status;syncComposer();
+ $('chat-title').textContent=other||'Sathivo chat';$('booking-summary').textContent=booking.category+' · '+fmt(booking.requested_for)+' · '+booking.status;const deal=$('deal-summary');if(booking.agreed_hourly_rate){const total=Math.round(Number(booking.agreed_hourly_rate)*Number(booking.duration_minutes)/60);deal.textContent='Agreed rate: ₹'+Number(booking.agreed_hourly_rate).toLocaleString('en-IN')+'/hour · Approx. ₹'+total.toLocaleString('en-IN')+' for '+booking.duration_minutes+' minutes. Coordinate the plan here. Payment is made directly between you outside Sathivo; never share a UPI PIN or OTP.';deal.hidden=false}else deal.hidden=true;syncComposer();
 }
 function presenceText(){
  const p=$('presence-status');if(!p)return;
