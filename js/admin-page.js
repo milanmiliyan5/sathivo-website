@@ -123,9 +123,33 @@ function supportRow(r){
 }
 function renderSupport(){
   const q=$('support-search').value.trim().toLowerCase(),status=value('support-status-filter');
-  const rows=supports.filter(r=>(!q||includesAny([r.subject,r.message,r.email,r.category,r.status],q))&&(status==='all'||r.status===status));
+  const rows=supports.filter(r=>r.category!=='feedback'&&(!q||includesAny([r.subject,r.message,r.email,r.category,r.status],q))&&(status==='all'||r.status===status));
   $('support-requests').replaceChildren(...(rows.length?rows.map(supportRow):[emptyRow(6,'No matching support requests.')]));
-  $('support-count').textContent=rows.length+' of '+supports.length+' request'+(supports.length===1?'':'s')+' shown.';
+  const total=supports.filter(r=>r.category!=='feedback').length;
+  $('support-count').textContent=rows.length+' of '+total+' support request'+(total===1?'':'s')+' shown.';
+}
+
+function feedbackRow(r){
+  const tr=node('tr'),copy=node('div',undefined,'primary-cell');
+  copy.append(node('strong',r.subject||'Feedback'),node('small',String(r.message||'').slice(0,120)||'No message'));
+  const stars=r.rating?('★'.repeat(Number(r.rating))+'☆'.repeat(5-Number(r.rating))):'—';
+  const actions=node('div',undefined,'action-group');
+  for(const s of ['reviewed','resolved','closed']){const b=node('button',s,'admin-btn');b.type='button';b.onclick=()=>void setSupport(r.id,s);actions.append(b)}
+  const type=String(r.feedback_type||'other').replaceAll('_',' ');
+  tr.append(td('Rating',node('span',stars,'feedback-stars')),td('Type',type),td('Feedback',copy),td('Email',r.email||'—'),td('Date',fmtDateTime(r.created_at)),td('Status',pill(r.status)),td('Action',actions));
+  return tr;
+}
+function renderFeedback(){
+  const q=$('feedback-search').value.trim().toLowerCase(),status=value('feedback-status-filter'),rating=value('feedback-rating-filter');
+  const all=supports.filter(r=>r.category==='feedback');
+  const rows=all.filter(r=>{
+    const qOk=!q||includesAny([r.subject,r.message,r.email,r.feedback_type,r.status,r.rating],q);
+    const ratingOk=rating==='all'||(rating==='none'?!r.rating:String(r.rating)===rating);
+    return qOk&&ratingOk&&(status==='all'||r.status===status);
+  });
+  $('feedback-requests').replaceChildren(...(rows.length?rows.map(feedbackRow):[emptyRow(7,'No matching feedback yet.')]));
+  $('feedback-count').textContent=rows.length+' of '+all.length+' feedback item'+(all.length===1?'':'s')+' shown.';
+  metric('metric-feedback',all.filter(r=>['open','reviewed'].includes(r.status)).length);
 }
 
 function reportRow(r){
@@ -163,7 +187,7 @@ function renderRecentActivity(){
   const items=[];
   for(const p of profiles)if(p.joined_at)items.push({kind:'USER',title:p.display_name||'New member',detail:'Joined as '+(p.profile_kind||'member'),at:p.joined_at});
   for(const b of bookings)if(b.created_at)items.push({kind:'BOOK',title:(b.customer_display_name||'Customer')+' → '+(b.companion_display_name||'Companion'),detail:(b.category||'Booking')+' · '+(b.status||'unknown'),at:b.created_at});
-  for(const s of supports)if(s.created_at)items.push({kind:'HELP',title:s.subject||'Support request',detail:(s.category||'support')+' · '+(s.status||'unknown'),at:s.created_at});
+  for(const s of supports)if(s.created_at){if(s.category==='feedback')items.push({kind:'FEED',title:s.subject||'Feedback',detail:(s.rating?s.rating+'/5 · ':'')+(s.status||'open'),at:s.created_at});else items.push({kind:'HELP',title:s.subject||'Support request',detail:(s.category||'support')+' · '+(s.status||'unknown'),at:s.created_at});}
   for(const r of reports)if(r.created_at)items.push({kind:'SAFE',title:'Report: '+(r.reason||'other'),detail:r.status||'open',at:r.created_at});
   items.sort((a,b)=>new Date(b.at)-new Date(a.at));
   const top=items.slice(0,10);
@@ -176,14 +200,14 @@ function renderRecentActivity(){
   }));
 }
 
-function renderAll(){renderUsers();renderBookings();renderSupport();renderReports();renderListings();renderRecentActivity()}
+function renderAll(){renderUsers();renderBookings();renderSupport();renderFeedback();renderReports();renderListings();renderRecentActivity()}
 
 async function load(){
   const [rr,ll,pp,ss,bb]=await Promise.all([
     client.from('user_reports').select('id,reporter_id,reported_user_id,booking_id,reason,details,status,created_at').order('created_at',{ascending:false}).limit(250),
     client.from('companion_listings').select('user_id,display_name,bio,published,moderation_status,moderation_note').order('display_name').limit(500),
     client.from('member_profiles').select('user_id,display_name,profile_kind,gender,safety_id,joined_at,email_verified_at').order('joined_at',{ascending:false}).limit(1000),
-    client.from('support_requests').select('id,email,category,subject,message,status,created_at').order('created_at',{ascending:false}).limit(250),
+    client.from('support_requests').select('id,email,category,subject,message,status,rating,feedback_type,created_at').order('created_at',{ascending:false}).limit(500),
     client.from('booking_requests').select('id,customer_id,companion_id,category,meeting_mode,requested_for,duration_minutes,status,created_at,customer_display_name,companion_display_name,listed_hourly_rate,offered_hourly_rate,agreed_hourly_rate').order('created_at',{ascending:false}).limit(500)
   ]);
   const failure=[rr,ll,pp,ss,bb].find(x=>x.error);if(failure)throw failure.error;
@@ -200,6 +224,7 @@ function initUi(){
     ['user-search','input',renderUsers],['user-gender-filter','change',renderUsers],['user-type-filter','change',renderUsers],
     ['booking-search','input',renderBookings],['booking-status-filter','change',renderBookings],['booking-mode-filter','change',renderBookings],
     ['support-search','input',renderSupport],['support-status-filter','change',renderSupport],
+    ['feedback-search','input',renderFeedback],['feedback-rating-filter','change',renderFeedback],['feedback-status-filter','change',renderFeedback],
     ['report-search','input',renderReports],['report-status-filter','change',renderReports],
     ['listing-search','input',renderListings],['listing-status-filter','change',renderListings]
   ];
