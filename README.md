@@ -58,3 +58,8 @@ Sathivo is strictly platonic, for adults 18+ only. No dating services, escort se
 ## Checks performed
 
 JavaScript syntax, local assets, internal links, duplicate HTML IDs, and form/module references are checked. Eighteen automated tests verify the auth flow with a mock transport, including OTP type, recovery-only password changes, expired grants, resend/rate-limit handling, session checks, and the pinned browser SDK export/integrity. These tests do not send emails or create live accounts. Browser rendering and live auth delivery remain unverified; the required acceptance checks are listed in `docs/AUTH_SETUP.md`.
+
+
+## Public legal & support pages — 2026-10-04
+
+Sathivo now publishes Privacy Policy, Terms of Use, Safety & Community Guidelines, Support, and self-service Account Deletion pages. Support requests are submitted through a server-validated Edge Function and are visible only to authorized admins. Account deletion requires a signed-in user, password re-confirmation, matching email, and an explicit DELETE confirmation before server-side removal.

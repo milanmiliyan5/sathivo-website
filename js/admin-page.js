@@ -31,6 +31,20 @@ function startPresence(){
     .on('presence',{event:'leave'},updateOnline)
     .subscribe(status=>{if(status==='SUBSCRIBED')updateOnline()});
 }
+async function setSupport(id,status){
+  const {error}=await client.from('support_requests').update({status}).eq('id',id);
+  $('status').textContent=error?error.message:'Support request updated.';
+  if(!error)await load();
+}
+function supportCard(r){
+  const n=el('article',undefined,'booking-card');
+  const top=el('div',undefined,'booking-top');
+  top.append(el('h3',r.subject),el('span',r.status,'status-pill'));
+  n.append(top,el('p',r.category+' · '+r.email+' · '+fmt(r.created_at),'booking-note'),el('p',r.message,'booking-note'));
+  const a=el('div',undefined,'admin-actions');
+  for(const s of ['reviewed','resolved','closed']){const b=el('button',s,'button button-outline');b.onclick=()=>void setSupport(r.id,s);a.append(b)}
+  n.append(a);return n;
+}
 async function setReport(id,status){
   const {error}=await client.from('user_reports').update({status}).eq('id',id);
   $('status').textContent=error?error.message:'Report updated.';
@@ -73,13 +87,15 @@ function renderUsers(){
   $('user-count').textContent=rows.length+' user'+(rows.length===1?'':'s')+' shown.';
 }
 async function load(){
-  const [rr,ll,pp]=await Promise.all([
+  const [rr,ll,pp,ss]=await Promise.all([
     client.from('user_reports').select('*').order('created_at',{ascending:false}),
     client.from('companion_listings').select('user_id,display_name,bio,published,moderation_status,moderation_note').order('display_name'),
-    client.from('member_profiles').select('user_id,display_name,profile_kind,gender,safety_id,joined_at,email_verified_at').order('display_name')
+    client.from('member_profiles').select('user_id,display_name,profile_kind,gender,safety_id,joined_at,email_verified_at').order('display_name'),
+    client.from('support_requests').select('id,email,category,subject,message,status,created_at').order('created_at',{ascending:false}).limit(100)
   ]);
-  if(rr.error||ll.error||pp.error)throw rr.error||ll.error||pp.error;
+  if(rr.error||ll.error||pp.error||ss.error)throw rr.error||ll.error||pp.error||ss.error;
   profiles=pp.data||[];
+  $('support-requests').replaceChildren(...(ss.data||[]).map(supportCard));
   $('reports').replaceChildren(...(rr.data||[]).map(reportCard));
   $('listings').replaceChildren(...(ll.data||[]).map(listingCard));
   renderUsers();$('admin-content').hidden=false;$('status').textContent='';
