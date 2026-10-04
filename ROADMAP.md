@@ -2,7 +2,7 @@
 
 ## Current status
 
-Core V1 marketplace functionality is implemented: authentication, profiles, public companion discovery, free booking requests, accept/decline/cancel/complete status flow, participant-only chat, notifications, report/block, completed-booking reviews, moderation schema/admin UI, and ad-ready placements. Sathivo does not process payments.
+Core V1 marketplace functionality is implemented: authentication, profiles, public companion discovery, companion-set hourly rates, customer price offers, accept/decline/cancel/complete booking flow, participant-only chat, notifications, report/block, completed-booking reviews, moderation schema/admin UI, and ad-ready placements. Sathivo records listed/offered/agreed hourly rates for coordination but does not process or hold booking payments.
 
 Remaining launch dependencies are mostly verification/testing items rather than core marketplace code: wait for AdSense approval, confirm GitHub Pages HTTPS on `sathivo.co`, confirm a fresh hosted 6-digit email OTP, complete full two-account end-to-end testing, and decide whether third-party identity/age verification belongs in a later release. Leaked-password protection is unavailable on the current Supabase Free plan and can be enabled after upgrading to a supporting plan. The owner admin account is authorized and the admin overview includes live operational counters.
 
