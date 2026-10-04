@@ -14,8 +14,8 @@ async function init(){
   await ensureSdk();if(!globalThis.supabase?.createClient)return;
   const client=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'sathivo.auth.v1'}});
   const u=await client.auth.getUser(),user=u.data.user;if(!user)return;
-  const notificationBadges=[...document.querySelectorAll('a[href="notifications.html"]')].map(a=>addBadge(a,'notification'));
-  const chatBadges=[...document.querySelectorAll('a[href="chats.html"]')].map(a=>addBadge(a,'chat'));
+  const notificationBadges=[...document.querySelectorAll('a[href="notifications.html"]')].filter(a=>!a.closest('.mobile-bottom-nav')).map(a=>addBadge(a,'notification'));
+  const chatBadges=[...document.querySelectorAll('a[href="chats.html"]')].filter(a=>!a.closest('.mobile-bottom-nav')).map(a=>addBadge(a,'chat'));
   const refresh=async()=>{
    const [nq,cq]=await Promise.all([
     client.from('notifications').select('id',{count:'exact',head:true}).eq('user_id',user.id).is('read_at',null),
