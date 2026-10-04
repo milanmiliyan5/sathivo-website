@@ -4,7 +4,7 @@
 
 Core V1 marketplace functionality is implemented: authentication, profiles, public companion discovery, free booking requests, accept/decline/cancel/complete status flow, participant-only chat, notifications, report/block, completed-booking reviews, moderation schema/admin UI, and ad-ready placements. Sathivo does not process payments.
 
-Remaining launch dependencies are external/configuration items rather than core marketplace code: connect an approved ad-network publisher ID, enable leaked-password protection in Supabase Auth, decide whether to add third-party identity/age verification, and verify the final custom-domain deployment. The owner admin account is authorized and the admin overview includes live operational counters.
+Remaining launch dependencies are mostly verification/testing items rather than core marketplace code: wait for AdSense approval, confirm GitHub Pages HTTPS on `sathivo.co`, confirm a fresh hosted 6-digit email OTP, complete full two-account end-to-end testing, and decide whether third-party identity/age verification belongs in a later release. Leaked-password protection is unavailable on the current Supabase Free plan and can be enabled after upgrading to a supporting plan. The owner admin account is authorized and the admin overview includes live operational counters.
 
 ## Confirmed product decisions
 
@@ -30,7 +30,7 @@ Remaining launch dependencies are external/configuration items rather than core 
 | 6 | Administration and moderation | Proposed owner review before profile visibility; approval, rejection, suspension, reports, and access controls |
 | 7 | Booking requests and account dashboards | Implemented: request, accept/decline, cancel, complete and booking list |n, companion acceptance or rejection, status tracking, cancellation and completion |
 | 8 | Booking communication and notifications | Implemented: participant-only chat, realtime refresh and account notifications |n-platform coordination with reporting/blocking and limited contact-data exposure |
-| 9 | Monetization | Payment processing intentionally excluded. Ad-ready placements exist; real publisher credentials are still required |ner chooses fee and payment/refund/payout rules; test transaction and failure handling before real payments |
+| 9 | Monetization | Payment processing intentionally excluded. AdSense publisher credentials are connected; test placeholders remain active while the site is under review |ner chooses fee and payment/refund/payout rules; test transaction and failure handling before real payments |
 | 10 | Launch preparation | Publish service/privacy/cancellation policies and support route; define verification; check privacy boundaries, real user flows, mobile layouts, and launch configuration |
 
 Stages 6, 8, and the detailed commercial/operational rules are proposed plans to discuss with the owner, not settled policies. An 18+ statement or email OTP is not identity/age verification. Do not publish verification or other protection claims before they exist.

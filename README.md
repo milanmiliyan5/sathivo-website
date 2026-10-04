@@ -14,7 +14,7 @@ Website and account integration for an India-wide, adults-only, strictly platoni
 - Blocking and safety reports with RLS-protected data.
 - Completed-booking reviews and safe public rating aggregates.
 - Moderation backend and admin page are implemented; the owner account is authorized in `platform_admins`. The admin overview shows total accounts, today's bookings, total bookings, profile gender counts, and live website presence.
-- Sathivo does not process payments. Current monetization direction is advertising only. Ad placements/config are prepared but disabled until a real approved publisher ID is connected.
+- Sathivo does not process payments. Current monetization direction is advertising only. AdSense publisher ID is connected and the site is under AdSense review. Test ad placeholders remain enabled until Google marks the site Ready/Approved.
 - Identity/age verification is not implemented; profiles remain clearly self-described.
 
 ## Files
@@ -41,7 +41,7 @@ THIRD_PARTY_NOTICES.md       Asset attribution and licensing
 
 No package installation or build step is needed. Serve the repository root with any static HTTP server. External SVG sprites work reliably over HTTP; opening the page through a file:// URL may block them in some browsers. Google Fonts is optional at runtime; local serif and sans-serif fallbacks are included. All imagery and interface icons are local.
 
-The owner enabled GitHub Pages from `main` at `/ (root)`: https://milanmiliyan5.github.io/sathivo-website/. All file paths work under that repository subpath. No custom domain is configured.
+The owner enabled GitHub Pages from `main` at `/ (root)`: https://milanmiliyan5.github.io/sathivo-website/. All file paths work under that repository subpath. The custom domain `sathivo.co` is configured through GitHub Pages and Spaceship DNS. HTTPS certificate provisioning may remain pending until GitHub finishes DNS/certificate checks.
 
 Run `npm test` for automated auth checks and `npm run check` for JavaScript syntax. These commands use Node and do not need dependency installation. `package-lock.json` records the pinned SDK dependency tree; the browser uses the verified local bundle rather than a CDN. No build step is required for GitHub Pages.
 
@@ -53,7 +53,7 @@ Recommended functional order: define the account/data model and service policies
 
 ## Brand and boundaries
 
-Sathivo is strictly platonic, for adults 18+ only. No dating services, escort services, sexual services, sexual offers, or sexual activity. Conversation companionship is not therapy or crisis support. The intended direction is India-wide, with actual local availability dependent on companions joining. `sathivo.co` is a future domain direction, not a configured URL in this release.
+Sathivo is strictly platonic, for adults 18+ only. No dating services, escort services, sexual services, sexual offers, or sexual activity. Conversation companionship is not therapy or crisis support. The intended direction is India-wide, with actual local availability dependent on companions joining. `sathivo.co` is the configured public domain for this release.
 
 ## Checks performed
 
@@ -63,3 +63,13 @@ JavaScript syntax, local assets, internal links, duplicate HTML IDs, and form/mo
 ## Public legal & support pages — 2026-10-04
 
 Sathivo now publishes Privacy Policy, Terms of Use, Safety & Community Guidelines, Support, and self-service Account Deletion pages. Support requests are submitted through a server-validated Edge Function and are visible only to authorized admins. Account deletion requires a signed-in user, password re-confirmation, matching email, and an explicit DELETE confirmation before server-side removal.
+
+
+## Launch status — 2026-10-04
+
+- Custom domain: `sathivo.co` configured.
+- AdSense: publisher connected, ownership verified, review requested; test ads stay on until approval.
+- Supabase plan: Free. Leaked-password protection is unavailable on this plan and can be enabled after upgrading to a plan that supports it.
+- OTP frontend: exactly 6 digits. A fresh live signup should be used to confirm the hosted Auth email is also issuing 6-digit OTPs.
+- Public legal/support/delete-account flows: implemented.
+- Remaining launch gate: live two-account end-to-end testing across signup, profile, discovery, booking, chat/photos, push, completion, review, reporting, support and account deletion.
