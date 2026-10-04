@@ -95,6 +95,7 @@ function bookingRow(b){
     td('Customer',customer),
     td('Companion',companion),
     td('Service',service),
+    td('Price',(()=>{const x=node('div',undefined,'primary-cell');if(b.listed_hourly_rate)x.append(node('strong','Listed ₹'+Number(b.listed_hourly_rate).toLocaleString('en-IN')+'/hr'));if(b.offered_hourly_rate)x.append(node('small','Offer ₹'+Number(b.offered_hourly_rate).toLocaleString('en-IN')+'/hr'));if(b.agreed_hourly_rate)x.append(node('small','Agreed ₹'+Number(b.agreed_hourly_rate).toLocaleString('en-IN')+'/hr'));if(!x.childNodes.length)x.append(node('span','Legacy booking'));return x})()),
     td('Mode',b.meeting_mode==='in-person'?'In person':'Online'),
     td('Requested For',fmtDateTime(b.requested_for)),
     td('Status',pill(b.status)),
@@ -108,7 +109,7 @@ function renderBookings(){
     const qOk=!q||includesAny([b.id,b.customer_display_name,b.companion_display_name,b.customer_id,b.companion_id,b.category,b.meeting_mode,b.status],q);
     return qOk&&(status==='all'||b.status===status)&&(mode==='all'||b.meeting_mode===mode);
   });
-  $('bookings').replaceChildren(...(rows.length?rows.map(bookingRow):[emptyRow(8,'No matching bookings found.')]));
+  $('bookings').replaceChildren(...(rows.length?rows.map(bookingRow):[emptyRow(9,'No matching bookings found.')]));
   $('booking-count').textContent=rows.length+' of '+bookings.length+' loaded booking'+(bookings.length===1?'':'s')+' shown. Latest 500 are loaded.';
 }
 
@@ -183,7 +184,7 @@ async function load(){
     client.from('companion_listings').select('user_id,display_name,bio,published,moderation_status,moderation_note').order('display_name').limit(500),
     client.from('member_profiles').select('user_id,display_name,profile_kind,gender,safety_id,joined_at,email_verified_at').order('joined_at',{ascending:false}).limit(1000),
     client.from('support_requests').select('id,email,category,subject,message,status,created_at').order('created_at',{ascending:false}).limit(250),
-    client.from('booking_requests').select('id,customer_id,companion_id,category,meeting_mode,requested_for,duration_minutes,status,created_at,customer_display_name,companion_display_name').order('created_at',{ascending:false}).limit(500)
+    client.from('booking_requests').select('id,customer_id,companion_id,category,meeting_mode,requested_for,duration_minutes,status,created_at,customer_display_name,companion_display_name,listed_hourly_rate,offered_hourly_rate,agreed_hourly_rate').order('created_at',{ascending:false}).limit(500)
   ]);
   const failure=[rr,ll,pp,ss,bb].find(x=>x.error);if(failure)throw failure.error;
   reports=rr.data||[];listings=ll.data||[];profiles=pp.data||[];supports=ss.data||[];bookings=bb.data||[];
