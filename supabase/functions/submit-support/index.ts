@@ -44,11 +44,17 @@ Deno.serve(async (req) => {
     const category = String(body?.category ?? "").trim();
     const subject = String(body?.subject ?? "").trim();
     const message = String(body?.message ?? "").trim();
+    const ratingValue = Number(body?.rating ?? 0);
+    const rating = Number.isInteger(ratingValue) && ratingValue >= 1 && ratingValue <= 5 ? ratingValue : null;
+    const feedbackType = String(body?.feedback_type ?? "").trim();
+    const allowedFeedbackTypes = new Set(["suggestion","bug","experience","compliment","other"]);
 
     if (!emailRe.test(email)) return Response.json({ error: "Enter a valid email address" }, { status: 400, headers: corsHeaders });
     if (!allowed.has(category)) return Response.json({ error: "Choose a valid support category" }, { status: 400, headers: corsHeaders });
     if (subject.length < 3 || subject.length > 120) return Response.json({ error: "Subject must be 3–120 characters" }, { status: 400, headers: corsHeaders });
     if (message.length < 10 || message.length > 3000) return Response.json({ error: "Message must be 10–3000 characters" }, { status: 400, headers: corsHeaders });
+    if (category === "feedback" && body?.rating !== undefined && rating === null) return Response.json({ error: "Choose a rating from 1 to 5" }, { status: 400, headers: corsHeaders });
+    if (category === "feedback" && feedbackType && !allowedFeedbackTypes.has(feedbackType)) return Response.json({ error: "Choose a valid feedback type" }, { status: 400, headers: corsHeaders });
 
     const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
     const { count, error: countError } = await admin
@@ -73,7 +79,7 @@ Deno.serve(async (req) => {
 
     const { data, error } = await admin
       .from("support_requests")
-      .insert({ user_id: userId, email, category, subject, message })
+      .insert({ user_id: userId, email, category, subject, message, rating: category === "feedback" ? rating : null, feedback_type: category === "feedback" && feedbackType ? feedbackType : null })
       .select("id")
       .single();
     if (error) throw error;
