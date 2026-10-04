@@ -51,13 +51,13 @@ function bookingMessage(event, b) {
   if (event === "request") return {
     target: b.companion_id,
     title: "New booking request",
-    body: `${b.customer_display_name || "Someone"} sent you a ${b.category} request.`,
+    body: `${b.customer_display_name || "Someone"} sent you a ${b.category} request${b.offered_hourly_rate ? ` with an offer of ₹${Number(b.offered_hourly_rate).toLocaleString("en-IN")}/hour` : ""}.`,
     url: `requests.html?id=${b.id}`,
   };
   if (event === "accepted") return {
     target: b.customer_id,
     title: "Request accepted ✅",
-    body: `${b.companion_display_name || "Your companion"} accepted your request. Chat and photo sharing are now open.`,
+    body: `${b.companion_display_name || "Your companion"} accepted your request${b.agreed_hourly_rate ? ` at ₹${Number(b.agreed_hourly_rate).toLocaleString("en-IN")}/hour` : ""}. Chat and photo sharing are now open.`,
     url: `chat.html?booking=${b.id}`,
   };
   if (event === "declined") return {
@@ -154,7 +154,7 @@ Deno.serve(async (req) => {
 
     const { data: booking, error: bookingError } = await userClient
       .from("booking_requests")
-      .select("id,customer_id,companion_id,customer_display_name,companion_display_name,category,status")
+      .select("id,customer_id,companion_id,customer_display_name,companion_display_name,category,status,offered_hourly_rate,agreed_hourly_rate")
       .eq("id", bookingId)
       .single();
     if (bookingError || !booking) return Response.json({ error: "Booking unavailable" }, { status: 404, headers: corsHeaders });
