@@ -8,13 +8,13 @@ Website and account integration for an India-wide, adults-only, strictly platoni
 - Supabase email/password authentication with email OTP verification and password recovery.
 - Private member profile editor with photo upload and India location hierarchy.
 - Explicit opt-in public companion listings with filters and public detail pages.
-- Free booking-request flow: customer sends an experience/date/time request; companion can accept or decline; customer can cancel; companion can mark accepted bookings completed.
+- Negotiated booking flow: companion sets an hourly rate; customer sends an experience/date/time request with an hourly offer; acceptance locks the offered rate as the agreed rate; customer can cancel; companion can mark accepted bookings completed.
 - Participant-only booking chat with realtime updates.
 - Account notifications for booking and message events.
 - Blocking and safety reports with RLS-protected data.
 - Completed-booking reviews and safe public rating aggregates.
 - Moderation backend and admin page are implemented; the owner account is authorized in `platform_admins`. The admin overview shows total accounts, today's bookings, total bookings, profile gender counts, and live website presence.
-- Sathivo does not process payments. Current monetization direction is advertising only. AdSense publisher ID is connected and the site is under AdSense review. Test ad placeholders remain enabled until Google marks the site Ready/Approved.
+- Sathivo records listed/offered/agreed rates for coordination but does not collect or process booking payments. Current monetization direction is advertising only. AdSense publisher ID is connected and the site is under AdSense review. Test ad placeholders remain enabled until Google marks the site Ready/Approved.
 - Identity/age verification is not implemented; profiles remain clearly self-described.
 
 ## Files
