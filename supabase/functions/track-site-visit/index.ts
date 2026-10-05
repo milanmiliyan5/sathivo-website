@@ -77,6 +77,21 @@ Deno.serve(async req=>{
 
     const visitorHash=await sha256(visitorId),now=new Date().toISOString(),date=indiaDate();
 
+    // A client-generated UUID is useful for browser uniqueness, but it must not let one
+    // device manufacture unlimited "new visitors". Existing visitors can refresh freely
+    // within the normal request limits; brand-new visitor IDs are capped per fingerprint.
+    const existing=await admin.from("site_visitors").select("visitor_hash").eq("visitor_hash",visitorHash).maybeSingle();
+    if(existing.error)throw existing.error;
+    if(!existing.data){
+      const fresh=await admin.rpc("consume_edge_rate_limit_server",{
+        p_scope:"site-visitor-new-day",p_key_hash:fingerprint,p_window_seconds:86400,p_limit:5
+      });
+      if(fresh.error)throw fresh.error;
+      if(fresh.data!==true){
+        return Response.json({ok:true,throttled:true},{headers:{...headers,"Content-Type":"application/json","Cache-Control":"no-store"}});
+      }
+    }
+
     const [allTime,daily]=await Promise.all([
       admin.from("site_visitors").upsert({visitor_hash:visitorHash,last_seen:now,last_page:page},{onConflict:"visitor_hash"}),
       admin.from("site_daily_visitors").upsert({visit_date:date,visitor_hash:visitorHash,last_seen:now,last_page:page},{onConflict:"visit_date,visitor_hash"})
