@@ -1,5 +1,6 @@
-import { setupPublishing } from './listing-publish.js?v=20261005-1';
+import { setupPublishing } from './listing-publish.js?v=20261006-2';
 import { authConfig } from './auth-config.js?v=20260926-1';
+import { avatarOptions, avatarMarker, avatarAsset, isBuiltinAvatar } from './avatar-utils.js?v=20261006-1';
 const $ = id => document.getElementById(id);
 const form = $('profile-form');
 const categories = ['Conversation','Coffee','Movies','Shopping','Events','Walking','Online chat','Phone conversation'];
@@ -18,6 +19,28 @@ categories.forEach(value=>{
   const label=document.createElement('label'), input=document.createElement('input');
   input.type='checkbox';input.name='categories';input.value=value;
   label.append(input,document.createTextNode(value));$('categories').append(label);
+});
+const avatarChoices=$('avatar-choices');
+avatarOptions.forEach(item=>{
+  const button=document.createElement('button'), image=document.createElement('img');
+  button.type='button';button.className='avatar-choice';button.dataset.avatar=item.id;button.setAttribute('aria-label','Use '+item.label);button.setAttribute('aria-pressed','false');
+  image.src=item.src;image.alt='';image.loading='lazy';button.append(image);avatarChoices.append(button);
+});
+function syncAvatarChoice(){
+  const current=isBuiltinAvatar(avatarPath)?avatarPath.slice(8):'';
+  avatarChoices.querySelectorAll('.avatar-choice').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.avatar===current&&!$('photo').files[0])));
+}
+avatarChoices.addEventListener('click',event=>{
+  const button=event.target.closest('.avatar-choice');if(!button)return;
+  avatarPath=avatarMarker(button.dataset.avatar);$('photo').value='';dirty=true;syncAvatarChoice();void showPhoto(avatarPath);updateCompleteness();
+  message('Avatar selected. Save your profile to keep it.');
+});
+let localPreviewUrl=null;
+$('photo').addEventListener('change',()=>{
+  const file=$('photo').files[0];
+  if(!file){syncAvatarChoice();updateCompleteness();return;}
+  if(localPreviewUrl)URL.revokeObjectURL(localPreviewUrl);
+  localPreviewUrl=URL.createObjectURL(file);$('avatar').src=localPreviewUrl;$('avatar').hidden=false;syncAvatarChoice();updateCompleteness();
 });
 function isCompanionKind(){return ['companion','both'].includes($('profile_kind').value)}
 function syncRateField(){const companion=isCompanionKind();$('hourly-rate-field').hidden=!companion;$('hourly_rate').required=companion;if(!companion)$('hourly_rate').value='';updateCompleteness()}
@@ -49,9 +72,11 @@ form.addEventListener('input',()=>{dirty=true;updateCompleteness();});
 form.addEventListener('change',e=>{if(e.target.id==='profile_kind')syncRateField();else updateCompleteness();});
 window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
 async function showPhoto(path) {
+  const builtIn=avatarAsset(path);
+  if(builtIn){$('avatar').src=builtIn;$('avatar').hidden=false;syncAvatarChoice();return;}
   const {data,error}=await client.storage.from('profile-photos').createSignedUrl(path,300);
   if(error) { message('Profile loaded, but the photo could not load. You can try again by refreshing.',true); return; }
-  $('avatar').src=data.signedUrl;$('avatar').hidden=false;
+  $('avatar').src=data.signedUrl;$('avatar').hidden=false;syncAvatarChoice();
 }
 async function photoBlob(file) {
   if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024) throw Error('Choose a JPG, PNG or WebP photo under 5 MB.');
@@ -83,8 +108,8 @@ form.addEventListener('submit',async event=>{
     row.avatar_path=avatarPath;
     const {data,error}=await client.from('member_profiles').upsert(row,{onConflict:'user_id'}).select('user_id,safety_id,joined_at,email_verified_at').single();
     if(error||!data)throw Error('Profile could not be saved. Check your connection and try again.');
-    dirty=false;$('photo').value='';showSystemInfo(data);message('Your profile is saved. You can come back and edit it anytime.');
-    if(avatarPath)await showPhoto(avatarPath);updateCompleteness();
+    dirty=false;$('photo').value='';if(localPreviewUrl){URL.revokeObjectURL(localPreviewUrl);localPreviewUrl=null;}showSystemInfo(data);message('Your profile is saved. You can come back and edit it anytime.');
+    if(avatarPath)await showPhoto(avatarPath);else{$('avatar').hidden=true;syncAvatarChoice();}updateCompleteness();
   }catch(error){message(error.message||'Could not save your profile. Please try again.',true);}
   finally{$('fields').disabled=false;$('profile-status').focus();}
 });
