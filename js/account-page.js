@@ -1,6 +1,7 @@
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { createAuthFlow } from './auth-flow.js?v=20261004-2';
 import { createAuthFetch } from './auth-transport.js?v=20260926-1';
+import { getSathivoClient, ensureSupabaseSdk, onAuthTransport } from './supabase-client.js?v=20261006-1';
 
 const panels = [...document.querySelectorAll('[data-panel]')];
 const tabs = document.querySelector('#account-tabs');
@@ -238,27 +239,21 @@ if (hadTokenUrl) announce('Use the verification code from your email on this pag
 async function initialize() {
   if (!authConfig.accountsEnabled) return;
   try {
-    // Load the vendored browser bundle as a classic script: its `var supabase`
-    // belongs on window, not in an ES module's private scope.
-    await new Promise((resolve, reject) => {
-      const script = document.createElement('script');
-      script.src = new URL('../assets/vendor/supabase-2.116.0.js', import.meta.url).href;
-      script.onload = resolve;
-      script.onerror = reject;
-      document.head.append(script);
-    });
+    await ensureSupabaseSdk();
     if (!globalThis.supabase?.createClient) throw new Error('SDK unavailable');
-    const authFetch = createAuthFetch({
-      supabaseUrl: authConfig.supabaseUrl,
+    const stopAuthTransport = onAuthTransport({
       report: event => console.info('[Sathivo Auth]', JSON.stringify(event)),
       onSendRateLimit: seconds => flow?.deferEmailRequests(seconds),
     });
-    const client = globalThis.supabase.createClient(authConfig.supabaseUrl, authConfig.publishableKey, {
-      global: { fetch: authFetch },
-      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: false, storageKey: 'sathivo.auth.v1' },
+    window.addEventListener('pagehide', stopAuthTransport, { once: true });
+    const client = await getSathivoClient();
+    const recoveryFetch = createAuthFetch({
+      supabaseUrl: authConfig.supabaseUrl,
+      report: event => console.info('[Sathivo Recovery]', JSON.stringify(event)),
+      onSendRateLimit: seconds => flow?.deferEmailRequests(seconds),
     });
     const recoveryClient = globalThis.supabase.createClient(authConfig.supabaseUrl, authConfig.publishableKey, {
-      global: { fetch: authFetch },
+      global: { fetch: recoveryFetch },
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'sathivo.recovery.v1' },
     });
     flow = createAuthFlow({ auth: client.auth, recoveryAuth: recoveryClient.auth, enabled: true });
