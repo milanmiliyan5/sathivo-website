@@ -1,12 +1,6 @@
-import {authConfig} from './auth-config.js?v=20260926-1';
+import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 const VAPID_PUBLIC_KEY='BKZgH_Qwry4r7h6n5YfFFsB_PslPCB_QNmavbjs4dxSnZe1YbmOiDJWsBOjnQcDBHUIcYEtHY6apcDVBUQrdYLs';
 let client,currentUser=null;
-async function ensureSdk(){
- if(globalThis.supabase?.createClient)return;
- const existing=[...document.scripts].find(s=>s.src&&s.src.includes('assets/vendor/supabase-2.116.0.js'));
- if(existing){await new Promise((resolve,reject)=>{if(globalThis.supabase?.createClient){resolve();return}existing.addEventListener('load',resolve,{once:true});existing.addEventListener('error',reject,{once:true})});return}
- await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='assets/vendor/supabase-2.116.0.js';s.onload=resolve;s.onerror=reject;document.head.append(s)});
-}
 const boxes=[...document.querySelectorAll('[data-push-settings]')];
 
 function base64UrlToUint8Array(value){
@@ -87,9 +81,7 @@ async function disable(){
 }
 async function init(){
  if(!boxes.length)return;
- try{await ensureSdk()}catch{setUI('Notification services could not load.','error',false);return}
- if(!globalThis.supabase){setUI('Notification services could not load.','error',false);return}
- client=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'sathivo.auth.v1'}});
+ try{client=await getSathivoClient()}catch{setUI('Notification services could not load.','error',false);return}
  const u=await client.auth.getUser();currentUser=u.data.user||null;
  boxes.forEach(box=>{box.querySelector('[data-push-toggle]')?.addEventListener('click',()=>void(box.querySelector('[data-push-toggle]').dataset.enabled==='true'?disable():enable()));box.querySelector('[data-push-test]')?.addEventListener('click',()=>void testPush())});
  client.auth.onAuthStateChange((_event,session)=>{currentUser=session?.user||null;void sync()});
