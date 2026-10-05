@@ -280,3 +280,56 @@ body.sathivo-2d:not(.home-2d).site-motion-ready [data-site-slide].site-visible{o
 @media(prefers-reduced-motion:reduce){
   body.sathivo-2d:not(.home-2d).site-motion-ready [data-site-slide]{opacity:1!important;transform:none!important;transition:none!important}
 }
+
+/* Tactile click / tap zoom effect — intentionally limited to interactive controls. */
+body.sathivo-2d:not(.home-2d) .button,
+body.sathivo-2d:not(.home-2d) .text-link,
+body.sathivo-2d:not(.home-2d) .directory-nav a,
+body.sathivo-2d:not(.home-2d) .marketplace-nav a,
+body.sathivo-2d:not(.home-2d) .profile-nav a,
+body.sathivo-2d:not(.home-2d) .account-nav a,
+body.sathivo-2d:not(.home-2d) .legal-top-links a,
+body.sathivo-2d:not(.home-2d) .booking-tabs button,
+body.sathivo-2d:not(.home-2d) .chat-list-card,
+body.sathivo-2d:not(.home-2d) .support-help>a,
+body.sathivo-2d:not(.home-2d) .rating-options label>span,
+body.sathivo-2d:not(.home-2d) .mobile-bottom-nav a,
+body.sathivo-2d:not(.home-2d) .request-bell,
+body.sathivo-2d:not(.home-2d) .notification-link{
+  transform-origin:center;
+  transition:transform .14s cubic-bezier(.2,.8,.2,1),box-shadow .14s ease,background .14s ease;
+}
+body.sathivo-2d:not(.home-2d) .button:active{
+  transform:translate(3px,3px) scale(.96)!important;
+  box-shadow:1px 1px 0 var(--d2-plum)!important;
+}
+body.sathivo-2d:not(.home-2d) .text-link:active,
+body.sathivo-2d:not(.home-2d) .directory-nav a:active,
+body.sathivo-2d:not(.home-2d) .marketplace-nav a:active,
+body.sathivo-2d:not(.home-2d) .profile-nav a:active,
+body.sathivo-2d:not(.home-2d) .account-nav a:active,
+body.sathivo-2d:not(.home-2d) .legal-top-links a:active,
+body.sathivo-2d:not(.home-2d) .mobile-bottom-nav a:active,
+body.sathivo-2d:not(.home-2d) .notification-link:active{
+  transform:scale(.95)!important;
+}
+body.sathivo-2d:not(.home-2d) .booking-tabs button:active,
+body.sathivo-2d:not(.home-2d) .request-bell:active{
+  transform:translate(2px,2px) scale(.94)!important;
+  box-shadow:1px 1px 0 #d7b7c4!important;
+}
+body.sathivo-2d:not(.home-2d) .chat-list-card:active,
+body.sathivo-2d:not(.home-2d) .support-help>a:active{
+  transform:scale(.985)!important;
+  box-shadow:2px 2px 0 rgba(93,48,72,.1)!important;
+}
+body.sathivo-2d:not(.home-2d) .rating-options label:active>span{
+  transform:scale(.9);
+  box-shadow:1px 1px 0 #d7b7c4;
+}
+@media(prefers-reduced-motion:reduce){
+  body.sathivo-2d:not(.home-2d) .button:active,
+  body.sathivo-2d:not(.home-2d) .text-link:active,
+  body.sathivo-2d:not(.home-2d) .chat-list-card:active,
+  body.sathivo-2d:not(.home-2d) .mobile-bottom-nav a:active{transform:none!important}
+}
