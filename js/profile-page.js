@@ -13,7 +13,7 @@ function options(select, items, placeholder) {
 }
 function states() { options($('state'), [...new Set(locations.map(r=>r.state))].sort().map(v=>[v,v]),'Choose your state / UT'); }
 function districts() { options($('district'), [...new Set(locations.filter(r=>r.state===$('state').value).map(r=>r.district))].sort().map(v=>[v,v]),'Choose district'); cities(); }
-function cities() { options($('location_id'), locations.filter(r=>r.state===$('state').value&&r.district===$('district').value).map(r=>[r.id,r.city]),'Choose city / town'); }
+function cityLabel(row){return row.city==='District-wide'?`District-wide / my city isn't listed`:row.city;}\nfunction cities() { options($('location_id'), locations.filter(r=>r.state===$('state').value&&r.district===$('district').value).map(r=>[r.id,cityLabel(r)]),'Choose city / town'); }
 $('state').addEventListener('change',districts);
 $('district').addEventListener('change',cities);
 categories.forEach(value=>{
