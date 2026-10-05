@@ -13,7 +13,7 @@ Website and account integration for an India-wide, adults-only, strictly platoni
 - Account notifications for booking and message events.
 - Blocking and safety reports with RLS-protected data.
 - Completed-booking reviews and safe public rating aggregates.
-- Moderation backend and admin page are implemented; the owner account is authorized in `platform_admins`. The admin overview shows total accounts, today's bookings, total bookings, profile gender counts, and live website presence.
+- Moderation backend and admin page are implemented; the owner account is authorized in `platform_admins`. The admin overview shows total accounts, today's bookings, total bookings, profile gender counts, unique visitors today, total unique visitors, and live website presence.
 - Sathivo records listed/offered/agreed rates for coordination but does not collect or process booking payments. Current monetization direction is advertising only. AdSense publisher ID is connected and the site is under AdSense review. Test ad placeholders remain enabled until Google marks the site Ready/Approved.
 - Identity/age verification is not implemented; profiles remain clearly self-described.
 
@@ -83,3 +83,11 @@ Sathivo now publishes Privacy Policy, Terms of Use, Safety & Community Guideline
 - If the companion accepts, the customer offer is locked as the agreed hourly rate for that booking.
 - Sathivo records the listed/offer/agreed rates only for coordination. It does not collect, hold, settle or refund booking payments.
 - Users arrange any lawful cash/UPI/direct payment themselves outside Sathivo. UPI PINs, OTPs and banking credentials must never be shared.
+
+
+## Visitor analytics — 2026-10-05
+
+- Admin dashboard shows Today Visitors, Total Visitors and Online Now.
+- Today/Total visitor counters use a locally generated browser UUID that is SHA-256 hashed server-side before storage.
+- The same browser is counted once per India calendar day for Today Visitors and once overall for Total Visitors; another browser/device or cleared site storage may count separately.
+- Visitor counters start from the deployment of this analytics feature; historical visits before tracking was enabled are not reconstructed.
