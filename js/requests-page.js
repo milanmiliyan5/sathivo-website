@@ -1,4 +1,4 @@
-import {authConfig} from './auth-config.js?v=20260926-1';
+import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
 const $=id=>document.getElementById(id);let client,user,rows=[],filter='pending',channel;
 const fmt=d=>new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d));
@@ -31,7 +31,7 @@ async function load(){
 async function update(id,status){$('status').textContent=status==='accepted'?'Accepting request…':'Updating request…';const {error}=await client.from('booking_requests').update({status}).eq('id',id);if(error){$('status').textContent=error.message;return}$('status').textContent='Sending notification…';await sendBookingPush(client,id,status);if(status==='accepted'){location.href='chat.html?booking='+encodeURIComponent(id);return}await load()}
 async function markLinkedNotification(){const id=new URL(location.href).searchParams.get('id');if(!id)return;await client.from('notifications').update({read_at:new Date().toISOString()}).eq('user_id',user.id).eq('link','requests.html?id='+id).is('read_at',null)}
 async function init(){try{
- if(!globalThis.supabase)throw Error('Services unavailable');client=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'sathivo.auth.v1'}});
+ client=await getSathivoClient();
  const u=await client.auth.getUser();user=u.data.user;if(!user){location.replace('account.html#login');return}
  document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));render()});
  await markLinkedNotification();await load();
