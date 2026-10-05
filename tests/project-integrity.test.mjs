@@ -58,3 +58,19 @@ test('important schema migrations are tracked in GitHub', async()=>{
     assert.ok(names.some(name=>name.endsWith(suffix)),suffix+' is missing');
   }
 });
+
+
+test('public Edge Functions keep server-side abuse controls', async()=>{
+  const visitor=await read('supabase/functions/track-site-visit/index.ts');
+  assert.match(visitor,/site-visit-hour/);
+  assert.match(visitor,/site-visit-day/);
+  assert.match(visitor,/site-visitor-new-day/);
+  assert.match(visitor,/p_limit:5/);
+  assert.match(visitor,/originAllowed/);
+
+  const support=await read('supabase/functions/submit-support/index.ts');
+  assert.match(support,/support-hour/);
+  assert.match(support,/support-day/);
+  assert.match(support,/website/);
+  assert.match(support,/originAllowed/);
+});
