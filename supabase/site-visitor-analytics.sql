@@ -22,7 +22,15 @@ create table if not exists public.site_daily_visitors(
 alter table public.site_visitors enable row level security;
 alter table public.site_daily_visitors enable row level security;
 
--- Live DB revokes public/anon/authenticated access and grants only the
--- service_role access needed by the server-side tracking/stat functions.
--- Admin dashboard statistics are returned through the admin-only
+revoke all on table public.site_visitors from public, anon, authenticated;
+revoke all on table public.site_daily_visitors from public, anon, authenticated;
+grant select, insert, update on table public.site_visitors to service_role;
+grant select, insert, update on table public.site_daily_visitors to service_role;
+
+create policy site_visitors_deny_clients on public.site_visitors
+for all to anon, authenticated using (false) with check (false);
+create policy site_daily_visitors_deny_clients on public.site_daily_visitors
+for all to anon, authenticated using (false) with check (false);
+
+-- Admin dashboard statistics are returned only through the admin-authorized
 -- admin-dashboard-stats Edge Function.
