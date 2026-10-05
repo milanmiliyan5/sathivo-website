@@ -267,3 +267,43 @@ body.home-2d{
   .home-2d.sathivo-motion-ready [data-slide]{opacity:1!important;transform:none!important;transition:none!important}
   .home-2d .hero-copy.is-visible,.home-2d .hero-visual.is-visible{animation:none!important}
 }
+
+/* Tactile click / tap zoom effect for the homepage. */
+.home-2d .button,
+.home-2d .text-link,
+.home-2d nav a,
+.home-2d .experience-card,
+.home-2d .more-experiences button,
+.home-2d .faq-items summary,
+.home-2d .mobile-bottom-nav a,
+.home-2d .request-bell,
+.home-2d .notification-link{
+  transform-origin:center;
+  transition:transform .14s cubic-bezier(.2,.8,.2,1),box-shadow .14s ease,background .14s ease;
+}
+.home-2d .button:active{
+  transform:translate(3px,3px) scale(.96)!important;
+  box-shadow:1px 1px 0 var(--d2-plum)!important;
+}
+.home-2d .text-link:active,
+.home-2d nav a:active,
+.home-2d .mobile-bottom-nav a:active,
+.home-2d .notification-link:active{
+  transform:scale(.95)!important;
+}
+.home-2d .experience-card:active{
+  transform:translate(3px,3px) scale(.975)!important;
+  box-shadow:2px 2px 0 rgba(93,48,72,.16)!important;
+}
+.home-2d .more-experiences button:active,
+.home-2d .request-bell:active{
+  transform:translate(2px,2px) scale(.94)!important;
+  box-shadow:1px 1px 0 #d8bcc7!important;
+}
+.home-2d .faq-items summary:active{transform:scale(.985)!important}
+@media(prefers-reduced-motion:reduce){
+  .home-2d .button:active,
+  .home-2d .text-link:active,
+  .home-2d .experience-card:active,
+  .home-2d .mobile-bottom-nav a:active{transform:none!important}
+}
