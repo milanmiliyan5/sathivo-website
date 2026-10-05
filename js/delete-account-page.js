@@ -1,10 +1,10 @@
-import {authConfig} from './auth-config.js?v=20260926-1';
+import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 const $=id=>document.getElementById(id);
 let client,user;
 function status(message,tone='info'){const n=$('delete-status');n.textContent=message;n.dataset.tone=tone}
 async function init(){
-  if(!globalThis.supabase){status('Account services could not load.','error');return}
-  client=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'sathivo.auth.v1'}});
+  
+  client=await getSathivoClient();
   const res=await client.auth.getUser();user=res.data.user||null;
   if(!user?.email){$('delete-signed-out').hidden=false;status('Sign in to delete your Sathivo account.');return}
   $('delete-email').textContent=user.email;$('delete-form').hidden=false;status('Re-enter your password and confirmations below.');
