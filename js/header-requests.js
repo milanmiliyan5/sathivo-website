@@ -1,10 +1,4 @@
-import {authConfig} from './auth-config.js?v=20260926-1';
-async function ensureSdk(){
- if(globalThis.supabase?.createClient)return;
- const existing=[...document.scripts].find(s=>s.src&&s.src.includes('assets/vendor/supabase-2.116.0.js'));
- if(existing){await new Promise((resolve,reject)=>{if(globalThis.supabase?.createClient){resolve();return}existing.addEventListener('load',resolve,{once:true});existing.addEventListener('error',reject,{once:true})});return}
- await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='assets/vendor/supabase-2.116.0.js';s.onload=resolve;s.onerror=reject;document.head.append(s)});
-}
+import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 function createBell(){
  const a=document.createElement('a');a.className='request-bell';a.href='requests.html';a.setAttribute('aria-label','Incoming requests');
  a.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span class="request-badge" hidden>0</span>';
@@ -21,8 +15,7 @@ function placeBell(bell){
 }
 async function init(){
  try{
-  await ensureSdk();if(!globalThis.supabase?.createClient)return;
-  const client=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'sathivo.auth.v1'}});
+  const client=await getSathivoClient();
   const u=await client.auth.getUser(),user=u.data.user;if(!user)return;
   const bell=createBell();if(!placeBell(bell))return;const badge=bell.querySelector('.request-badge');
   const refresh=async()=>{const {count,error}=await client.from('booking_requests').select('id',{count:'exact',head:true}).eq('companion_id',user.id).eq('status','pending');if(error)return;const n=count||0;badge.textContent=n>99?'99+':String(n);badge.hidden=n===0;bell.setAttribute('aria-label',n?(String(n)+' incoming request'+(n===1?'':'s')):'No pending incoming requests')};
