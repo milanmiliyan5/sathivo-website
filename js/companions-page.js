@@ -1,4 +1,4 @@
-import {authConfig} from './auth-config.js?v=20260926-1';
+import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
 import {avatarAsset} from './avatar-utils.js?v=20261006-1';
 const $=id=>document.getElementById(id), directory=!!$('filters');
@@ -81,7 +81,7 @@ async function detail(){
 }
 async function init(){try{
  if(!globalThis.supabase)throw Error();
- client=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'sathivo.auth.v1'}});
+ client=await getSathivoClient();
  const [loc,u]=await Promise.all([client.from('profile_locations').select('*').order('state'),client.auth.getUser()]);if(loc.error)throw loc.error;locations=loc.data;currentUser=u.data?.user||null;
  if(directory){opts('state',[...new Set(locations.map(r=>r.state))].sort().map(v=>[v,v]),'All states / UTs');districts();
  ['Conversation','Coffee','Movies','Shopping','Events','Walking','Online chat','Phone conversation'].forEach(v=>$('category').add(new Option(v,v)));
