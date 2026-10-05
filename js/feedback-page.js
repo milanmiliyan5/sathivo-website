@@ -1,10 +1,10 @@
-import {authConfig} from './auth-config.js?v=20260926-1';
+import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 const $=id=>document.getElementById(id);
 let client;
 function status(message,tone='info'){const n=$('feedback-status');n.textContent=message;n.dataset.tone=tone}
 async function init(){
-  if(!globalThis.supabase){status('Feedback services could not load. Please try again.','error');return}
-  client=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'sathivo.auth.v1'}});
+  
+  client=await getSathivoClient();
   const u=await client.auth.getUser();
   if(u.data.user?.email)$('feedback-email').value=u.data.user.email;
   $('feedback-form').addEventListener('submit',submit);
