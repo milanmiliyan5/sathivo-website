@@ -1,5 +1,6 @@
 import { setupPublishing } from './listing-publish.js?v=20261006-2';
 import { authConfig } from './auth-config.js?v=20260926-1';
+import { getSathivoClient } from './supabase-client.js?v=20261006-1';
 import { avatarOptions, avatarMarker, avatarAsset, isBuiltinAvatar } from './avatar-utils.js?v=20261006-1';
 const $ = id => document.getElementById(id);
 const form = $('profile-form');
@@ -115,8 +116,8 @@ form.addEventListener('submit',async event=>{
 });
 async function init(){
   try{
-    if(!authConfig.accountsEnabled||!globalThis.supabase)throw Error('Profile services could not load. Please refresh.');
-    client=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'sathivo.auth.v1'}});
+    if(!authConfig.accountsEnabled)throw Error('Profile services could not load. Please refresh.');
+    client=await getSathivoClient();
     const result=await client.auth.getUser();user=result.data?.user;
     if(!user){message('Sign in to create or edit your free profile.');$('signin').hidden=false;return;}
     const [loc,profile]=await Promise.all([client.from('profile_locations').select('*').order('state'),client.from('member_profiles').select('*').eq('user_id',user.id).maybeSingle()]);
