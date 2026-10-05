@@ -7,7 +7,8 @@ let client,locations=[],page=0,request=0,currentUser=null;
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
 function opts(id,rows,title){$(id).replaceChildren(new Option(title,''));rows.forEach(([v,t])=>$(id).add(new Option(t,String(v))));}
 function matching(){return locations.filter(r=>(!$('state').value||r.state===$('state').value)&&(!$('district').value||r.district===$('district').value));}
-function cityFilterLabel(r){return (r.city==='District-wide'?r.district+' district-wide':r.city)+' · '+r.state;}\nfunction cities(){opts('city',matching().map(r=>[r.id,cityFilterLabel(r)]),'All cities / towns');}
+function cityFilterLabel(r){return (r.city==='District-wide'?r.district+' district-wide':r.city)+' · '+r.state;}
+function cities(){opts('city',matching().map(r=>[r.id,cityFilterLabel(r)]),'All cities / towns');}
 function districts(){opts('district',[...new Set(locations.filter(r=>!$('state').value||r.state===$('state').value).map(r=>r.district))].sort().map(v=>[v,v]),'All districts');cities();}
 function locationName(id){const r=locations.find(r=>r.id===id);if(!r)return 'Location unavailable';return r.city==='District-wide'?[r.district+' district',r.state].join(' · '):[r.city,r.district,r.state].join(' · ');}
 function tags(row){const n=el('div',undefined,'tags');[{'online':'Online','in-person':'In person','both':'Online & in person'}[row.meeting_mode],...row.categories].forEach(v=>n.append(el('span',v)));return n;}
