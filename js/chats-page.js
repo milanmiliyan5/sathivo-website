@@ -1,4 +1,4 @@
-import {authConfig} from './auth-config.js?v=20260926-1';
+import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 const $=id=>document.getElementById(id);
 let client,user,messageChannel,bookingChannel;
 const el=(t,x,c)=>{const n=document.createElement(t);if(x!==undefined)n.textContent=x;if(c)n.className=c;return n};
@@ -25,8 +25,8 @@ async function load(){
  const rows=data||[];$('chats').replaceChildren(...rows.map(card));$('empty').hidden=rows.length>0;$('status').textContent=rows.length?rows.length+' chat'+(rows.length===1?'':'s'):'';
 }
 async function init(){try{
- if(!globalThis.supabase)throw Error('Services unavailable');
- client=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'sathivo.auth.v1'}});
+ 
+ client=await getSathivoClient();
  const u=await client.auth.getUser();user=u.data.user;if(!user){location.replace('account.html#login');return}
  await load();
  messageChannel=client.channel('chats-inbox-messages:'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_messages'},()=>void load()).subscribe();
