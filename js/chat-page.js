@@ -1,4 +1,4 @@
-import {authConfig} from './auth-config.js?v=20260926-1';
+import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 import {sendMessagePush} from './push-events.js?v=20261004-2';
 
 const $=id=>document.getElementById(id);
@@ -188,8 +188,8 @@ function protectPrivateMedia(){
  window.addEventListener('blur',()=>{if(viewerIsOnce&&mediaViewer&&!mediaViewer.hidden)closeViewer()});
 }
 async function init(){try{
- if(!globalThis.supabase)throw Error('Services unavailable');const id=new URL(location.href).searchParams.get('booking');if(!/^[0-9a-f-]{36}$/i.test(id||''))throw Error('Invalid booking link.');
- client=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'sathivo.auth.v1'}});
+ const id=new URL(location.href).searchParams.get('booking');if(!/^[0-9a-f-]{36}$/i.test(id||''))throw Error('Invalid booking link.');
+ client=await getSathivoClient();
  const u=await client.auth.getUser();user=u.data.user;if(!user){location.replace('account.html#login');return}
  const p=await client.from('member_profiles').select('safety_id').eq('user_id',user.id).maybeSingle();if(p.data?.safety_id)mySafetyId=p.data.safety_id;
  booking={id};await loadBooking();applySafetyWatermark();$('safety-actions').hidden=false;protectPrivateMedia();setupPresence();await loadMessages(true);
