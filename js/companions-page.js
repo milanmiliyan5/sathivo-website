@@ -1,5 +1,6 @@
 import {authConfig} from './auth-config.js?v=20260926-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
+import {avatarAsset} from './avatar-utils.js?v=20261006-1';
 const $=id=>document.getElementById(id), directory=!!$('filters');
 const fields='public_id,display_name,bio,location_id,languages,interests,categories,meeting_mode,availability,hourly_rate,photo_path,safety_id,joined_at,email_verified_at,adult_confirmed,boundaries_accepted';
 let client,locations=[],page=0,request=0,currentUser=null;
@@ -10,7 +11,14 @@ function cities(){opts('city',matching().map(r=>[r.id,r.city+' · '+r.state]),'A
 function districts(){opts('district',[...new Set(locations.filter(r=>!$('state').value||r.state===$('state').value).map(r=>r.district))].sort().map(v=>[v,v]),'All districts');cities();}
 function locationName(id){const r=locations.find(r=>r.id===id);return r?[r.city,r.district,r.state].join(' · '):'Location unavailable';}
 function tags(row){const n=el('div',undefined,'tags');[{'online':'Online','in-person':'In person','both':'Online & in person'}[row.meeting_mode],...row.categories].forEach(v=>n.append(el('span',v)));return n;}
-function portrait(row){const initial=row.display_name.slice(0,1).toUpperCase(),n=el('div',initial,'portrait');if(row.photo_path)void client.storage.from('listing-photos').createSignedUrl(row.photo_path,60).then(({data,error})=>{if(error||!data)return;const img=el('img');img.alt=row.display_name+' — profile photo';img.loading='lazy';img.src=data.signedUrl;img.onerror=()=>n.replaceChildren(document.createTextNode(initial));n.replaceChildren(img);});return n;}
+function portrait(row){
+ const initial=row.display_name.slice(0,1).toUpperCase(),n=el('div',initial,'portrait');
+ if(!row.photo_path)return n;
+ const builtIn=avatarAsset(row.photo_path);
+ if(builtIn){const img=el('img');img.alt=row.display_name+' — profile avatar';img.loading='lazy';img.src=builtIn;n.classList.add('is-builtin-avatar');n.replaceChildren(img);return n;}
+ void client.storage.from('listing-photos').createSignedUrl(row.photo_path,60).then(({data,error})=>{if(error||!data)return;const img=el('img');img.alt=row.display_name+' — profile photo';img.loading='lazy';img.src=data.signedUrl;img.onerror=()=>n.replaceChildren(document.createTextNode(initial));n.replaceChildren(img);});
+ return n;
+}
 function trustChips(row,compact=false){const n=el('div',undefined,'trust-chips'+(compact?' compact':''));if(row.email_verified_at)n.append(el('span','✓ Email verified'));if(row.adult_confirmed)n.append(el('span','18+ self-declared'));if(row.boundaries_accepted)n.append(el('span','Platonic boundaries'));return n;}
 function rateText(rate){return Number(rate)>0?'₹'+Number(rate).toLocaleString('en-IN')+' / hour':'Rate not set'}
 function totalFor(rate,minutes){return Number(rate)>0?Math.round(Number(rate)*Number(minutes)/60):null}
