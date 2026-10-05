@@ -1,10 +1,4 @@
-import {authConfig} from './auth-config.js?v=20260926-1';
-async function ensureSdk(){
- if(globalThis.supabase?.createClient)return;
- const existing=[...document.scripts].find(s=>s.src&&s.src.includes('assets/vendor/supabase-2.116.0.js'));
- if(existing){await new Promise((resolve,reject)=>{if(globalThis.supabase?.createClient){resolve();return}existing.addEventListener('load',resolve,{once:true});existing.addEventListener('error',reject,{once:true})});return}
- await new Promise((resolve,reject)=>{const s=document.createElement('script');s.src='assets/vendor/supabase-2.116.0.js';s.onload=resolve;s.onerror=reject;document.head.append(s)});
-}
+import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 const items=[['Home','./','⌂'],['Explore','companions.html','♡'],['Requests','requests.html','↗'],['Chats','chats.html','◌'],['Account','account.html','◉']];
 function badge(n){const b=document.createElement('span');b.className='mobile-nav-badge';b.hidden=!n;b.textContent=n>99?'99+':String(n||0);return b}
 async function init(){
@@ -17,8 +11,7 @@ async function init(){
  }
  document.body.append(nav);
  try{
-  await ensureSdk();if(!globalThis.supabase)return;
-  const client=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'sathivo.auth.v1'}});
+  const client=await getSathivoClient();
   const u=await client.auth.getUser(),user=u.data.user;if(!user)return;
   const refresh=async()=>{
    const [rq,cq]=await Promise.all([client.from('booking_requests').select('id',{count:'exact',head:true}).eq('companion_id',user.id).eq('status','pending'),client.rpc('get_unread_chat_count')]);
