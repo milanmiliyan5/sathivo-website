@@ -1,5 +1,4 @@
-import {authConfig} from './auth-config.js?v=20260926-1';
-
+import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 const $=id=>document.getElementById(id);
 let client,user,profiles=[],bookings=[],supports=[],reports=[],listings=[],metricsTimer,presenceChannel;
 const nf=new Intl.NumberFormat('en-IN');
@@ -241,8 +240,8 @@ async function refreshAll(showLoading=true){
 async function init(){
   initUi();
   try{
-    if(!globalThis.supabase)throw Error('Services unavailable');
-    client=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:false,storageKey:'sathivo.auth.v1'}});
+    
+    client=await getSathivoClient();
     const u=await client.auth.getUser();user=u.data.user;
     if(!user){location.replace('account.html#login');return}
     const a=await client.from('platform_admins').select('role').eq('user_id',user.id).maybeSingle();
