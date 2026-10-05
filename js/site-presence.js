@@ -1,22 +1,4 @@
-import {authConfig} from './auth-config.js?v=20260926-1';
-
-async function ensureSdk(){
-  if(globalThis.supabase?.createClient)return;
-  const existing=[...document.scripts].find(s=>s.src&&s.src.includes('assets/vendor/supabase-2.116.0.js'));
-  if(existing){
-    await new Promise((resolve,reject)=>{
-      if(globalThis.supabase?.createClient){resolve();return}
-      existing.addEventListener('load',resolve,{once:true});
-      existing.addEventListener('error',reject,{once:true});
-    });
-    return;
-  }
-  await new Promise((resolve,reject)=>{
-    const s=document.createElement('script');
-    s.src='assets/vendor/supabase-2.116.0.js';
-    s.onload=resolve;s.onerror=reject;document.head.append(s);
-  });
-}
+import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 
 function browserKey(){
   const storageKey='sathivo.presence.browser.v1';
@@ -52,11 +34,7 @@ async function recordVisit(client,visitorId){
 
 async function init(){
   try{
-    await ensureSdk();
-    if(!globalThis.supabase?.createClient)return;
-    const client=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{
-      auth:{persistSession:false,autoRefreshToken:false,detectSessionInUrl:false}
-    });
+    const client=await getSathivoClient();
     const visitorId=browserKey();
     void recordVisit(client,visitorId);
 
