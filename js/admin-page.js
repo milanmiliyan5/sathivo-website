@@ -24,6 +24,8 @@ async function loadStats(){
   metric('metric-accounts',row.total_accounts);
   metric('metric-today-bookings',row.bookings_today);
   metric('metric-total-bookings',row.total_bookings);
+  metric('metric-visitors-today',row.visitors_today);
+  metric('metric-total-visitors',row.total_visitors);
   metric('metric-male',row.male_users);
   metric('metric-female',row.female_users);
   metric('metric-pending',row.pending_bookings);
