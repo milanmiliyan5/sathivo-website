@@ -17,20 +17,25 @@ export async function setupPublishing({client,user,isDirty}) {
  }
  publish.addEventListener('click',()=>void run(async()=>{
   if(isDirty())throw Error('Save your profile changes first, then publish.');
-  if(!$('publish-consent').checked)throw Error('Confirm that your saved profile details and photo can be public.');
+  if(!$('publish-consent').checked)throw Error('Confirm that your saved profile details and photo/avatar can be public.');
   status.textContent='Publishing your saved profile…';
   const {data:p,error}=await client.from('member_profiles').select('*').eq('user_id',user.id).single();
   if(error||!p)throw Error('Save your profile first.');
   if(!['companion','both'].includes(p.profile_kind))throw Error('Choose Become a companion or Both, then save.');
   if(p.bio.trim().length<20||!p.categories.length)throw Error('Save a bio of at least 20 characters and select at least one category.');
   if(!Number.isInteger(p.hourly_rate)||p.hourly_rate<1||p.hourly_rate>100000)throw Error('Set and save your hourly companionship rate before publishing.');
+  if(!p.avatar_path)throw Error('Add a profile photo or choose a Sathivo avatar before publishing.');
   const row={user_id:user.id,published:true,photo_path:null};
   for(const k of ['display_name','bio','location_id','languages','interests','categories','meeting_mode','availability','hourly_rate'])row[k]=p[k];
   // Hide before replacing the public photo so a failed update cannot expose a new photo on an old listing.
   const hidden=await client.from('companion_listings').update({published:false}).eq('user_id',user.id);
   if(hidden.error)throw Error('Could not prepare publication. Try again.');
   hide.hidden=view.hidden=true;
-  if(p.avatar_path){
+  if(isBuiltinAvatar(p.avatar_path)){
+   row.photo_path=p.avatar_path;
+   // A previous uploaded public photo is no longer referenced; remove it when possible.
+   try{await client.storage.from('listing-photos').remove([user.id+'/avatar.webp'])}catch{}
+  }else{
    const image=await client.storage.from('profile-photos').download(p.avatar_path);
    if(image.error)throw Error('Listing is hidden. Could not prepare your photo; try publishing again.');
    const path=user.id+'/avatar.webp';
