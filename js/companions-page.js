@@ -24,6 +24,16 @@ function trustChips(row,compact=false){const n=el('div',undefined,'trust-chips'+
 function rateText(rate){return Number(rate)>0?'₹'+Number(rate).toLocaleString('en-IN')+' / hour':'Rate not set'}
 function totalFor(rate,minutes){return Number(rate)>0?Math.round(Number(rate)*Number(minutes)/60):null}
 function card(row){const n=el('article',undefined,'companion-card'),copy=el('div',undefined,'card-copy');copy.append(el('h2',row.display_name),el('p',locationName(row.location_id)),el('strong',rateText(row.hourly_rate),'rate-chip'),trustChips(row,true),tags(row),el('p',row.bio.length>150?row.bio.slice(0,147)+'…':row.bio));const link=el('a','Get to know '+row.display_name+' ↗','text-link');link.href='companion.html?id='+encodeURIComponent(row.public_id);copy.append(link);n.append(portrait(row),copy);return n;}
+function feedNodes(rows){
+ const nodes=[];
+ rows.forEach((row,index)=>{
+  nodes.push(card(row));
+  if((index===5||index===13)&&index<rows.length-1){
+   const ad=el('div',undefined,'ad-slot ad-slot-inline');ad.dataset.adSlot='directory-inline';ad.hidden=true;nodes.push(ad);
+  }
+ });
+ return nodes;
+}
 async function list(){
  const seq=++request;$('empty').hidden=true;$('retry').hidden=true;$('previous').disabled=$('next').disabled=true;$('status').textContent='Finding good company…';
  $('results').replaceChildren(...Array.from({length:6},()=>{const n=el('article',undefined,'companion-card companion-skeleton');n.innerHTML='<div class="portrait skeleton-block"></div><div class="card-copy"><i></i><i></i><i></i><i></i></div>';return n}));
@@ -31,7 +41,7 @@ async function list(){
  if($('city').value)q=q.eq('location_id',Number($('city').value));else if($('state').value||$('district').value)q=q.in('location_id',matching().map(r=>r.id));
  if($('category').value)q=q.contains('categories',[$('category').value]);
  if($('mode').value)q=q.in('meeting_mode',[$('mode').value,'both']);
- try{const {data,error}=await q;if(seq!==request)return;if(error)throw error;const rows=data.slice(0,24);$('results').replaceChildren(...rows.map(card));$('empty').hidden=rows.length>0;$('status').textContent=rows.length?rows.length+' companions on this page.':'No matching companions yet.';$('previous').disabled=page===0;$('next').disabled=data.length<=24;$('page-label').textContent='Page '+(page+1);}catch{if(seq!==request)return;$('status').textContent='Could not load companions. Please try again.';$('retry').hidden=false;}
+ try{const {data,error}=await q;if(seq!==request)return;if(error)throw error;const rows=data.slice(0,24);$('results').replaceChildren(...feedNodes(rows));$('empty').hidden=rows.length>0;$('status').textContent=rows.length?rows.length+' companions on this page.':'No matching companions yet.';$('previous').disabled=page===0;$('next').disabled=data.length<=24;$('page-label').textContent='Page '+(page+1);}catch{if(seq!==request)return;$('status').textContent='Could not load companions. Please try again.';$('retry').hidden=false;}
 }
 function bookingForm(r){
  const wrap=el('section',undefined,'booking-form');
@@ -59,7 +69,7 @@ function bookingForm(r){
  );
  form.append(grid);form.append(el('p','Payment is outside Sathivo. After you both agree, you may settle directly between yourselves by cash, UPI/PhonePe/Google Pay or another lawful method you both choose. Sathivo does not collect, hold, refund or guarantee that payment. Never share a UPI PIN or OTP.','payment-note'));
  const row=el('div',undefined,'booking-submit-row'),b=el('button','Send request ↗','button button-primary'),status=el('p','', 'field-hint');b.type='submit';row.append(b,status);form.append(row);
- form.onsubmit=async e=>{e.preventDefault();const chosen=new Date(when.value);if(!when.value||Number.isNaN(chosen.getTime())||chosen<=new Date()){status.textContent='Please choose a future date and time.';when.focus();return}b.disabled=true;status.textContent='Sending request…';try{const iso=chosen.toISOString();const offerRate=Number(offer.value);if(!Number.isInteger(offerRate)||offerRate<1||offerRate>100000){status.textContent='Enter a valid hourly offer between ₹1 and ₹1,00,000.';offer.focus();b.disabled=false;return}const {data,error}=await client.rpc('create_booking_request_with_offer',{p_companion_public_id:r.public_id,p_category:category.value,p_meeting_mode:mode.value,p_requested_for:iso,p_duration_minutes:Number(duration.value),p_note:note.value.trim(),p_offer_hourly_rate:offerRate});if(error)throw error;status.textContent='Request sent. Notifying the companion…';await sendBookingPush(client,data,'request');status.textContent='Request sent. Opening your bookings…';location.href='bookings.html?id='+encodeURIComponent(data)}catch(err){status.textContent=err.message||'Could not send request.';b.disabled=false;}};
+ form.onsubmit=async e=>{e.preventDefault();const chosen=new Date(when.value);if(!when.value||Number.isNaN(chosen.getTime())||chosen<=new Date()){status.textContent='Please choose a future date and time.';when.focus();return}b.disabled=true;status.textContent='Sending request…';try{const iso=chosen.toISOString();const offerRate=Number(offer.value);if(!Number.isInteger(offerRate)||offerRate<1||offerRate>100000){status.textContent='Enter a valid hourly offer between ₹1 and ₹1,00,000.';offer.focus();b.disabled=false;return}const {data,error}=await client.rpc('create_booking_request_with_offer',{p_companion_public_id:r.public_id,p_category:category.value,p_meeting_mode:mode.value,p_requested_for:iso,p_duration_minutes:Number(duration.value),p_note:note.value.trim(),p_offer_hourly_rate:offerRate});if(error)throw error;status.textContent='Request sent. Notifying the companion…';await sendBookingPush(client,data,'request');status.textContent='Request sent. Opening your bookings…';location.href='bookings.html?id='+encodeURIComponent(data)+'&booked=1'}catch(err){status.textContent=err.message||'Could not send request.';b.disabled=false;}};
  wrap.append(form);return wrap;
 }
 async function detail(){
