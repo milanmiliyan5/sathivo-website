@@ -26,6 +26,19 @@ function serverKey() {
   }
   return "";
 }
+function createAdminClient(url:string,key:string){
+  const options:any={auth:{persistSession:false,autoRefreshToken:false}};
+  // New sb_secret keys belong on the apikey header. supabase-js also adds
+  // Authorization: Bearer by default, which can be misread as a JWT.
+  if(key.startsWith("sb_secret_")){
+    options.global={fetch:(input:RequestInfo|URL,init:RequestInit={})=>{
+      const headers=new Headers(init.headers);
+      if(headers.get("Authorization")===`Bearer ${key}`)headers.delete("Authorization");
+      return fetch(input,{...init,headers});
+    }};
+  }
+  return createClient(url,key,options);
+}
 function indiaDate() {
   const parts = new Intl.DateTimeFormat("en-GB", { timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit" }).formatToParts(new Date());
   const map = Object.fromEntries(parts.map(p => [p.type,p.value]));
@@ -69,7 +82,7 @@ Deno.serve(async req=>{
 
     const url=Deno.env.get("SUPABASE_URL")??"",key=serverKey();
     if(!url||!key)throw new Error("Server configuration unavailable");
-    const admin=createClient(url,key,{auth:{persistSession:false,autoRefreshToken:false}});
+    const admin=createAdminClient(url,key);
     const fingerprint=await requestFingerprint(req,key);
     if(!await withinLimits(admin,fingerprint)){
       return Response.json({ok:true,throttled:true},{headers:{...headers,"Content-Type":"application/json","Cache-Control":"no-store"}});

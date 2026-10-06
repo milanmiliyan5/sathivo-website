@@ -67,6 +67,8 @@ test('public Edge Functions keep server-side abuse controls', async()=>{
   assert.match(visitor,/site-visitor-new-day/);
   assert.match(visitor,/p_limit:5/);
   assert.match(visitor,/originAllowed/);
+  assert.match(visitor,/key\.startsWith\("sb_secret_"\)/);
+  assert.match(visitor,/headers\.delete\("Authorization"\)/);
 
   const support=await read('supabase/functions/submit-support/index.ts');
   assert.match(support,/support-hour/);
