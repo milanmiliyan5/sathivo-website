@@ -1,11 +1,23 @@
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 import webpush from "npm:web-push@3.6.7";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
+const allowedOrigins = new Set([
+  "https://sathivo.co",
+  "https://www.sathivo.co",
+  "https://milanmiliyan5.github.io",
+]);
+function originAllowed(origin:string){
+  return allowedOrigins.has(origin) || /^http:\/\/(?:localhost|127\\.0\\.0\\.1)(?::\\d+)?$/.test(origin);
+}
+function corsHeaders(req:Request){
+  const origin=req.headers.get("origin")??"";
+  return {
+    "Access-Control-Allow-Origin": originAllowed(origin) ? origin : "https://sathivo.co",
+    "Vary":"Origin",
+    "Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type, x-retry-count, traceparent, tracestate, baggage",
+    "Access-Control-Allow-Methods":"POST, OPTIONS",
+  };
+}
 
 let vapidReady = false;
 
@@ -110,13 +122,17 @@ async function deliver(admin, target, payload) {
 }
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
-  if (req.method !== "POST") return Response.json({ error: "Method not allowed" }, { status: 405, headers: corsHeaders });
+  const origin=req.headers.get("origin")??"";
+  if(origin && !originAllowed(origin)){
+    return Response.json({error:"Origin not allowed"},{status:403,headers:corsHeaders(req)});
+  }
+  if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders(req) });
+  if (req.method !== "POST") return Response.json({ error: "Method not allowed" }, { status: 405, headers: corsHeaders(req) });
 
   try {
     const authHeader = req.headers.get("Authorization") ?? "";
     const token = authHeader.replace(/^Bearer\s+/i, "");
-    if (!token) return Response.json({ error: "Sign in required" }, { status: 401, headers: corsHeaders });
+    if (!token) return Response.json({ error: "Sign in required" }, { status: 401, headers: corsHeaders(req) });
 
     const url = Deno.env.get("SUPABASE_URL") ?? "";
     const userClient = createClient(url, publishableKey(), {
@@ -125,7 +141,7 @@ Deno.serve(async (req) => {
     });
     const { data: userData, error: userError } = await userClient.auth.getUser(token);
     const user = userData.user;
-    if (userError || !user) return Response.json({ error: "Invalid session" }, { status: 401, headers: corsHeaders });
+    if (userError || !user) return Response.json({ error: "Invalid session" }, { status: 401, headers: corsHeaders(req) });
 
     const key = serverKey();
     if (!key) throw new Error("Server key unavailable");
@@ -142,14 +158,14 @@ Deno.serve(async (req) => {
         url: "notifications.html",
         tag: "sathivo-test",
       });
-      return Response.json({ ok: true, sent }, { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return Response.json({ ok: true, sent }, { headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
     }
 
     const bookingId = String(body?.booking_id ?? "");
     const messageId = String(body?.message_id ?? "");
     const validEvents = ["request","accepted","declined","cancelled","completed","message"];
     if (!/^[0-9a-f-]{36}$/i.test(bookingId) || !validEvents.includes(event)) {
-      return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders });
+      return Response.json({ error: "Invalid request" }, { status: 400, headers: corsHeaders(req) });
     }
 
     const { data: booking, error: bookingError } = await userClient
@@ -157,12 +173,12 @@ Deno.serve(async (req) => {
       .select("id,customer_id,companion_id,customer_display_name,companion_display_name,category,status,offered_hourly_rate,agreed_hourly_rate")
       .eq("id", bookingId)
       .single();
-    if (bookingError || !booking) return Response.json({ error: "Booking unavailable" }, { status: 404, headers: corsHeaders });
+    if (bookingError || !booking) return Response.json({ error: "Booking unavailable" }, { status: 404, headers: corsHeaders(req) });
 
     const callerIsCustomer = booking.customer_id === user.id;
     const callerIsCompanion = booking.companion_id === user.id;
     if (!callerIsCustomer && !callerIsCompanion) {
-      return Response.json({ error: "Not a booking participant" }, { status: 403, headers: corsHeaders });
+      return Response.json({ error: "Not a booking participant" }, { status: 403, headers: corsHeaders(req) });
     }
 
     let msg;
@@ -170,7 +186,7 @@ Deno.serve(async (req) => {
 
     if (event === "message") {
       if (!/^[0-9a-f-]{36}$/i.test(messageId) || booking.status !== "accepted") {
-        return Response.json({ error: "Invalid message push" }, { status: 400, headers: corsHeaders });
+        return Response.json({ error: "Invalid message push" }, { status: 400, headers: corsHeaders(req) });
       }
       const { data: chatMessage, error: messageError } = await userClient
         .from("booking_messages")
@@ -178,8 +194,8 @@ Deno.serve(async (req) => {
         .eq("id", messageId)
         .eq("booking_id", bookingId)
         .single();
-      if (messageError || !chatMessage) return Response.json({ error: "Message unavailable" }, { status: 404, headers: corsHeaders });
-      if (chatMessage.sender_id !== user.id) return Response.json({ error: "Only the sender can trigger this push" }, { status: 403, headers: corsHeaders });
+      if (messageError || !chatMessage) return Response.json({ error: "Message unavailable" }, { status: 404, headers: corsHeaders(req) });
+      if (chatMessage.sender_id !== user.id) return Response.json({ error: "Only the sender can trigger this push" }, { status: 403, headers: corsHeaders(req) });
 
       const target = callerIsCustomer ? booking.companion_id : booking.customer_id;
       const senderName = callerIsCustomer
@@ -200,7 +216,7 @@ Deno.serve(async (req) => {
         target_user_id: target,
       });
       if (deliveryError?.code === "23505") {
-        return Response.json({ ok: true, duplicate: true, sent: 0 }, { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return Response.json({ ok: true, duplicate: true, sent: 0 }, { headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
       }
       if (deliveryError) throw deliveryError;
     } else {
@@ -210,11 +226,11 @@ Deno.serve(async (req) => {
         (event === "declined" && callerIsCompanion && booking.status === "declined") ||
         (event === "cancelled" && booking.status === "cancelled") ||
         (event === "completed" && callerIsCompanion && booking.status === "completed");
-      if (!allowed) return Response.json({ error: "Push event does not match booking state" }, { status: 403, headers: corsHeaders });
+      if (!allowed) return Response.json({ error: "Push event does not match booking state" }, { status: 403, headers: corsHeaders(req) });
 
       booking._caller = user.id;
       msg = bookingMessage(event, booking);
-      if (!msg) return Response.json({ error: "Unsupported event" }, { status: 400, headers: corsHeaders });
+      if (!msg) return Response.json({ error: "Unsupported event" }, { status: 400, headers: corsHeaders(req) });
 
       const { error: deliveryError } = await admin.from("push_delivery_events").insert({
         booking_id: booking.id,
@@ -222,7 +238,7 @@ Deno.serve(async (req) => {
         target_user_id: msg.target,
       });
       if (deliveryError?.code === "23505") {
-        return Response.json({ ok: true, duplicate: true, sent: 0 }, { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        return Response.json({ ok: true, duplicate: true, sent: 0 }, { headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
       }
       if (deliveryError) throw deliveryError;
     }
@@ -234,9 +250,9 @@ Deno.serve(async (req) => {
       tag: `sathivo-${booking.id}-${tagSuffix}`,
     });
 
-    return Response.json({ ok: true, sent }, { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    return Response.json({ ok: true, sent }, { headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
   } catch (error) {
     console.error(error);
-    return Response.json({ error: error instanceof Error ? error.message : "Unexpected error" }, { status: 500, headers: corsHeaders });
+    return Response.json({ error: error instanceof Error ? error.message : "Unexpected error" }, { status: 500, headers: corsHeaders(req) });
   }
 });
