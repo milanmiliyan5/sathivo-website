@@ -307,3 +307,116 @@ body.home-2d{
   .home-2d .experience-card:active,
   .home-2d .mobile-bottom-nav a:active{transform:none!important}
 }
+
+
+/* Companion earning promotion */
+.home-2d .earning-promo{
+  margin-top:34px;
+  margin-bottom:30px;
+  padding:30px 32px;
+  display:grid;
+  grid-template-columns:minmax(0,1.35fr) minmax(210px,.65fr);
+  gap:28px;
+  align-items:center;
+  border:2px solid var(--d2-plum);
+  border-radius:26px;
+  background:linear-gradient(135deg,#fff0f6 0%,#fff8ee 55%,#f1eaff 100%);
+  box-shadow:9px 9px 0 rgba(93,48,72,.16);
+  overflow:hidden;
+  position:relative;
+}
+.home-2d .earning-promo::after{
+  content:"♡";
+  position:absolute;
+  right:45%;
+  bottom:-26px;
+  width:70px;height:70px;
+  display:grid;place-items:center;
+  border:2px solid var(--d2-plum);
+  border-radius:20px;
+  background:#fff;
+  color:var(--d2-rose);
+  font-size:2rem;
+  transform:rotate(-10deg);
+  opacity:.8;
+}
+.home-2d .earning-promo-copy{position:relative;z-index:1}
+.home-2d .earning-promo h2{
+  margin:.3rem 0 .75rem;
+  font-size:clamp(2.35rem,5vw,4.35rem);
+  line-height:.98;
+}
+.home-2d .earning-promo p{max-width:720px}
+.home-2d .earning-points{
+  display:flex;
+  flex-wrap:wrap;
+  gap:9px;
+  margin:18px 0 22px;
+}
+.home-2d .earning-points span{
+  padding:8px 11px;
+  border:1.5px solid #b9899e;
+  border-radius:999px;
+  background:#fff;
+  box-shadow:2px 2px 0 #e9c8d5;
+  font-size:.76rem;
+  font-weight:700;
+}
+.home-2d .earning-promo .button{margin-right:12px}
+.home-2d .earning-promo small{
+  display:block;
+  max-width:700px;
+  margin-top:14px;
+  color:var(--muted);
+  line-height:1.55;
+}
+.home-2d .earning-rate-card{
+  min-height:220px;
+  padding:26px 22px;
+  display:grid;
+  align-content:center;
+  justify-items:center;
+  text-align:center;
+  border:2px solid var(--d2-plum);
+  border-radius:22px;
+  background:#fff;
+  box-shadow:7px 7px 0 #ddb2c3;
+  transform:rotate(2deg);
+}
+.home-2d .earning-rate-card>span{
+  font-size:.68rem;
+  letter-spacing:.16em;
+  font-weight:800;
+  color:var(--d2-rose);
+}
+.home-2d .earning-rate-card strong{
+  margin:10px 0 0;
+  font-size:2.7rem;
+  color:var(--d2-plum);
+}
+.home-2d .earning-rate-card small{margin:0;color:var(--muted)}
+.home-2d .earning-rate-card div{
+  margin-top:18px;
+  padding:7px 11px;
+  border-radius:999px;
+  background:#ffe5ee;
+  border:1px solid #c999ab;
+  font-size:.72rem;
+  font-weight:800;
+}
+@media(max-width:760px){
+  .home-2d .earning-promo{
+    grid-template-columns:1fr;
+    padding:23px 18px;
+    margin-top:22px;
+    border-radius:22px;
+    box-shadow:6px 6px 0 rgba(93,48,72,.14);
+  }
+  .home-2d .earning-promo::after{display:none}
+  .home-2d .earning-promo h2{font-size:clamp(2.25rem,11vw,3.3rem)}
+  .home-2d .earning-points{display:grid;grid-template-columns:1fr;gap:7px}
+  .home-2d .earning-points span{width:100%}
+  .home-2d .earning-promo .button{width:100%;justify-content:center;margin-right:0}
+  .home-2d .earning-rate-card{min-height:160px;transform:none;padding:20px}
+  .home-2d .earning-rate-card strong{font-size:2.25rem}
+}
