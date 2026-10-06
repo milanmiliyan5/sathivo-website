@@ -54,6 +54,7 @@ test('important schema migrations are tracked in GitHub', async()=>{
     'allow_builtin_profile_avatars.sql',
     'edge_function_rate_limits.sql',
     'expand_pan_india_district_coverage.sql',
+    'allow_owner_photo_cleanup.sql',
   ]){
     assert.ok(names.some(name=>name.endsWith(suffix)),suffix+' is missing');
   }
