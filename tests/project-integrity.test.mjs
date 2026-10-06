@@ -74,3 +74,24 @@ test('public Edge Functions keep server-side abuse controls', async()=>{
   assert.match(support,/website/);
   assert.match(support,/originAllowed/);
 });
+
+
+test('ad placements stay in safe test mode until real unit IDs are configured', async()=>{
+  const config=await read('js/ads-config.js');
+  assert.match(config,/testMode:true/);
+  for(const slot of ['home-mid','directory-top','directory-inline','bookings-top','booking-confirm']){
+    assert.match(config,new RegExp("'"+slot+"'"));
+  }
+
+  const ads=await read('js/ads.js');
+  assert.match(ads,/MutationObserver/);
+  assert.match(ads,/adsbygoogle/);
+
+  const companions=await read('js/companions-page.js');
+  assert.match(companions,/directory-inline/);
+  assert.match(companions,/booked=1/);
+
+  const bookings=await read('js/bookings-page.js');
+  assert.match(bookings,/booking-confirm/);
+  assert.match(bookings,/Booking request sent/);
+});
