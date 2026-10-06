@@ -70,6 +70,7 @@ test('public Edge Functions keep server-side abuse controls', async()=>{
   assert.match(visitor,/originAllowed/);
   assert.match(visitor,/key\.startsWith\("sb_secret_"\)/);
   assert.match(visitor,/headers\.delete\("Authorization"\)/);
+  assert.ok(visitor.indexOf('SUPABASE_SECRET_KEYS') < visitor.indexOf('SUPABASE_SERVICE_ROLE_KEY'),'track-site-visit must prefer modern secret keys over legacy service_role JWTs');
 
   const support=await read('supabase/functions/submit-support/index.ts');
   assert.match(support,/support-hour/);

@@ -18,13 +18,19 @@ function corsHeaders(req:Request){
   };
 }
 function serverKey() {
-  const legacy = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
-  if (legacy) return legacy;
+  // Prefer Supabase's modern secret key. Unlike the legacy service_role JWT,
+  // sb_secret keys have no issued-at timestamp, so internal database calls
+  // cannot fail because of transient clock skew ("JWT issued at future").
   const raw = Deno.env.get("SUPABASE_SECRET_KEYS");
   if (raw) {
-    try { const parsed = JSON.parse(raw); if (parsed.default) return parsed.default; } catch {}
+    try {
+      const parsed = JSON.parse(raw);
+      const secret = parsed?.default;
+      if (typeof secret === "string" && secret.startsWith("sb_secret_")) return secret;
+    } catch {}
   }
-  return "";
+  // Compatibility fallback for projects that have not created secret keys yet.
+  return Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 }
 function createAdminClient(url:string,key:string){
   const options:any={auth:{persistSession:false,autoRefreshToken:false}};
