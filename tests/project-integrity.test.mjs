@@ -142,3 +142,38 @@ test('favorites, sharing, discovery sorting and cancellation reasons are wired',
   assert.match(migration,/browse_public_companions/);
   assert.match(migration,/cancel_reason/);
 });
+
+
+test('sensitive Edge Functions never restore wildcard CORS', async()=>{
+  const slugs=[
+    'push-subscription',
+    'send-booking-push',
+    'open-view-once-photo',
+    'mark-chat-read',
+    'admin-dashboard-stats',
+    'submit-support',
+    'delete-my-account',
+    'track-site-visit',
+  ];
+  for(const slug of slugs){
+    const source=await read('supabase/functions/'+slug+'/index.ts');
+    assert.doesNotMatch(source,/Access-Control-Allow-Origin["']?\s*:\s*["']\*["']/,slug+' must not allow every browser origin');
+    assert.match(source,/originAllowed/,slug+' must keep an explicit trusted-origin check');
+  }
+});
+
+test('browser code never contains server-side Supabase secrets', async()=>{
+  const entries=await readdir(path.join(root,'js'),{withFileTypes:true});
+  for(const entry of entries){
+    if(!entry.isFile()||!entry.name.endsWith('.js'))continue;
+    const source=await read('js/'+entry.name);
+    assert.doesNotMatch(source,/sb_secret_[A-Za-z0-9_-]+/,entry.name+' contains a Supabase secret key');
+    assert.doesNotMatch(source,/SUPABASE_SERVICE_ROLE_KEY/,entry.name+' references a server-only service role key');
+  }
+});
+
+test('saved-companion table keeps least-privilege grants', async()=>{
+  const migration=await read('supabase/migrations/20261006183854_revoke_excess_companion_favorites_privileges.sql');
+  assert.match(migration,/revoke\s+truncate,\s*trigger,\s*references/i);
+  assert.match(migration,/companion_favorites/);
+});
