@@ -242,12 +242,14 @@ body.sathivo-2d:not(.home-2d) .legal-footer{
   background:#fff3f7;
 }
 body.sathivo-2d:not(.home-2d) .mobile-bottom-nav{
+  background:#fff9f7;
   border:2px solid var(--d2-plum);
-  box-shadow:5px 5px 0 rgba(93,48,72,.16);
+  box-shadow:0 6px 0 var(--d2-plum),0 16px 34px rgba(61,31,47,.18);
 }
 body.sathivo-2d:not(.home-2d) .mobile-bottom-nav a[aria-current=page]{
-  border:1px solid #c18ea3;
-  background:#ffe5ee;
+  border:1.5px solid #b87d95;
+  background:linear-gradient(180deg,#ffe8f0,#f8dbe6);
+  box-shadow:0 3px 0 var(--d2-plum);
 }
 
 /* Site-wide slide reveals. Content is visible when JS is unavailable. */
