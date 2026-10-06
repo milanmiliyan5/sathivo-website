@@ -177,3 +177,12 @@ test('saved-companion table keeps least-privilege grants', async()=>{
   assert.match(migration,/revoke\s+truncate,\s*trigger,\s*references/i);
   assert.match(migration,/companion_favorites/);
 });
+
+
+test('premium built-in avatars use optimized WebP assets', async()=>{
+  const avatars=await read('js/avatar-utils.js');
+  for(const id of ['male-1','male-2','male-3','female-1','female-2','female-3']){
+    assert.match(avatars,new RegExp('assets/avatar-'+id+'\\.webp\\?v=20261007-1'));
+  }
+  assert.doesNotMatch(avatars,/avatar-(?:male|female)-[123]\.svg/);
+});

@@ -23,3 +23,23 @@
 @media(prefers-reduced-motion:reduce){.profile-card .avatar-choice:active,.profile-card .avatar-choice:hover{transform:none}}
 
 .profile-card .avatar-clear{margin-top:12px;background:#fff;width:auto;padding:9px 13px;font-size:.82rem;box-shadow:3px 3px 0 #ead0da}.profile-card .avatar-clear[hidden]{display:none!important}
+
+
+/* Premium portrait avatars */
+.avatar-choice img{
+  object-fit:contain;
+  background:linear-gradient(145deg,#fff7fb 0%,#f9eaf2 52%,#f1eafb 100%);
+}
+.profile-card .avatar-choice{
+  overflow:hidden;
+  padding:3px;
+  border-radius:16px;
+  box-shadow:3px 3px 0 rgba(93,48,72,.10);
+}
+.profile-card .avatar-choice[aria-pressed=true]{
+  box-shadow:0 0 0 3px rgba(161,58,99,.13),4px 4px 0 #e4b8c9;
+}
+.photo-row #avatar{
+  object-fit:contain;
+  background:linear-gradient(145deg,#fff7fb,#f2e8f8);
+}

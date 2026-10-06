@@ -1,6 +1,6 @@
 import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
-import {avatarAsset} from './avatar-utils.js?v=20261006-1';
+import {avatarAsset} from './avatar-utils.js?v=20261007-1';
 
 const $=id=>document.getElementById(id),directory=!!$('filters');
 const fields='public_id,display_name,bio,location_id,languages,interests,categories,meeting_mode,availability,hourly_rate,photo_path,safety_id,joined_at,email_verified_at,adult_confirmed,boundaries_accepted';

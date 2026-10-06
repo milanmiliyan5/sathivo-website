@@ -1,4 +1,4 @@
-import { isBuiltinAvatar } from './avatar-utils.js?v=20261006-1';
+import { isBuiltinAvatar } from './avatar-utils.js?v=20261007-1';
 export async function setupPublishing({client,user,isDirty}) {
  const $=id=>document.getElementById(id);
  const panel=$('publication'), status=$('listing-status'), publish=$('publish-listing'), hide=$('hide-listing'), view=$('view-listing');

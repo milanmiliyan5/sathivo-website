@@ -1,7 +1,7 @@
 import { setupPublishing } from './listing-publish.js?v=20261006-2';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { getSathivoClient } from './supabase-client.js?v=20261006-1';
-import { avatarOptions, avatarMarker, avatarAsset, isBuiltinAvatar } from './avatar-utils.js?v=20261006-1';
+import { avatarOptions, avatarMarker, avatarAsset, isBuiltinAvatar } from './avatar-utils.js?v=20261007-1';
 import { compressImageFile,formatBytes } from './image-compress.js?v=20261006-1';
 const $ = id => document.getElementById(id);
 const form = $('profile-form');
