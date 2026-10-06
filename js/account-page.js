@@ -88,7 +88,9 @@ function renderAccount(user) {
   const name = typeof user.user_metadata?.display_name === 'string' ? user.user_metadata.display_name.trim().slice(0, 60) : 'friend';
   document.querySelector('#account-name').textContent = name || 'friend';
   document.querySelector('#account-email').textContent = user.email ?? '';
-  showPanel('account');
+  // Do not auto-focus the account heading on session restore. On phones that
+  // scrolls past the story/photo and also leaves a focus outline around Welcome.
+  showPanel('account', { focus: false });
   clearSecrets();
 }
 
