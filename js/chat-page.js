@@ -1,5 +1,6 @@
 import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 import {sendMessagePush} from './push-events.js?v=20261004-2';
+import {compressImageFile,formatBytes} from './image-compress.js?v=20261006-1';
 
 const $=id=>document.getElementById(id);
 let client,user,booking,otherId,messageChannel,bookingChannel,presenceChannel;
@@ -157,27 +158,22 @@ function clearPhotoDraft(){
  if($('message')){$('message').maxLength=2000;$('message').placeholder='Write a message…'}if($('photo-status'))$('photo-status').textContent='';
 }
 function stagePhoto(file){
- const ps=$('photo-status'),types=['image/jpeg','image/png','image/webp'];if(!types.includes(file.type)){clearPhotoDraft();ps.textContent='Please choose a JPG, PNG or WebP image.';return}
- if(file.size>5*1024*1024){clearPhotoDraft();ps.textContent='Photo must be 5 MB or smaller.';return}
- clearPhotoDraft();selectedPhotoFile=file;selectedPhotoPreviewUrl=URL.createObjectURL(file);$('photo-draft-image').src=selectedPhotoPreviewUrl;$('photo-draft').hidden=false;$('message').maxLength=1000;$('message').placeholder='Add a caption…';ps.textContent='Photo ready. Add a caption, choose View once if you want, then tap Send.';
-}
-async function prepareChatPhoto(file){
- try{
-  const bitmap=await createImageBitmap(file);const scale=Math.min(1,1600/Math.max(bitmap.width,bitmap.height));
-  const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
-  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',.84));if(blob&&blob.size<file.size)return {blob,ext:'webp',type:'image/webp'};
- }catch{}
- return {blob:file,ext:{'image/jpeg':'jpg','image/png':'png','image/webp':'webp'}[file.type],type:file.type};
+ const ps=$('photo-status'),types=['image/jpeg','image/png','image/webp'];
+ if(!types.includes(file.type)){clearPhotoDraft();ps.textContent='Please choose a JPG, PNG or WebP image.';return}
+ if(file.size>50*1024*1024){clearPhotoDraft();ps.textContent='This photo is extremely large. Please choose one under 50 MB.';return}
+ clearPhotoDraft();selectedPhotoFile=file;selectedPhotoPreviewUrl=URL.createObjectURL(file);$('photo-draft-image').src=selectedPhotoPreviewUrl;$('photo-draft').hidden=false;$('message').maxLength=1000;$('message').placeholder='Add a caption…';
+ ps.textContent=formatBytes(file.size)+' selected. It will be compressed automatically before sending.';
 }
 async function sendStagedPhoto(){
  const file=selectedPhotoFile,ps=$('photo-status');if(!file)return false;if(booking.status!=='accepted'){ps.textContent='Photo sharing opens after the request is accepted.';return false}
  const viewOnce=$('view-once')?.checked===true,caption=$('message').value.trim().slice(0,1000);ps.innerHTML='<span class="upload-spinner"></span> Preparing photo…';
- const prepared=await prepareChatPhoto(file);const path=booking.id+'/'+user.id+'/'+crypto.randomUUID()+'.'+prepared.ext;ps.innerHTML='<span class="upload-spinner"></span> Sending photo…';
+ let prepared;try{prepared=await compressImageFile(file,{maxBytes:480*1024,maxDimension:1600,minDimension:640,maxInputBytes:50*1024*1024})}catch(error){ps.textContent=error.message||'Could not prepare this photo.';return false}
+ const path=booking.id+'/'+user.id+'/'+crypto.randomUUID()+'.'+prepared.ext;ps.innerHTML='<span class="upload-spinner"></span> Sending compressed photo…';
  const up=await client.storage.from('booking-chat-photos').upload(path,prepared.blob,{contentType:prepared.type,cacheControl:'60',upsert:false});
  if(up.error){ps.textContent='Upload failed. Tap Send to retry.';return false}
  const msg=await client.from('booking_messages').insert({booking_id:booking.id,sender_id:user.id,message_type:'image',photo_path:path,body:caption,view_once:viewOnce}).select('id').single();
  if(msg.error){await client.storage.from('booking-chat-photos').remove([path]);ps.textContent='Send failed. Tap Send to retry.';return false}
- clearPhotoDraft();$('message').value='';$('photo-status').textContent=viewOnce?'View-once photo sent.':'Photo sent.';void sendMessagePush(client,booking.id,msg.data.id);return true;
+ const sizeNote=formatBytes(prepared.originalBytes)+' → '+formatBytes(prepared.outputBytes);clearPhotoDraft();$('message').value='';$('photo-status').textContent=(viewOnce?'View-once photo sent.':'Photo sent.')+' Compressed '+sizeNote+'.';void sendMessagePush(client,booking.id,msg.data.id);return true;
 }
 async function report(){const reason=prompt('Reason: safety, harassment, sexual-content, scam, fake-profile, spam, or other');if(!reason)return;const allowed=['safety','harassment','sexual-content','scam','fake-profile','spam','other'];if(!allowed.includes(reason)){alert('Please use one of the listed reasons.');return}const details=prompt('Brief details (optional)')||'';const {error}=await client.from('user_reports').insert({reporter_id:user.id,reported_user_id:otherId,booking_id:booking.id,reason,details});$('status').textContent=error?error.message:'Report submitted for review.'}
 async function block(){if(!confirm('Block this user? You will no longer be able to message each other.'))return;const {error}=await client.from('user_blocks').insert({blocker_id:user.id,blocked_id:otherId});$('status').textContent=error?(error.code==='23505'?'User is already blocked.':error.message):'User blocked.';if(!error)$('message-form').hidden=true}

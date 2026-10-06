@@ -95,3 +95,22 @@ test('ad placements stay in safe test mode until real unit IDs are configured', 
   assert.match(bookings,/booking-confirm/);
   assert.match(bookings,/Booking request sent/);
 });
+
+
+test('profile and chat photos are compressed before upload', async()=>{
+  const compressor=await read('js/image-compress.js');
+  assert.match(compressor,/maxBytes=480\*1024/);
+  assert.match(compressor,/image\/webp/);
+  assert.match(compressor,/MAX_SOURCE_PIXELS/);
+  assert.match(compressor,/50\*1024\*1024/);
+
+  const chat=await read('js/chat-page.js');
+  assert.match(chat,/compressImageFile/);
+  assert.match(chat,/maxBytes:480\*1024/);
+  assert.doesNotMatch(chat,/Photo must be 5 MB or smaller/);
+
+  const profile=await read('js/profile-page.js');
+  assert.match(profile,/compressImageFile/);
+  assert.match(profile,/maxBytes:300\*1024/);
+  assert.doesNotMatch(profile,/under 5 MB/);
+});

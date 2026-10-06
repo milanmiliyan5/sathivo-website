@@ -2,6 +2,7 @@ import { setupPublishing } from './listing-publish.js?v=20261006-2';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { getSathivoClient } from './supabase-client.js?v=20261006-1';
 import { avatarOptions, avatarMarker, avatarAsset, isBuiltinAvatar } from './avatar-utils.js?v=20261006-1';
+import { compressImageFile,formatBytes } from './image-compress.js?v=20261006-1';
 const $ = id => document.getElementById(id);
 const form = $('profile-form');
 const categories = ['Conversation','Coffee','Movies','Shopping','Events','Walking','Online chat','Phone conversation'];
@@ -92,15 +93,7 @@ async function showPhoto(path) {
   $('avatar').src=data.signedUrl;$('avatar').hidden=false;syncAvatarChoice();
 }
 async function photoBlob(file) {
-  if(!['image/jpeg','image/png','image/webp'].includes(file.type)||file.size>5*1024*1024) throw Error('Choose a JPG, PNG or WebP photo under 5 MB.');
-  const bitmap=await createImageBitmap(file);
-  if(bitmap.width*bitmap.height>40000000){bitmap.close();throw Error('Please choose a smaller photo.');}
-  const scale=Math.min(1,800/Math.max(bitmap.width,bitmap.height));
-  const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
-  canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
-  const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/webp',.85));
-  if(!blob||blob.type!=='image/webp'||blob.size>2097152) throw Error('This photo could not be prepared. Try another photo.');
-  return blob;
+  return compressImageFile(file,{maxBytes:300*1024,maxDimension:900,minDimension:480,maxInputBytes:50*1024*1024});
 }
 form.addEventListener('submit',async event=>{
   event.preventDefault();if(!user||!form.reportValidity())return;
@@ -116,15 +109,15 @@ form.addEventListener('submit',async event=>{
   $('fields').disabled=true;message('Saving your profile…');
   try {
     const fresh=await client.auth.getUser();if(fresh.error||fresh.data.user?.id!==user.id)throw Error('Your session ended. Sign in again before saving.');
-    const file=$('photo').files[0];
-    if(file){const blob=await photoBlob(file);const path=user.id+'/avatar.webp';const upload=await client.storage.from('profile-photos').upload(path,blob,{upsert:true,contentType:'image/webp'});if(upload.error)throw Error('Photo upload failed. Check your connection and try again.');avatarPath=path;}
+    const file=$('photo').files[0];let preparedPhoto=null;
+    if(file){preparedPhoto=await photoBlob(file);const path=user.id+'/avatar.webp';const upload=await client.storage.from('profile-photos').upload(path,preparedPhoto.blob,{upsert:true,contentType:preparedPhoto.type});if(upload.error)throw Error('Photo upload failed. Check your connection and try again.');avatarPath=path;}
     row.avatar_path=avatarPath;
     const {data,error}=await client.from('member_profiles').upsert(row,{onConflict:'user_id'}).select('user_id,safety_id,joined_at,email_verified_at').single();
     if(error||!data)throw Error('Profile could not be saved. Check your connection and try again.');
     if(savedAvatarPath&&!isBuiltinAvatar(savedAvatarPath)&&savedAvatarPath!==avatarPath){
       try{await client.storage.from('profile-photos').remove([savedAvatarPath])}catch{}
     }
-    savedAvatarPath=avatarPath;dirty=false;$('photo').value='';if(localPreviewUrl){URL.revokeObjectURL(localPreviewUrl);localPreviewUrl=null;}showSystemInfo(data);message('Your profile is saved. You can come back and edit it anytime.');
+    savedAvatarPath=avatarPath;dirty=false;$('photo').value='';if(localPreviewUrl){URL.revokeObjectURL(localPreviewUrl);localPreviewUrl=null;}showSystemInfo(data);message(preparedPhoto?'Your profile is saved. Photo compressed '+formatBytes(preparedPhoto.originalBytes)+' → '+formatBytes(preparedPhoto.outputBytes)+'.':'Your profile is saved. You can come back and edit it anytime.');
     if(avatarPath)await showPhoto(avatarPath);else{$('avatar').hidden=true;syncAvatarChoice();}updateCompleteness();
   }catch(error){message(error.message||'Could not save your profile. Please try again.',true);}
   finally{$('fields').disabled=false;$('profile-status').focus();}
