@@ -3,6 +3,16 @@ import {sendBookingPush} from './push-events.js?v=20261004-1';
 const $=id=>document.getElementById(id); let client,user,rows=[],filter='all';
 const fmt=d=>new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d));
 const el=(t,x,c)=>{const n=document.createElement(t);if(x!==undefined)n.textContent=x;if(c)n.className=c;return n};
+function showBookingConfirmation(){
+ const url=new URL(location.href);
+ if(url.searchParams.get('booked')!=='1')return;
+ const box=el('section',undefined,'booking-confirmation');
+ box.append(el('strong','Booking request sent ✓'),el('p','Your request is saved. You can track its status below while the companion reviews it.'));
+ const ad=el('div',undefined,'ad-slot ad-slot-large');ad.dataset.adSlot='booking-confirm';ad.hidden=true;
+ $('status').before(box,ad);
+ url.searchParams.delete('booked');
+ history.replaceState(null,'',url.pathname+url.search+url.hash);
+}
 function visible(r){if(filter==='all')return true;if(filter==='closed')return ['declined','cancelled'].includes(r.status);return r.status===filter}
 function card(r){const mine=r.customer_id===user.id,other=mine?r.companion_display_name:r.customer_display_name,n=el('article',undefined,'booking-card');
  const top=el('div',undefined,'booking-top'),left=el('div');left.append(el('h2',other||'Sathivo member'),el('div',undefined,'booking-meta'));left.lastChild.append(el('span',r.category),el('span',r.meeting_mode==='in-person'?'In person':'Online'),el('span',fmt(r.requested_for)),el('span',r.duration_minutes+' min'));top.append(left,el('span',r.status,'status-pill'));n.append(top);
@@ -18,5 +28,5 @@ function render(){const list=rows.filter(visible);$('bookings').replaceChildren(
 async function load(){const {data,error}=await client.from('booking_requests').select('*').order('created_at',{ascending:false});if(error)throw error;rows=data||[];$('filters').hidden=false;render()}
 async function update(id,status){$('status').textContent='Updating…';const {error}=await client.from('booking_requests').update({status}).eq('id',id);if(error){$('status').textContent=error.message;return}if(['cancelled','completed'].includes(status)){ $('status').textContent='Sending notification…';await sendBookingPush(client,id,status)}await load()}
 async function submitReview(r,form){const rating=Number(form.querySelector('select').value),comment=form.querySelector('textarea').value.trim();const {error}=await client.from('booking_reviews').insert({booking_id:r.id,reviewer_id:user.id,companion_id:r.companion_id,rating,comment});if(error){$('status').textContent=error.code==='23505'?'You already reviewed this booking.':error.message;return}form.replaceWith(el('p','Thanks for your review.','launch-note'))}
-async function init(){try{client=await getSathivoClient();const u=await client.auth.getUser();user=u.data.user;if(!user){location.replace('account.html#login');return}document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));render()});await load();client.channel('bookings:'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_requests'},()=>void load()).subscribe()}catch(e){$('status').textContent=e.message||'Could not load bookings.'}}
+async function init(){try{client=await getSathivoClient();const u=await client.auth.getUser();user=u.data.user;if(!user){location.replace('account.html#login');return}showBookingConfirmation();document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;document.querySelectorAll('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));render()});await load();client.channel('bookings:'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_requests'},()=>void load()).subscribe()}catch(e){$('status').textContent=e.message||'Could not load bookings.'}}
 void init();
