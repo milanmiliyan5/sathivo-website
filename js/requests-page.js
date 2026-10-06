@@ -1,5 +1,6 @@
 import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
+import {askCancellationReason,cancellationLabel} from './booking-cancel.js?v=20261006-1';
 const $=id=>document.getElementById(id);let client,user,rows=[],filter='pending',channel;
 const fmt=d=>new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d));
 const el=(t,x,c)=>{const n=document.createElement(t);if(x!==undefined)n.textContent=x;if(c)n.className=c;return n};
@@ -16,9 +17,9 @@ function card(r){
   decline.onclick=()=>{if(confirm('Decline this booking request?')){accept.disabled=decline.disabled=true;void update(r.id,'declined')}};a.append(accept,decline);
  }else if(r.status==='accepted'){
   const chat=el('a','Open chat & photos ↗','button button-primary');chat.href='chat.html?booking='+encodeURIComponent(r.id);
-  const done=el('button','Mark completed','button button-outline');done.onclick=()=>void update(r.id,'completed');a.append(chat,done);
+  const done=el('button','Mark completed','button button-outline');done.onclick=()=>void update(r.id,'completed');const cancel=el('button','Cancel booking','button button-outline');cancel.onclick=()=>void cancelBooking(r);a.append(chat,done,cancel);
  }
- if(a.childNodes.length)n.append(a);if(r.status==='accepted'&&r.agreed_hourly_rate)n.append(el('p','Deal recorded at ₹'+Number(r.agreed_hourly_rate).toLocaleString('en-IN')+'/hour. Coordinate details in chat. Payment stays outside Sathivo.','payment-note'));return n;
+ if(a.childNodes.length)n.append(a);if(r.status==='cancelled'&&r.cancel_reason)n.append(el('p','Cancelled · '+cancellationLabel(r.cancel_reason)+(r.cancel_note?' — '+r.cancel_note:''),'cancellation-note'));if(r.status==='accepted'&&r.agreed_hourly_rate)n.append(el('p','Deal recorded at ₹'+Number(r.agreed_hourly_rate).toLocaleString('en-IN')+'/hour. Coordinate details in chat. Payment stays outside Sathivo.','payment-note'));return n;
 }
 function render(){
  const list=rows.filter(visible);$('requests').replaceChildren(...list.map(card));$('empty').hidden=list.length>0;$('status').textContent=list.length?(String(list.length)+' request'+(list.length===1?'':'s')+' here.'):'';
@@ -28,7 +29,8 @@ async function load(){
  $('requests').replaceChildren(...Array.from({length:3},()=>{const n=el('article',undefined,'booking-card request-skeleton');n.innerHTML='<div class="request-identity"><span class="skeleton-dot"></span><div class="skeleton-lines"><i></i><i></i><i></i></div></div>';return n}));
  const {data,error}=await client.from('booking_requests').select('*').eq('companion_id',user.id).order('created_at',{ascending:false});if(error)throw error;rows=data||[];$('request-filters').hidden=false;render()
 }
-async function update(id,status){$('status').textContent=status==='accepted'?'Accepting request…':'Updating request…';const {error}=await client.from('booking_requests').update({status}).eq('id',id);if(error){$('status').textContent=error.message;return}$('status').textContent='Sending notification…';await sendBookingPush(client,id,status);if(status==='accepted'){location.href='chat.html?booking='+encodeURIComponent(id);return}await load()}
+async function cancelBooking(r){const answer=await askCancellationReason();if(!answer)return;await update(r.id,'cancelled',{cancel_reason:answer.reason,cancel_note:answer.note||null})}
+async function update(id,status,extra={}){$('status').textContent=status==='accepted'?'Accepting request…':'Updating request…';const {error}=await client.from('booking_requests').update({status,...extra}).eq('id',id);if(error){$('status').textContent=error.message;return}$('status').textContent='Sending notification…';await sendBookingPush(client,id,status);if(status==='accepted'){location.href='chat.html?booking='+encodeURIComponent(id);return}await load()}
 async function markLinkedNotification(){const id=new URL(location.href).searchParams.get('id');if(!id)return;await client.from('notifications').update({read_at:new Date().toISOString()}).eq('user_id',user.id).eq('link','requests.html?id='+id).is('read_at',null)}
 async function init(){try{
  client=await getSathivoClient();

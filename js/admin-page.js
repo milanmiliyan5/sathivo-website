@@ -99,7 +99,7 @@ function bookingRow(b){
     td('Price',(()=>{const x=node('div',undefined,'primary-cell');if(b.listed_hourly_rate)x.append(node('strong','Listed ₹'+Number(b.listed_hourly_rate).toLocaleString('en-IN')+'/hr'));if(b.offered_hourly_rate)x.append(node('small','Offer ₹'+Number(b.offered_hourly_rate).toLocaleString('en-IN')+'/hr'));if(b.agreed_hourly_rate)x.append(node('small','Agreed ₹'+Number(b.agreed_hourly_rate).toLocaleString('en-IN')+'/hr'));if(!x.childNodes.length)x.append(node('span','Legacy booking'));return x})()),
     td('Mode',b.meeting_mode==='in-person'?'In person':'Online'),
     td('Requested For',fmtDateTime(b.requested_for)),
-    td('Status',pill(b.status)),
+    td('Status',(()=>{const x=node('div',undefined,'primary-cell');x.append(pill(b.status));if(b.status==='cancelled'&&b.cancel_reason)x.append(node('small','Reason: '+String(b.cancel_reason).replaceAll('_',' ')+(b.cancel_note?' · '+b.cancel_note:'')));return x})()),
     td('Created',fmtDateTime(b.created_at))
   );
   return tr;
@@ -209,7 +209,7 @@ async function load(){
     client.from('companion_listings').select('user_id,display_name,bio,published,moderation_status,moderation_note').order('display_name').limit(500),
     client.from('member_profiles').select('user_id,display_name,profile_kind,gender,safety_id,joined_at,email_verified_at').order('joined_at',{ascending:false}).limit(1000),
     client.from('support_requests').select('id,email,category,subject,message,status,rating,feedback_type,created_at').order('created_at',{ascending:false}).limit(500),
-    client.from('booking_requests').select('id,customer_id,companion_id,category,meeting_mode,requested_for,duration_minutes,status,created_at,customer_display_name,companion_display_name,listed_hourly_rate,offered_hourly_rate,agreed_hourly_rate').order('created_at',{ascending:false}).limit(500)
+    client.from('booking_requests').select('id,customer_id,companion_id,category,meeting_mode,requested_for,duration_minutes,status,created_at,customer_display_name,companion_display_name,listed_hourly_rate,offered_hourly_rate,agreed_hourly_rate,cancel_reason,cancel_note,cancelled_by,cancelled_at').order('created_at',{ascending:false}).limit(500)
   ]);
   const failure=[rr,ll,pp,ss,bb].find(x=>x.error);if(failure)throw failure.error;
   reports=rr.data||[];listings=ll.data||[];profiles=pp.data||[];supports=ss.data||[];bookings=bb.data||[];

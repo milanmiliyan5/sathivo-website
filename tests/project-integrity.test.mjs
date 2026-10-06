@@ -117,3 +117,28 @@ test('profile and chat photos are compressed before upload', async()=>{
   assert.match(profile,/maxBytes:300\*1024/);
   assert.doesNotMatch(profile,/under 5 MB/);
 });
+
+
+test('favorites, sharing, discovery sorting and cancellation reasons are wired', async()=>{
+  const companions=await read('js/companions-page.js');
+  assert.match(companions,/companion_favorites/);
+  assert.match(companions,/browse_public_companions/);
+  assert.match(companions,/navigator\.share/);
+  assert.match(companions,/saved-only/);
+  assert.match(companions,/price_asc/);
+  assert.match(companions,/rating/);
+
+  const cancel=await read('js/booking-cancel.js');
+  assert.match(cancel,/plan_changed/);
+  assert.match(cancel,/safety_concern/);
+
+  const bookings=await read('js/bookings-page.js');
+  const requests=await read('js/requests-page.js');
+  assert.match(bookings,/cancel_reason/);
+  assert.match(requests,/Cancel booking/);
+
+  const migration=await read('supabase/migrations/20261006182143_favorites_discovery_and_cancel_reasons.sql');
+  assert.match(migration,/create table if not exists public\.companion_favorites/);
+  assert.match(migration,/browse_public_companions/);
+  assert.match(migration,/cancel_reason/);
+});
