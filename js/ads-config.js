@@ -3,5 +3,12 @@ export const adsConfig={
   testMode:true,
   provider:'adsense',
   publisherId:'ca-pub-9377266871455870',
-  note:'Sathivo test ads are enabled. Replace testMode with false only after an approved publisher ID and real ad units are configured.'
+  slots:{
+    'home-mid':'',
+    'directory-top':'',
+    'directory-inline':'',
+    'bookings-top':'',
+    'booking-confirm':''
+  },
+  note:'Sathivo test ads are enabled. Keep testMode true until AdSense approval and real ad unit IDs are available.'
 };
