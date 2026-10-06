@@ -3,3 +3,13 @@ node_modules/
 .env.*
 !.env.example
 *.log
+.supabase/
+supabase/.temp/
+supabase/functions/.env
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
+.DS_Store
