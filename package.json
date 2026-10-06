@@ -10,6 +10,6 @@
     "check:static": "node scripts/check-static.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "2.116.0"
+    "@supabase/supabase-js": "2.117.2"
   }
 }
