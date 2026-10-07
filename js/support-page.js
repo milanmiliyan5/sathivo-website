@@ -1,6 +1,16 @@
 import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 const $=id=>document.getElementById(id);
 let client;
+async function errorMessage(error,fallback){
+  try{
+    const response=error?.context;
+    if(response&&typeof response.clone==='function'){
+      const payload=await response.clone().json();
+      if(payload?.error)return String(payload.error);
+    }
+  }catch{}
+  return error?.message||fallback;
+}
 function status(message,tone='info'){const n=$('support-status');n.textContent=message;n.dataset.tone=tone}
 async function init(){
   
@@ -21,7 +31,7 @@ async function submit(event){
     status('Request sent'+(ref?' · Reference '+ref:'')+'. Keep this reference for follow-up.','success');
     const email=$('support-email').value,category=$('support-category').value;
     form.reset();$('support-email').value=email;$('support-category').value=category;
-  }catch(error){status(error?.message||'Could not send your request. Please try again.','error')}
+  }catch(error){status(await errorMessage(error,'Could not send your request. Please try again.'),'error')}
   finally{button.disabled=false}
 }
 void init();
