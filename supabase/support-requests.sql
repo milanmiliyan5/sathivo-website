@@ -19,3 +19,6 @@ using (exists(select 1 from public.platform_admins pa where pa.user_id=(select a
 create policy support_admin_update on public.support_requests for update to authenticated
 using (exists(select 1 from public.platform_admins pa where pa.user_id=(select auth.uid())))
 with check (exists(select 1 from public.platform_admins pa where pa.user_id=(select auth.uid())));
+
+-- Server-side Edge Functions need only these privileges for submit/delete flows.
+grant select, insert, delete on table public.support_requests to service_role;
