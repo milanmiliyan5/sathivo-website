@@ -1,6 +1,16 @@
 import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 const $=id=>document.getElementById(id);
 let client;
+async function errorMessage(error,fallback){
+  try{
+    const response=error?.context;
+    if(response&&typeof response.clone==='function'){
+      const payload=await response.clone().json();
+      if(payload?.error)return String(payload.error);
+    }
+  }catch{}
+  return error?.message||fallback;
+}
 function status(message,tone='info'){const n=$('feedback-status');n.textContent=message;n.dataset.tone=tone}
 async function init(){
   
@@ -36,7 +46,7 @@ async function submit(event){
     const email=$('feedback-email').value;
     form.reset();$('feedback-email').value=email;
   }catch(error){
-    status(error?.context?.body?.error||error?.message||'Could not send feedback. Please try again.','error');
+    status(await errorMessage(error,'Could not send feedback. Please try again.'),'error');
   }finally{button.disabled=false}
 }
 void init();
