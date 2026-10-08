@@ -11,8 +11,8 @@ Remaining launch dependencies are mostly verification/testing items rather than 
 - India-wide, strictly platonic companionship for adults 18+ only. Sexual services, offers, escort services, and sexual activity are prohibited.
 - Male and female companions; customers choose according to preference.
 - Customers can browse without logging in; a booking request requires an account.
-- In-person discovery: State or Union Territory -> selected important districts -> selected main cities/towns. Include every State/UT, not every village/locality.
-- Use the same canonical location records for customers and companions. Companions may select nearby service cities.
+- In-person discovery: State or Union Territory -> district -> exact city/town. All current States/UTs and district fallbacks are available; users may type any city/town even when it is not pre-seeded.
+- Profile creation and Explore use the same location system. Exact city/town text is saved with the profile/listing, while canonical and already-published cities are offered as autocomplete suggestions. Villages/localities are not required for V1.
 - Online experiences do not require a city selection.
 - Email address and password for normal login. Forgot password -> OTP to the verified account email -> verification -> new password.
 - Sathivo booking requests are free in the current release. Sathivo does not process booking payments, commissions, payouts, subscriptions, or boosts. Monetization direction is advertising only.
@@ -24,7 +24,7 @@ Remaining launch dependencies are mostly verification/testing items rather than 
 | --- | --- | --- |
 | 1 | Backend project and authentication setup | Connected project, protected user records, verified email delivery setup, no secrets in frontend or GitHub |
 | 2 | Signup, email verification, email/password login, logout, and OTP password recovery | Real test account completes signup, login, logout, reset; expired/wrong OTP and resend limits handled; old password fails after reset |
-| 3 | Curated India location catalog | All current States/UTs and selected districts/cities sourced and checked; stable IDs; shared hierarchy and nearby service areas |
+| 3 | India location catalog | All States/UTs and district fallbacks are available; exact city/town entry and matching work on both profile creation and Explore |
 | 4 | Find a Companion page | In-person/online choice, location/activity/gender/language/budget filters; anonymous browsing; truthful empty states |
 | 5 | Companion application and editable profile | Photo, bio, languages, experiences, rates, availability, home and service cities persisted |
 | 6 | Administration and moderation | Proposed owner review before profile visibility; approval, rejection, suspension, reports, and access controls |
