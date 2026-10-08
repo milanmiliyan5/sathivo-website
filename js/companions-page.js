@@ -3,28 +3,47 @@ import {sendBookingPush} from './push-events.js?v=20261004-1';
 import {avatarAsset} from './avatar-utils.js?v=20261007-1';
 
 const $=id=>document.getElementById(id),directory=!!$('filters');
-const fields='public_id,display_name,bio,location_id,languages,interests,categories,meeting_mode,availability,hourly_rate,photo_path,safety_id,joined_at,email_verified_at,adult_confirmed,boundaries_accepted';
-let client,locations=[],page=0,request=0,currentUser=null,favoriteIds=new Set();
+const fields='public_id,display_name,bio,location_id,city_name,languages,interests,categories,meeting_mode,availability,hourly_rate,photo_path,safety_id,joined_at,email_verified_at,adult_confirmed,boundaries_accepted';
+let client,locations=[],page=0,request=0,currentUser=null,favoriteIds=new Set(),citySuggestionRequest=0;
 
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
 function opts(id,rows,title){$(id).replaceChildren(new Option(title,''));rows.forEach(([v,t])=>$(id).add(new Option(t,String(v))));}
+const normalized=value=>String(value||'').trim().toLocaleLowerCase('en-IN');
 function matching(){return locations.filter(r=>(!$('state')?.value||r.state===$('state').value)&&(!$('district')?.value||r.district===$('district').value));}
-function cityFilterLabel(r){return (r.city==='District-wide'?r.district+' district-wide':r.city)+' · '+r.state;}
-function cities(){opts('city',matching().map(r=>[r.id,cityFilterLabel(r)]),'All cities / towns');}
-function districts(){opts('district',[...new Set(locations.filter(r=>!$('state').value||r.state===$('state').value).map(r=>r.district))].sort().map(v=>[v,v]),'All districts');cities();}
-function locationName(id){const r=locations.find(r=>r.id===id);if(!r)return 'Location unavailable';return r.city==='District-wide'?[r.district+' district',r.state].join(' · '):[r.city,r.district,r.state].join(' · ');}
+function selectedLocationIds(){
+ if(!directory)return null;
+ if($('state').value||$('district').value)return matching().map(r=>r.id);
+ return null;
+}
+async function refreshCitySuggestions(){
+ const seq=++citySuggestionRequest,list=$('city-search-options');if(!list)return;
+ const names=new Set(matching().filter(r=>r.city!=='District-wide').map(r=>r.city).filter(Boolean));
+ try{
+  const ids=selectedLocationIds();
+  const {data,error}=await client.rpc('browse_public_city_suggestions',{p_location_ids:ids?.length?ids:null});
+  if(!error)(data||[]).forEach(row=>{if(row.city_name)names.add(row.city_name);});
+ }catch{}
+ if(seq!==citySuggestionRequest)return;
+ list.replaceChildren(...[...names].sort((a,b)=>a.localeCompare(b,'en-IN')).map(name=>{const option=document.createElement('option');option.value=name;return option;}));
+}
+function districts(){
+ opts('district',[...new Set(locations.filter(r=>!$('state').value||r.state===$('state').value).map(r=>r.district))].sort().map(v=>[v,v]),'All districts');
+ $('city').value='';void refreshCitySuggestions();
+}
+function locationName(id,cityName=''){
+ const r=locations.find(r=>r.id===id);if(!r)return cityName||'Location unavailable';
+ const city=String(cityName||'').trim();
+ if(city&&normalized(city)!==normalized(r.district))return [city,r.district,r.state].join(' · ');
+ if(r.city!=='District-wide'&&r.city&&normalized(r.city)!==normalized(r.district))return [r.city,r.district,r.state].join(' · ');
+ return [r.district,r.state].join(' · ');
+}
 function scopeName(){
  if(!directory)return '';
- if($('city').value){const row=locations.find(r=>r.id===Number($('city').value));return row?locationName(row.id):'Selected city';}
+ const city=$('city').value.trim();
+ if(city)return [city,$('district').value,$('state').value||'India'].filter(Boolean).join(' · ');
  if($('district').value)return $('district').value+' · '+($('state').value||'India');
  if($('state').value)return $('state').value;
  return 'All India';
-}
-function selectedLocationIds(){
- if(!directory)return null;
- if($('city').value)return [Number($('city').value)];
- if($('state').value||$('district').value)return matching().map(r=>r.id);
- return null;
 }
 function tags(row){const n=el('div',undefined,'tags');[{'online':'Online','in-person':'In person','both':'Online & in person'}[row.meeting_mode],...row.categories].forEach(v=>n.append(el('span',v)));return n;}
 function portrait(row){
@@ -84,7 +103,7 @@ async function shareProfile(row,button){
 function card(row){
  const n=el('article',undefined,'companion-card'),copy=el('div',undefined,'card-copy'),head=el('div',undefined,'card-heading-row'),name=el('h2',row.display_name);
  head.append(name,favoriteButton(row));
- copy.append(head,el('p',locationName(row.location_id)),el('strong',rateText(row.hourly_rate),'rate-chip'),el('span',ratingText(row),'rating-line'),trustChips(row,true),tags(row),el('p',row.bio.length>150?row.bio.slice(0,147)+'…':row.bio));
+ copy.append(head,el('p',locationName(row.location_id,row.city_name)),el('strong',rateText(row.hourly_rate),'rate-chip'),el('span',ratingText(row),'rating-line'),trustChips(row,true),tags(row),el('p',row.bio.length>150?row.bio.slice(0,147)+'…':row.bio));
  const actions=el('div',undefined,'card-actions'),link=el('a','Get to know '+row.display_name+' ↗','text-link'),share=el('button','Share ↗','text-link share-link');
  link.href='companion.html?id='+encodeURIComponent(row.public_id);share.type='button';share.onclick=()=>void shareProfile(row,share);actions.append(link,share);copy.append(actions);n.append(portrait(row),copy);return n;
 }
@@ -103,8 +122,9 @@ async function list(){
  if(savedOnly&&!savedIds.length){$('results').replaceChildren();$('empty').hidden=false;$('status').textContent='No saved companions yet.';$('previous').disabled=$('next').disabled=true;$('page-label').textContent='';return}
  const locationIds=selectedLocationIds();
  try{
-  const {data,error}=await client.rpc('browse_public_companions',{
+  const {data,error}=await client.rpc('browse_public_companions_v2',{
    p_location_ids:locationIds?.length?locationIds:null,
+   p_city:$('city').value.trim()||null,
    p_category:$('category').value||null,
    p_mode:$('mode').value||null,
    p_sort:$('sort').value||'newest',
@@ -153,7 +173,7 @@ async function detail(){
   const copy=el('div',undefined,'detail-copy');copy.append(el('p','GOOD COMPANY, ON YOUR TERMS','eyebrow'));
   const titleRow=el('div',undefined,'detail-title-row');titleRow.append(el('h1',r.display_name),favoriteButton(r,true));copy.append(titleRow);
   const profileActions=el('div',undefined,'profile-actions'),share=el('button','Share profile ↗','button button-outline');share.type='button';share.onclick=()=>void shareProfile(r,share);profileActions.append(share);copy.append(profileActions);
-  copy.append(el('p',locationName(r.location_id)),el('div',rateText(r.hourly_rate),'detail-rate'),el('p',ratingText(r),'rating-line'),trustChips(r),tags(r));
+  copy.append(el('p',locationName(r.location_id,r.city_name)),el('div',rateText(r.hourly_rate),'detail-rate'),el('p',ratingText(r),'rating-line'),trustChips(r),tags(r));
   const trust=el('section',undefined,'profile-trust-panel');trust.append(el('strong','Trust & account details'));const trustGrid=el('div',undefined,'profile-trust-grid');
   trustGrid.append(el('span',r.email_verified_at?'✓ Email verified':'Email verification unavailable'),el('span',r.adult_confirmed?'18+ self-declared':'Age declaration missing'),el('span',r.boundaries_accepted?'Platonic boundaries accepted':'Boundaries declaration missing'));
   if(r.joined_at)trustGrid.append(el('span','Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(r.joined_at))));if(r.safety_id)trustGrid.append(el('span','Safety ID '+r.safety_id));trust.append(trustGrid);copy.append(trust);
@@ -172,7 +192,7 @@ async function init(){
    opts('state',[...new Set(locations.map(r=>r.state))].sort().map(v=>[v,v]),'All India — all states / UTs');districts();
    ['Conversation','Coffee','Movies','Shopping','Events','Walking','Online chat','Phone conversation'].forEach(v=>$('category').add(new Option(v,v)));
    $('filters').onsubmit=e=>{e.preventDefault();page=0;void list();};
-   $('filters').onchange=e=>{if(e.target.id==='state')districts();else if(e.target.id==='district')cities();};
+   $('filters').onchange=e=>{if(e.target.id==='state')districts();else if(e.target.id==='district'){$('city').value='';void refreshCitySuggestions();}};
    $('filters').onreset=e=>{e.preventDefault();$('state').value='';districts();$('category').value=$('mode').value='';$('sort').value='newest';$('saved-only').checked=false;page=0;void list();};
    $('saved-only').addEventListener('change',()=>{if($('saved-only').checked&&!currentUser){$('saved-only').checked=false;location.href='account.html#login';return}page=0;void list();});
    $('sort').addEventListener('change',()=>{page=0;void list();});
