@@ -15,8 +15,17 @@ function selectedLocationIds(){
  if($('state').value||$('district').value)return matching().map(r=>r.id);
  return null;
 }
-async function refreshCitySuggestions(){
- const seq=++citySuggestionRequest,list=$('city-search-options');if(!list)return;
+function selectedCity(){
+ if(!directory)return '';
+ return $('city').value==='__other__'?$('city-custom').value.trim():$('city').value.trim();
+}
+function syncCitySearch(){
+ const custom=$('city').value==='__other__';
+ $('city-custom').hidden=!custom;
+ if(!custom)$('city-custom').value='';
+}
+async function refreshCitySuggestions(preferred=''){
+ const seq=++citySuggestionRequest,select=$('city');if(!select)return;
  const names=new Set(matching().filter(r=>r.city!=='District-wide').map(r=>r.city).filter(Boolean));
  try{
   const ids=selectedLocationIds();
@@ -24,11 +33,19 @@ async function refreshCitySuggestions(){
   if(!error)(data||[]).forEach(row=>{if(row.city_name)names.add(row.city_name);});
  }catch{}
  if(seq!==citySuggestionRequest)return;
- list.replaceChildren(...[...names].sort((a,b)=>a.localeCompare(b,'en-IN')).map(name=>{const option=document.createElement('option');option.value=name;return option;}));
+ const sorted=[...names].sort((a,b)=>a.localeCompare(b,'en-IN'));
+ opts('city',sorted.map(name=>[name,name]),'All cities / towns');
+ $('city').add(new Option('Other city / town — type manually','__other__'));
+ const exact=sorted.find(name=>normalized(name)===normalized(preferred));
+ if(preferred){
+  if(exact){$('city').value=exact;$('city-custom').value='';}
+  else{$('city').value='__other__';$('city-custom').value=preferred;}
+ }
+ syncCitySearch();
 }
 function districts(){
  opts('district',[...new Set(locations.filter(r=>!$('state').value||r.state===$('state').value).map(r=>r.district))].sort().map(v=>[v,v]),'All districts');
- $('city').value='';void refreshCitySuggestions();
+ $('city-custom').value='';void refreshCitySuggestions();
 }
 function locationName(id,cityName=''){
  const r=locations.find(r=>r.id===id);if(!r)return cityName||'Location unavailable';
@@ -39,7 +56,7 @@ function locationName(id,cityName=''){
 }
 function scopeName(){
  if(!directory)return '';
- const city=$('city').value.trim();
+ const city=selectedCity();
  if(city)return [city,$('district').value,$('state').value||'India'].filter(Boolean).join(' · ');
  if($('district').value)return $('district').value+' · '+($('state').value||'India');
  if($('state').value)return $('state').value;
@@ -124,7 +141,7 @@ async function list(){
  try{
   const {data,error}=await client.rpc('browse_public_companions_v2',{
    p_location_ids:locationIds?.length?locationIds:null,
-   p_city:$('city').value.trim()||null,
+   p_city:selectedCity()||null,
    p_category:$('category').value||null,
    p_mode:$('mode').value||null,
    p_sort:$('sort').value||'newest',
@@ -192,8 +209,8 @@ async function init(){
    opts('state',[...new Set(locations.map(r=>r.state))].sort().map(v=>[v,v]),'All India — all states / UTs');districts();
    ['Conversation','Coffee','Movies','Shopping','Events','Walking','Online chat','Phone conversation'].forEach(v=>$('category').add(new Option(v,v)));
    $('filters').onsubmit=e=>{e.preventDefault();page=0;void list();};
-   $('filters').onchange=e=>{if(e.target.id==='state')districts();else if(e.target.id==='district'){$('city').value='';void refreshCitySuggestions();}};
-   $('filters').onreset=e=>{e.preventDefault();$('state').value='';districts();$('category').value=$('mode').value='';$('sort').value='newest';$('saved-only').checked=false;page=0;void list();};
+   $('filters').onchange=e=>{if(e.target.id==='state')districts();else if(e.target.id==='district'){$('city-custom').value='';void refreshCitySuggestions();}else if(e.target.id==='city')syncCitySearch();};
+   $('filters').onreset=e=>{e.preventDefault();$('state').value='';districts();$('city-custom').value='';$('category').value=$('mode').value='';$('sort').value='newest';$('saved-only').checked=false;page=0;void list();};
    $('saved-only').addEventListener('change',()=>{if($('saved-only').checked&&!currentUser){$('saved-only').checked=false;location.href='account.html#login';return}page=0;void list();});
    $('sort').addEventListener('change',()=>{page=0;void list();});
    $('previous').onclick=()=>{if(page>0){page--;void list();}};$('next').onclick=()=>{page++;void list();};await list();
