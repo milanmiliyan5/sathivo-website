@@ -48,12 +48,30 @@ test('profile publishing requires a photo or built-in avatar', async()=>{
   assert.match(source,/isBuiltinAvatar\(p\.avatar_path\)/);
 });
 
+
+test('exact city and town entry is shared by profiles and discovery', async()=>{
+  const profile=await read('js/profile-page.js');
+  const discovery=await read('js/companions-page.js');
+  const publish=await read('js/listing-publish.js');
+  const migration=await read('supabase/migrations/20261008180738_exact_city_town_profile_discovery.sql');
+
+  assert.match(profile,/city_name/);
+  assert.match(profile,/browse_public_city_suggestions/);
+  assert.match(discovery,/browse_public_companions_v2/);
+  assert.match(discovery,/p_city:/);
+  assert.match(discovery,/browse_public_city_suggestions/);
+  assert.match(publish,/city_name/);
+  assert.match(migration,/add column if not exists city_name text/);
+  assert.match(migration,/browse_public_companions_v2/);
+});
+
 test('important schema migrations are tracked in GitHub', async()=>{
   const names=await readdir(path.join(root,'supabase','migrations'));
   for(const suffix of [
     'allow_builtin_profile_avatars.sql',
     'edge_function_rate_limits.sql',
     'expand_pan_india_district_coverage.sql',
+    'exact_city_town_profile_discovery.sql',
     'allow_owner_photo_cleanup.sql',
   ]){
     assert.ok(names.some(name=>name.endsWith(suffix)),suffix+' is missing');
