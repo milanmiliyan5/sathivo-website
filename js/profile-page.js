@@ -25,10 +25,23 @@ function resolveLocationId(){
  $('location_id').value=chosen?String(chosen.id):'';
  return chosen;
 }
-async function refreshCitySuggestions(){
- const seq=++citySuggestionRequest,list=$('city-town-options');
- if(!list)return;
- if(!$('state').value||!$('district').value){list.replaceChildren();return;}
+function syncCityChoice(){
+ const choice=$('city_choice').value,custom=choice==='__other__';
+ $('custom-city-wrap').hidden=!custom;
+ $('city_name').required=custom;
+ if(!custom){
+  $('city_name').value=choice||'';
+  resolveLocationId();
+ }
+ updateCompleteness();
+}
+async function refreshCitySuggestions(preferred=''){
+ const seq=++citySuggestionRequest,select=$('city_choice');
+ if(!select)return;
+ if(!$('state').value||!$('district').value){
+  options(select,[],'Choose city / town');select.add(new Option('Other city / town — type manually','__other__'));
+  $('custom-city-wrap').hidden=true;$('city_name').value='';$('location_id').value='';return;
+ }
  const names=new Set(districtRows().filter(r=>r.city!=='District-wide').map(r=>r.city).filter(Boolean));
  try{
   if(client){
@@ -38,11 +51,20 @@ async function refreshCitySuggestions(){
   }
  }catch{}
  if(seq!==citySuggestionRequest)return;
- list.replaceChildren(...[...names].sort((a,b)=>a.localeCompare(b,'en-IN')).map(name=>{const option=document.createElement('option');option.value=name;return option;}));
+ const sorted=[...names].sort((a,b)=>a.localeCompare(b,'en-IN'));
+ options(select,sorted.map(name=>[name,name]),'Choose city / town');
+ select.add(new Option('Other city / town — type manually','__other__'));
+ const exact=sorted.find(name=>normalized(name)===normalized(preferred));
+ if(preferred){
+  if(exact){select.value=exact;$('city_name').value=exact;$('custom-city-wrap').hidden=true;}
+  else{select.value='__other__';$('city_name').value=preferred;$('custom-city-wrap').hidden=false;}
+ }else{
+  select.value='';$('city_name').value='';$('custom-city-wrap').hidden=true;
+ }
+ resolveLocationId();
 }
 function clearCity(){
- $('city_name').value='';
- $('location_id').value='';
+ $('city_name').value='';$('location_id').value='';$('custom-city-wrap').hidden=true;
  void refreshCitySuggestions();
 }
 function districts(){
@@ -51,7 +73,8 @@ function districts(){
 }
 $('state').addEventListener('change',districts);
 $('district').addEventListener('change',clearCity);
-$('city_name').addEventListener('input',resolveLocationId);
+$('city_choice').addEventListener('change',syncCityChoice);
+$('city_name').addEventListener('input',()=>{resolveLocationId();updateCompleteness();});
 $('city_name').addEventListener('change',resolveLocationId);
 categories.forEach(value=>{
   const label=document.createElement('label'), input=document.createElement('input');
@@ -175,9 +198,9 @@ async function init(){
       const loc=locations.find(r=>r.id===p.location_id);
       if(loc){
         $('state').value=loc.state;districts();$('district').value=loc.district;
-        $('city_name').value=p.city_name||((loc.city&&loc.city!=='District-wide')?loc.city:'');
-        resolveLocationId();if(!$('location_id').value)$('location_id').value=String(loc.id);
-        void refreshCitySuggestions();
+        const savedCity=p.city_name||((loc.city&&loc.city!=='District-wide')?loc.city:'');
+        await refreshCitySuggestions(savedCity);
+        if(!$('location_id').value)$('location_id').value=String(loc.id);
       }
       form.querySelectorAll('[name=categories]').forEach(input=>input.checked=p.categories.includes(input.value));
       form.elements.adult_confirmed.checked=p.adult_confirmed;form.elements.boundaries_accepted.checked=p.boundaries_accepted;
