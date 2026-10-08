@@ -1,4 +1,4 @@
-import { setupPublishing } from './listing-publish.js?v=20261006-2';
+import { setupPublishing } from './listing-publish.js?v=20261008-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { getSathivoClient } from './supabase-client.js?v=20261006-1';
 import { avatarOptions, avatarMarker, avatarAsset, isBuiltinAvatar } from './avatar-utils.js?v=20261007-1';
@@ -12,12 +12,47 @@ function options(select, items, placeholder) {
   select.replaceChildren(new Option(placeholder,''));
   items.forEach(([value,label])=>select.add(new Option(label,String(value))));
 }
-function states() { options($('state'), [...new Set(locations.map(r=>r.state))].sort().map(v=>[v,v]),'Choose your state / UT'); }
-function districts() { options($('district'), [...new Set(locations.filter(r=>r.state===$('state').value).map(r=>r.district))].sort().map(v=>[v,v]),'Choose district'); cities(); }
-function cityLabel(row){return row.city==='District-wide'?`District-wide / my city isn't listed`:row.city;}
-function cities() { options($('location_id'), locations.filter(r=>r.state===$('state').value&&r.district===$('district').value).map(r=>[r.id,cityLabel(r)]),'Choose city / town'); }
+const normalized=value=>String(value||'').trim().toLocaleLowerCase('en-IN');
+let citySuggestionRequest=0;
+function states(){options($('state'),[...new Set(locations.map(r=>r.state))].sort().map(v=>[v,v]),'Choose your state / UT');}
+function districtRows(){return locations.filter(r=>r.state===$('state').value&&r.district===$('district').value);}
+function districtLocationIds(){return districtRows().map(r=>r.id);}
+function resolveLocationId(){
+ const rows=districtRows(),name=$('city_name').value.trim();
+ const exact=rows.find(r=>r.city!=='District-wide'&&normalized(r.city)===normalized(name));
+ const fallback=rows.find(r=>r.city==='District-wide')||rows[0];
+ const chosen=exact||fallback;
+ $('location_id').value=chosen?String(chosen.id):'';
+ return chosen;
+}
+async function refreshCitySuggestions(){
+ const seq=++citySuggestionRequest,list=$('city-town-options');
+ if(!list)return;
+ if(!$('state').value||!$('district').value){list.replaceChildren();return;}
+ const names=new Set(districtRows().filter(r=>r.city!=='District-wide').map(r=>r.city).filter(Boolean));
+ try{
+  if(client){
+   const ids=districtLocationIds();
+   const {data,error}=await client.rpc('browse_public_city_suggestions',{p_location_ids:ids.length?ids:null});
+   if(!error)(data||[]).forEach(row=>{if(row.city_name)names.add(row.city_name);});
+  }
+ }catch{}
+ if(seq!==citySuggestionRequest)return;
+ list.replaceChildren(...[...names].sort((a,b)=>a.localeCompare(b,'en-IN')).map(name=>{const option=document.createElement('option');option.value=name;return option;}));
+}
+function clearCity(){
+ $('city_name').value='';
+ $('location_id').value='';
+ void refreshCitySuggestions();
+}
+function districts(){
+ options($('district'),[...new Set(locations.filter(r=>r.state===$('state').value).map(r=>r.district))].sort().map(v=>[v,v]),'Choose district');
+ clearCity();
+}
 $('state').addEventListener('change',districts);
-$('district').addEventListener('change',cities);
+$('district').addEventListener('change',clearCity);
+$('city_name').addEventListener('input',resolveLocationId);
+$('city_name').addEventListener('change',resolveLocationId);
 categories.forEach(value=>{
   const label=document.createElement('label'), input=document.createElement('input');
   input.type='checkbox';input.name='categories';input.value=value;
@@ -64,7 +99,7 @@ function updateCompleteness(){
   $('display_name').value.trim().length>=2,
   $('gender').value!=='',
   $('bio').value.trim().length>=20,
-  $('location_id').value!=='',
+  $('city_name').value.trim().length>=2&&$('location_id').value!=='',
   $('languages').value.trim().length>=2,
   $('interests').value.trim().length>0,
   [...form.querySelectorAll('[name=categories]')].some(x=>x.checked),
@@ -103,9 +138,11 @@ form.addEventListener('submit',async event=>{
   const rateRaw=String(values.get('hourly_rate')||'').trim();row.hourly_rate=['companion','both'].includes(row.profile_kind)?Number(rateRaw):null;
   if(['companion','both'].includes(row.profile_kind)&&(!Number.isInteger(row.hourly_rate)||row.hourly_rate<1||row.hourly_rate>100000)){message('Set a valid hourly companionship rate between ₹1 and ₹1,00,000.',true);$('hourly_rate').focus();return;}
   if(row.display_name.length<2||row.languages.length<2){message('Enter your name and languages (at least 2 characters).',true);return;}
-  row.location_id=Number(values.get('location_id'));row.categories=values.getAll('categories');
+  row.city_name=String(values.get('city_name')||'').trim();
+  if(row.city_name.length<2||row.city_name.length>80){message('Enter your city or town (2–80 characters).',true);$('city_name').focus();return;}
+  resolveLocationId();row.location_id=Number($('location_id').value);row.categories=values.getAll('categories');
   row.adult_confirmed=values.get('adult_confirmed')==='on';row.boundaries_accepted=values.get('boundaries_accepted')==='on';
-  if(!locations.some(r=>r.id===row.location_id&&r.state===$('state').value&&r.district===$('district').value)){message('Please select your location again.',true);return;}
+  if(!locations.some(r=>r.id===row.location_id&&r.state===$('state').value&&r.district===$('district').value)){message('Choose your state and district again, then enter your city or town.',true);return;}
   $('fields').disabled=true;message('Saving your profile…');
   try {
     const fresh=await client.auth.getUser();if(fresh.error||fresh.data.user?.id!==user.id)throw Error('Your session ended. Sign in again before saving.');
@@ -136,7 +173,12 @@ async function init(){
       for(const name of ['display_name','profile_kind','gender','bio','languages','interests','meeting_mode','availability'])$(name).value=p[name]||'';
       $('hourly_rate').value=p.hourly_rate||'';
       const loc=locations.find(r=>r.id===p.location_id);
-      if(loc){$('state').value=loc.state;districts();$('district').value=loc.district;cities();$('location_id').value=String(loc.id);}
+      if(loc){
+        $('state').value=loc.state;districts();$('district').value=loc.district;
+        $('city_name').value=p.city_name||((loc.city&&loc.city!=='District-wide')?loc.city:'');
+        resolveLocationId();if(!$('location_id').value)$('location_id').value=String(loc.id);
+        void refreshCitySuggestions();
+      }
       form.querySelectorAll('[name=categories]').forEach(input=>input.checked=p.categories.includes(input.value));
       form.elements.adult_confirmed.checked=p.adult_confirmed;form.elements.boundaries_accepted.checked=p.boundaries_accepted;
       avatarPath=p.avatar_path;savedAvatarPath=p.avatar_path;showSystemInfo(p);
