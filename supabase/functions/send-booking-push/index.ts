@@ -4,6 +4,7 @@ import webpush from "npm:web-push@3.6.7";
 const allowedOrigins = new Set([
   "https://sathivo.co",
   "https://www.sathivo.co",
+  "https://app.sathivo.co",
   "https://milanmiliyan5.github.io",
 ]);
 function originAllowed(origin:string){
