@@ -3,6 +3,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 const allowedOrigins = new Set([
   "https://sathivo.co",
   "https://www.sathivo.co",
+  "https://app.sathivo.co",
   "https://milanmiliyan5.github.io",
 ]);
 function originAllowed(origin:string){
