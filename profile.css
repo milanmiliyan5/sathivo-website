@@ -43,3 +43,18 @@
   object-fit:contain;
   background:linear-gradient(145deg,#fff7fb,#f2e8f8);
 }
+
+
+/* Mode-aware profile onboarding */
+.companion-only[hidden]{display:none!important}
+.profile-card #profile-kind-hint{margin-bottom:6px}
+.profile-safety-confirmations{margin-top:26px;padding:16px;border:1px solid #e1cad4;border-radius:14px;background:#fff8fb}
+.profile-safety-confirmations>strong{display:block;font-size:.86rem;color:var(--plum);margin-bottom:4px}
+.profile-safety-confirmations .check{margin-top:12px}
+#publication .eyebrow{margin:0 0 7px!important}
+#publication .publish-hint strong{display:block;color:var(--ink);font-size:.95rem;margin-bottom:4px}
+body[data-profile-mode="customer"] .profile-completeness{background:linear-gradient(135deg,#f7edf2,#fff8f4)}
+body[data-profile-mode="customer"] #save-profile{background:var(--rose)}
+@media(max-width:640px){
+  .profile-safety-confirmations{padding:14px}
+}

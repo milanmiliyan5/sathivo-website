@@ -116,32 +116,65 @@ $('photo').addEventListener('change',()=>{
   localPreviewUrl=URL.createObjectURL(file);$('avatar').src=localPreviewUrl;$('avatar').hidden=false;syncAvatarChoice();updateCompleteness();
 });
 function isCompanionKind(){return ['companion','both'].includes($('profile_kind').value)}
-function syncRateField(){const companion=isCompanionKind();$('hourly-rate-field').hidden=!companion;$('hourly_rate').required=companion;if(!companion)$('hourly_rate').value='';updateCompleteness()}
+function setSectionDisabled(id,disabled){
+ const section=$(id);if(!section)return;
+ section.hidden=disabled;
+ section.querySelectorAll('input,select,textarea,button').forEach(control=>{control.disabled=disabled;});
+}
+function syncModeUI(){
+ const companion=isCompanionKind();
+ document.body.dataset.profileMode=companion?'companion':'customer';
+ setSectionDisabled('companion-photo-section',!companion);
+ setSectionDisabled('companion-bio-section',!companion);
+ setSectionDisabled('companion-details-section',!companion);
+ $('hourly_rate').required=companion;
+ $('publication').hidden=!companion;
+ $('save-profile').textContent=companion?'Save companion profile ↗':'Save & find companions ↗';
+ $('profile-kind-hint').textContent=companion
+  ? 'Your companion details stay private until you save and explicitly publish them.'
+  : 'Your customer profile stays private. Only the details needed to use Sathivo are saved.';
+ $('profile-mode-note-title').textContent=companion?'You’re setting up as a companion.':'Want to become a companion?';
+ $('profile-mode-note-copy').textContent=companion
+  ? 'Add your photo/avatar, bio, categories, availability and hourly rate, then save before publishing.'
+  : 'Choose Become a companion or Both in the profile type whenever you want to create a public companion listing.';
+ $('profile-mode-note-extra').textContent=companion
+  ? 'Customers can send hourly offers. You choose what to accept; payment is settled directly between users outside Sathivo.'
+  : 'As a customer, your saved profile is not published in Find a companion.';
+ updateCompleteness();
+}
 function updateCompleteness(){
+ const companion=isCompanionKind();
  const values=[
   $('display_name').value.trim().length>=2,
   $('gender').value!=='',
-  $('bio').value.trim().length>=20,
   $('city_name').value.trim().length>=2&&$('location_id').value!=='',
   $('languages').value.trim().length>=2,
   $('interests').value.trim().length>0,
-  [...form.querySelectorAll('[name=categories]')].some(x=>x.checked),
-  $('availability').value.trim().length>0,
   form.elements.adult_confirmed.checked,
   form.elements.boundaries_accepted.checked
  ];
- if(isCompanionKind())values.push(!!avatarPath||!!$('photo').files[0],Number($('hourly_rate').value)>=1);
+ if(companion)values.push(
+  $('bio').value.trim().length>=20,
+  [...form.querySelectorAll('[name=categories]')].some(x=>x.checked),
+  $('availability').value.trim().length>0,
+  !!avatarPath||!!$('photo').files[0],
+  Number($('hourly_rate').value)>=1
+ );
  const pct=Math.round(values.filter(Boolean).length/values.length*100);
  $('profile-percent').textContent=pct+'%';$('profile-progress-bar').style.width=pct+'%';
- $('profile-progress-copy').textContent=pct===100?'Profile complete — ready to shine.':pct>=70?'Almost there. A few details will make your profile stronger.':'Add a few more details to help people understand your vibe.';
+ $('profile-progress-copy').textContent=pct===100
+  ? (companion?'Profile complete — save it, then publish when ready.':'Customer profile complete — you’re ready to find companions.')
+  : pct>=70?'Almost there. A few details will make your profile stronger.':'Add a few more details to finish your profile.';
 }
 function showSystemInfo(p){
  $('safety-id').textContent=p?.safety_id||'Assigned after first save';
- $('email-trust').textContent=p?.email_verified_at?'✓ Email verified':'Email verification pending';
- $('joined-date').textContent=p?.joined_at?'Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(p.joined_at)):'';
+ const verified=!!(user?.email_confirmed_at||p?.email_verified_at);
+ $('email-trust').textContent=verified?'✓ Email verified':'Email verification pending';
+ const joined=p?.joined_at||user?.created_at;
+ $('joined-date').textContent=joined?'Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(joined)):'';
 }
 form.addEventListener('input',()=>{dirty=true;updateCompleteness();});
-form.addEventListener('change',e=>{if(e.target.id==='profile_kind')syncRateField();else updateCompleteness();});
+form.addEventListener('change',e=>{if(e.target.id==='profile_kind')syncModeUI();else updateCompleteness();});
 window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
 async function showPhoto(path) {
   const builtIn=avatarAsset(path);
@@ -157,28 +190,40 @@ form.addEventListener('submit',async event=>{
   event.preventDefault();if(!user||!form.reportValidity())return;
   const values=new FormData(form);
   const row={user_id:user.id};
-  for(const name of ['display_name','profile_kind','gender','bio','languages','interests','meeting_mode','availability']) row[name]=String(values.get(name)||'').trim();
-  const rateRaw=String(values.get('hourly_rate')||'').trim();row.hourly_rate=['companion','both'].includes(row.profile_kind)?Number(rateRaw):null;
+  row.display_name=String(values.get('display_name')||'').trim();
+  row.profile_kind=String(values.get('profile_kind')||'customer').trim();
+  row.gender=String(values.get('gender')||'').trim();
+  row.languages=String(values.get('languages')||'').trim();
+  row.interests=String(values.get('interests')||'').trim();
+  const companion=['companion','both'].includes(row.profile_kind);
+  row.bio=companion?String(values.get('bio')||'').trim():'';
+  row.meeting_mode=companion?String(values.get('meeting_mode')||'online').trim():'online';
+  row.availability=companion?String(values.get('availability')||'').trim():'';
+  const rateRaw=String(values.get('hourly_rate')||'').trim();row.hourly_rate=companion?Number(rateRaw):null;
   if(['companion','both'].includes(row.profile_kind)&&(!Number.isInteger(row.hourly_rate)||row.hourly_rate<1||row.hourly_rate>100000)){message('Set a valid hourly companionship rate between ₹1 and ₹1,00,000.',true);$('hourly_rate').focus();return;}
   if(row.display_name.length<2||row.languages.length<2){message('Enter your name and languages (at least 2 characters).',true);return;}
   row.city_name=String(values.get('city_name')||'').trim();
   if(row.city_name.length<2||row.city_name.length>80){message('Enter your city or town (2–80 characters).',true);$('city_name').focus();return;}
-  resolveLocationId();row.location_id=Number($('location_id').value);row.categories=values.getAll('categories');
+  resolveLocationId();row.location_id=Number($('location_id').value);row.categories=companion?values.getAll('categories'):[];
   row.adult_confirmed=values.get('adult_confirmed')==='on';row.boundaries_accepted=values.get('boundaries_accepted')==='on';
   if(!locations.some(r=>r.id===row.location_id&&r.state===$('state').value&&r.district===$('district').value)){message('Choose your state and district again, then enter your city or town.',true);return;}
   $('fields').disabled=true;message('Saving your profile…');
   try {
     const fresh=await client.auth.getUser();if(fresh.error||fresh.data.user?.id!==user.id)throw Error('Your session ended. Sign in again before saving.');
-    const file=$('photo').files[0];let preparedPhoto=null;
+    const file=companion?$('photo').files[0]:null;let preparedPhoto=null;
     if(file){preparedPhoto=await photoBlob(file);const path=user.id+'/avatar.webp';const upload=await client.storage.from('profile-photos').upload(path,preparedPhoto.blob,{upsert:true,contentType:preparedPhoto.type});if(upload.error)throw Error('Photo upload failed. Check your connection and try again.');avatarPath=path;}
-    row.avatar_path=avatarPath;
+    row.avatar_path=companion?avatarPath:null;
     const {data,error}=await client.from('member_profiles').upsert(row,{onConflict:'user_id'}).select('user_id,safety_id,joined_at,email_verified_at').single();
     if(error||!data)throw Error('Profile could not be saved. Check your connection and try again.');
     if(savedAvatarPath&&!isBuiltinAvatar(savedAvatarPath)&&savedAvatarPath!==avatarPath){
       try{await client.storage.from('profile-photos').remove([savedAvatarPath])}catch{}
     }
-    savedAvatarPath=avatarPath;dirty=false;$('photo').value='';if(localPreviewUrl){URL.revokeObjectURL(localPreviewUrl);localPreviewUrl=null;}showSystemInfo(data);message(preparedPhoto?'Your profile is saved. Photo compressed '+formatBytes(preparedPhoto.originalBytes)+' → '+formatBytes(preparedPhoto.outputBytes)+'.':'Your profile is saved. You can come back and edit it anytime.');
-    if(avatarPath)await showPhoto(avatarPath);else{$('avatar').hidden=true;syncAvatarChoice();}updateCompleteness();
+    savedAvatarPath=companion?avatarPath:null;dirty=false;$('photo').value='';if(localPreviewUrl){URL.revokeObjectURL(localPreviewUrl);localPreviewUrl=null;}showSystemInfo(data);
+    if(preparedPhoto)message('Your profile is saved. Photo compressed '+formatBytes(preparedPhoto.originalBytes)+' → '+formatBytes(preparedPhoto.outputBytes)+'.');
+    else message(companion?'Your companion profile is saved. Review it, then publish when you are ready.':'Your customer profile is saved. Taking you to Find a companion…');
+    if(companion&&avatarPath)await showPhoto(avatarPath);else{$('avatar').hidden=true;syncAvatarChoice();}
+    updateCompleteness();
+    if(!companion){window.setTimeout(()=>location.assign('companions.html'),450);}
   }catch(error){message(error.message||'Could not save your profile. Please try again.',true);}
   finally{$('fields').disabled=false;$('profile-status').focus();}
 });
@@ -205,11 +250,19 @@ async function init(){
       form.querySelectorAll('[name=categories]').forEach(input=>input.checked=p.categories.includes(input.value));
       form.elements.adult_confirmed.checked=p.adult_confirmed;form.elements.boundaries_accepted.checked=p.boundaries_accepted;
       avatarPath=p.avatar_path;savedAvatarPath=p.avatar_path;showSystemInfo(p);
-    }else{$('display_name').value=user.user_metadata?.display_name||'';showSystemInfo(null);}
-    syncRateField();
+    }else{
+      $('display_name').value=user.user_metadata?.display_name||'';
+      const signupGender=String(user.user_metadata?.gender||'');
+      if(['male','female','other','prefer_not_to_say'].includes(signupGender))$('gender').value=signupGender;
+      form.elements.adult_confirmed.checked=!!user.user_metadata?.adult_declaration;
+      form.elements.boundaries_accepted.checked=!!user.user_metadata?.community_rules_version;
+      showSystemInfo(null);
+    }
+    syncModeUI();
     $('fields').disabled=false;message(p?'Your saved profile. Make it feel like you.':'Let’s create your free profile.');
-    if(avatarPath)await showPhoto(avatarPath);updateCompleteness();
+    if(isCompanionKind()&&avatarPath)await showPhoto(avatarPath);updateCompleteness();
     await setupPublishing({client,user,isDirty:()=>dirty});
+    $('publication').hidden=!isCompanionKind();
     client.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){dirty=false;location.replace('account.html');}});
   }catch(error){message(error.message||'Profile services are unavailable. Please refresh.',true);}
 }
