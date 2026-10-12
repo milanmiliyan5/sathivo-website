@@ -13,6 +13,7 @@ const publicRoutes = new Set(['login', 'signup', 'forgot', 'verify-email']);
 let flow = null;
 let busy = false;
 let activePanel = 'login';
+let appClient = null;
 
 document.querySelector('#account-year').textContent = new Date().getFullYear();
 
@@ -83,6 +84,21 @@ function renderOtp(pending) {
   clearSecrets();
 }
 
+async function refreshAccountActions(user) {
+  const incoming = document.querySelector('#account-incoming-requests');
+  if (!incoming) return;
+  incoming.hidden = true;
+  if (!appClient || !user?.id) return;
+  try {
+    const { data, error } = await appClient
+      .from('member_profiles')
+      .select('profile_kind')
+      .eq('user_id', user.id)
+      .maybeSingle();
+    if (!error && ['companion', 'both'].includes(data?.profile_kind)) incoming.hidden = false;
+  } catch {}
+}
+
 function renderAccount(user) {
   // User metadata is display-only. Never use it for roles or verification badges.
   const name = typeof user.user_metadata?.display_name === 'string' ? user.user_metadata.display_name.trim().slice(0, 60) : 'friend';
@@ -92,6 +108,7 @@ function renderAccount(user) {
   // scrolls past the story/photo and also leaves a focus outline around Welcome.
   showPanel('account', { focus: false });
   clearSecrets();
+  void refreshAccountActions(user);
 }
 
 async function run(task, loadingMessage) {
@@ -249,6 +266,7 @@ async function initialize() {
     });
     window.addEventListener('pagehide', stopAuthTransport, { once: true });
     const client = await getSathivoClient();
+    appClient = client;
     const recoveryFetch = createAuthFetch({
       supabaseUrl: authConfig.supabaseUrl,
       report: event => console.info('[Sathivo Recovery]', JSON.stringify(event)),

@@ -10,8 +10,8 @@
   <title>Your account — Sathivo</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="account.css?v=20261006-3">
-  <script type="module" src="js/account-page.js?v=20261006-2"></script>
+  <link rel="stylesheet" href="account.css?v=20261012-1">
+  <script type="module" src="js/account-page.js?v=20261012-1"></script>
 <link rel="stylesheet" href="responsive.css?v=20261006-1"><script type="module" src="js/mobile-nav.js?v=20261006-3"></script><script type="module" src="js/header-requests.js?v=20261006-2"></script><script type="module" src="js/header-notifications.js?v=20261006-2"></script><script type="module" src="js/push-settings.js?v=20261006-2"></script><script type="module" src="js/site-presence.js?v=20261006-3"></script><link rel="stylesheet" href="site-2d.css?v=20261006-3"><script src="js/site-motion.js?v=20261006-1" defer></script></head>
 <body class="account-page sathivo-2d">
   <a class="skip-link" href="#account-main">Skip to account</a>
@@ -87,11 +87,58 @@
       </section>
 
       <section data-panel="account" aria-labelledby="account-title" hidden>
-        <span class="account-emblem" aria-hidden="true">♡</span><p class="eyebrow">YOUR SATHIVO SPACE</p><h2 id="account-title" tabindex="-1">Welcome, <em id="account-name">friend</em>.</h2><p class="panel-intro">Your account is ready for what's next.</p>
-        <div class="account-summary"><span>Account email</span><strong id="account-email"></strong><span class="email-verified">Email verified</span></div>
-        <p class="panel-note">Email verification confirms access to your inbox. It is not identity or age verification.</p><div class="push-settings-card" data-push-settings><strong>Device notifications</strong><p data-push-status>Checking notification support…</p><button type="button" class="button button-outline" data-push-toggle>Enable device notifications</button><button type="button" class="button button-outline" data-push-test hidden>Send test notification</button></div>
-        <div class="next-chapter"><strong>Your Sathivo space is ready.</strong><p>Create a free companion profile, set your own hourly rate, and receive booking requests. You choose what to accept; earnings depend on accepted bookings.</p><a class="button button-primary" href="profile.html">Create profile & earn ↗</a><a class="button button-outline" href="requests.html">Incoming requests ↗</a><a class="button button-outline" href="bookings.html">My bookings ↗</a><a class="button button-outline" href="chats.html">My chats ↗</a><a class="form-link" href="notifications.html">Notifications ↗</a></div>
-        <a class="button button-primary form-submit" href="./#experiences">Explore experiences <span aria-hidden="true">↗</span></a><button class="form-link signout" id="signout" type="button">Sign out on this device</button>
+        <span class="account-emblem" aria-hidden="true">♡</span>
+        <p class="eyebrow">YOUR SATHIVO SPACE</p>
+        <h2 id="account-title" tabindex="-1">Welcome, <em id="account-name">friend</em>.</h2>
+        <p class="panel-intro">Your account is ready. Choose what you want to do next.</p>
+
+        <div class="account-summary">
+          <span>Account email</span>
+          <strong id="account-email"></strong>
+          <span class="email-verified">Email verified ✓</span>
+        </div>
+        <p class="panel-note">Email verification confirms access to your inbox. It is not identity or age verification.</p>
+
+        <section class="account-start" aria-labelledby="account-start-title">
+          <div class="account-section-head">
+            <p class="eyebrow">START HERE</p>
+            <h3 id="account-start-title">What would you like to do?</h3>
+          </div>
+          <div class="account-choice-grid">
+            <a class="account-choice account-choice-primary" href="companions.html">
+              <span class="account-choice-icon" aria-hidden="true">♡</span>
+              <span><strong>Find a companion</strong><small>Browse people, rates and plans near you.</small></span>
+              <b aria-hidden="true">↗</b>
+            </a>
+            <a class="account-choice account-choice-secondary" href="profile.html">
+              <span class="account-choice-icon" aria-hidden="true">＋</span>
+              <span><strong>Become a companion</strong><small>Create your profile, set your rate and choose requests.</small></span>
+              <b aria-hidden="true">↗</b>
+            </a>
+          </div>
+        </section>
+
+        <section class="account-activity" aria-labelledby="account-activity-title">
+          <div class="account-section-head account-section-head-row">
+            <div><p class="eyebrow">YOUR SPACE</p><h3 id="account-activity-title">My activity</h3></div>
+            <span>Bookings, chats and updates</span>
+          </div>
+          <div class="account-activity-grid">
+            <a href="bookings.html"><span aria-hidden="true">⌁</span><strong>My bookings</strong><small>Your sent requests</small></a>
+            <a id="account-incoming-requests" href="requests.html" hidden><span aria-hidden="true">↗</span><strong>Incoming requests</strong><small>For your companion profile</small></a>
+            <a href="chats.html"><span aria-hidden="true">◌</span><strong>My chats</strong><small>Accepted booking chats</small></a>
+            <a href="notifications.html"><span aria-hidden="true">♢</span><strong>Notifications</strong><small>Booking and message updates</small></a>
+          </div>
+        </section>
+
+        <div class="push-settings-card account-push-card" data-push-settings>
+          <strong>Device notifications</strong>
+          <p data-push-status>Checking notification support…</p>
+          <button type="button" class="button button-outline" data-push-toggle>Enable device notifications</button>
+          <button type="button" class="button button-outline" data-push-test hidden>Send test notification</button>
+        </div>
+
+        <button class="form-link signout" id="signout" type="button">Sign out on this device</button>
       </section>
 
       <details class="account-boundaries" id="account-boundaries"><summary>Account privacy & community boundaries</summary><div>
