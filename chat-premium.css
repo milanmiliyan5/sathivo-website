@@ -169,3 +169,27 @@ body.sathivo-2d.chat-premium .chat-sr-only{position:absolute!important;width:1px
  }
  body.sathivo-2d.chat-premium.chat-input-focused .chat-back{margin-bottom:4px}
 }
+
+/* One-shot heart effect for a newly sent or received standalone heart message.
+   Scoped to booking chat: no persistent heart-wall background or interactivity changes. */
+body.sathivo-2d.chat-premium .chat-shell .chat-heart-overlay{
+ position:absolute!important;inset:0;overflow:hidden;pointer-events:none;
+ z-index:4!important;isolation:isolate;flex:none;min-width:0;
+}
+body.sathivo-2d.chat-premium .chat-heart-spark{
+ position:absolute;left:var(--heart-x);top:var(--heart-y);
+ display:block;width:22px;height:22px;line-height:22px;text-align:center;
+ color:var(--heart-color,#d45b90);font-size:var(--heart-size,19px);font-weight:800;
+ opacity:0;will-change:transform,opacity;user-select:none;
+ text-shadow:0 2px 9px rgba(158,54,104,.12);
+ animation:chat-heart-rise 1.65s ease-out var(--heart-delay,0ms) both;
+}
+@keyframes chat-heart-rise{
+ 0%{opacity:0;transform:translate3d(-50%,12px,0) scale(.62) rotate(-10deg)}
+ 15%{opacity:.94}
+ 75%{opacity:.77}
+ 100%{opacity:0;transform:translate3d(calc(-50% + var(--heart-drift,0px)),var(--heart-rise,-125px),0) scale(1.05) rotate(var(--heart-tilt,10deg))}
+}
+@media(prefers-reduced-motion:reduce){
+ body.sathivo-2d.chat-premium .chat-heart-spark{animation:none!important;display:none!important}
+}
