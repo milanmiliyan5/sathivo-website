@@ -9,6 +9,8 @@ let selectedPhotoFile=null,selectedPhotoPreviewUrl=null;
 let mySafetyId='STV-PRIVATE',sessionUnreadBoundary=null,otherOnline=false,lastOtherActive=null;
 let typingTimer=null,typingSent=false,markTimer=null;
 const messageBlobUrls=new Set();
+const heartSeenMessageIds=new Set();
+let heartHistoryReady=false;
 
 const el=(t,x,c)=>{const n=document.createElement(t);if(x!==undefined)n.textContent=x;if(c)n.className=c;return n};
 const fmt=d=>new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d));
@@ -31,6 +33,40 @@ function fitComposer(){
  box.style.height=floor+'px';
  box.style.height=Math.max(floor,Math.min(126,box.scrollHeight))+'px';
 }
+// Play a brief, quiet celebration only for a newly sent standalone heart emoji.
+// Existing messages, captions and mixed-text messages never re-trigger the effect.
+const isStandaloneHeart=r=>r?.message_type==='text'&&['❤️','❤'].includes(String(r.body||'').trim());
+function floatHeartMessage(r){
+ if(document.hidden||window.matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+ const shell=$('main'),messages=$('messages');if(!shell||!messages)return;
+ let layer=shell.querySelector('.chat-heart-overlay');
+ if(!layer){layer=el('div',undefined,'chat-heart-overlay');layer.setAttribute('aria-hidden','true');shell.append(layer)}
+ const bubble=[...messages.querySelectorAll('.message')].find(n=>n.dataset.messageId===r.id);
+ const mine=r.sender_id===user.id;
+ const area=messages.getBoundingClientRect(),host=shell.getBoundingClientRect();
+ const b=bubble?.getBoundingClientRect();
+ const visible=!!b&&b.bottom>area.top&&b.top<area.bottom;
+ const x=visible?(mine?b.right-25:b.left+25):(mine?area.right-55:area.left+55);
+ const y=visible?Math.min(b.top+22,area.bottom-32):area.bottom-48;
+ const px=Math.max(35,Math.min(shell.clientWidth-35,x-host.left));
+ const py=Math.max(90,Math.min(shell.clientHeight-35,y-host.top));
+ const drifts=[-49,-25,0,26,50],rises=[-123,-151,-114,-143,-122];
+ const colors=['#d45b90','#ae4379','#ee86b0','#ce5188','#b65f95'];
+ for(let i=0;i<5;i++){
+  const heart=el('span','♥','chat-heart-spark');
+  heart.style.setProperty('--heart-x',px+'px');
+  heart.style.setProperty('--heart-y',py+'px');
+  heart.style.setProperty('--heart-drift',drifts[i]+'px');
+  heart.style.setProperty('--heart-rise',rises[i]+'px');
+  heart.style.setProperty('--heart-color',colors[i]);
+  heart.style.setProperty('--heart-size',(16+i%3*3)+'px');
+  heart.style.setProperty('--heart-delay',i*80+'ms');
+  heart.style.setProperty('--heart-tilt',(i%2?12:-12)+'deg');
+  heart.addEventListener('animationend',()=>{heart.remove();if(!layer.childElementCount)layer.remove()},{once:true});
+  layer.append(heart);
+ }
+}
+
 function syncChatKeyboard(){
  if(!document.body.classList.contains('chat-input-focused'))return;
  const height=window.visualViewport?.height;
@@ -134,8 +170,14 @@ async function markChatState(seen){
 async function loadMessages(initial=false){
  const {data,error}=await client.from('booking_messages').select('*').eq('booking_id',booking.id).order('created_at');if(error)throw error;
  const rows=data||[];
+ // Seed existing message IDs on first load; animate only newly arriving heart messages.
+ const incomingHearts=heartHistoryReady&&!initial?rows.filter(r=>isStandaloneHeart(r)&&!heartSeenMessageIds.has(r.id)):[];
+ for(const row of rows)if(isStandaloneHeart(row))heartSeenMessageIds.add(row.id);
+ heartHistoryReady=true;
  if(!sessionUnreadBoundary){const first=rows.find(r=>r.sender_id!==user.id&&!r.seen_at);if(first)sessionUnreadBoundary=first.id}
  await renderMessages(rows,initial);
+ // One celebration per new batch, even if several events arrive together.
+ if(incomingHearts.length)setTimeout(()=>floatHeartMessage(incomingHearts[incomingHearts.length-1]),100);
  await markChatState(document.visibilityState==='visible');
 }
 function syncComposer(){
@@ -236,8 +278,8 @@ async function init(){try{
  });
  window.visualViewport?.addEventListener('resize',syncChatKeyboard,{passive:true});
  fitComposer();
- $('message-form').onsubmit=async e=>{e.preventDefault();if(booking.status!=='accepted')return;const b=$('send-message');b.disabled=true;try{if(selectedPhotoFile){await sendStagedPhoto();return}const body=$('message').value.trim();if(!body)return;const {data,error}=await client.from('booking_messages').insert({booking_id:booking.id,sender_id:user.id,message_type:'text',body}).select('id').single();if(error){$('status').textContent=error.message;return}$('message').value='';fitComposer();void sendMessagePush(client,booking.id,data.id)}finally{b.disabled=false}};
+ $('message-form').onsubmit=async e=>{e.preventDefault();if(booking.status!=='accepted')return;const b=$('send-message');b.disabled=true;try{if(selectedPhotoFile){await sendStagedPhoto();return}const body=$('message').value.trim();if(!body)return;const {data,error}=await client.from('booking_messages').insert({booking_id:booking.id,sender_id:user.id,message_type:'text',body}).select('id').single();if(error){$('status').textContent=error.message;return}if(isStandaloneHeart({message_type:'text',body})&&!heartSeenMessageIds.has(data.id)){heartSeenMessageIds.add(data.id);floatHeartMessage({id:data.id,sender_id:user.id,message_type:'text',body})}$('message').value='';fitComposer();void sendMessagePush(client,booking.id,data.id)}finally{b.disabled=false}};
  $('photo-input').onchange=e=>{const file=e.target.files?.[0];if(file)stagePhoto(file)};$('remove-photo').onclick=()=>clearPhotoDraft();$('report-user').onclick=()=>void report();$('block-user').onclick=()=>void block();
  }catch(e){$('status').textContent=e.message||'Could not load chat.'}}
-window.addEventListener('pagehide',()=>{closeViewer();clearPhotoDraft();clearTimeout(typingTimer);clearTimeout(markTimer);for(const url of messageBlobUrls)URL.revokeObjectURL(url);messageBlobUrls.clear();if(messageChannel)void client.removeChannel(messageChannel);if(bookingChannel)void client.removeChannel(bookingChannel);if(presenceChannel)void client.removeChannel(presenceChannel)});
+window.addEventListener('pagehide',()=>{document.querySelector('.chat-heart-overlay')?.remove();closeViewer();clearPhotoDraft();clearTimeout(typingTimer);clearTimeout(markTimer);for(const url of messageBlobUrls)URL.revokeObjectURL(url);messageBlobUrls.clear();if(messageChannel)void client.removeChannel(messageChannel);if(bookingChannel)void client.removeChannel(bookingChannel);if(presenceChannel)void client.removeChannel(presenceChannel)});
 void init();
