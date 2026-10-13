@@ -1,0 +1,8 @@
+# Sathivo public crawl policy
+# Private user, chat, booking and account pages use their own noindex meta tags.
+# Leave those pages crawlable so search engines can read the noindex directive.
+User-agent: *
+Allow: /
+Disallow: /api/
+
+Sitemap: https://sathivo.co/sitemap.xml
