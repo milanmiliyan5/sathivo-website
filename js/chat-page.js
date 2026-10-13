@@ -22,8 +22,15 @@ function dayLabel(d){
  if(key===y.toLocaleDateString('en-CA'))return 'Yesterday';
  return new Intl.DateTimeFormat('en-IN',{day:'numeric',month:'short',year:'numeric'}).format(x);
 }
-function nearBottom(){return window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-180}
-function updateJump(){const b=$('jump-latest');if(b)b.hidden=nearBottom()}
+function nearBottom(){const m=$('messages');return !m||m.scrollHeight-m.scrollTop-m.clientHeight<=120}
+function scrollLatest(smooth=false){const m=$('messages');if(m)m.scrollTo({top:m.scrollHeight,behavior:smooth?'smooth':'auto'});}
+function updateJump(){const b=$('jump-latest'),m=$('messages');if(b)b.hidden=!m||m.scrollHeight<=m.clientHeight+24||nearBottom();}
+function fitComposer(){
+ const box=$('message');if(!box)return;
+ const floor=window.matchMedia('(max-width: 640px)').matches?44:46;
+ box.style.height=floor+'px';
+ box.style.height=Math.max(floor,Math.min(126,box.scrollHeight))+'px';
+}
 function applySafetyWatermark(){
  const main=$('main');if(!main||main.querySelector('.chat-watermark-layer'))return;
  const layer=el('div',undefined,'chat-watermark-layer');
@@ -98,6 +105,11 @@ async function renderMessages(rows,initial=false){
  const wasNear=nearBottom()||initial||!$('messages').dataset.ready;
  for(const url of messageBlobUrls)URL.revokeObjectURL(url);messageBlobUrls.clear();
  const nodes=[];let lastDay='';
+ if(!rows.length){
+  const empty=el('div',undefined,'chat-empty');
+  empty.append(el('span','♡','chat-empty-icon'),el('h2','Say hello 👋'),el('p',booking?.status==='accepted'?'Start with a friendly message and plan your time together.':'No messages yet. Chat opens when the booking is accepted.'));
+  nodes.push(empty);
+ }
  for(const r of rows){
   const key=dateKey(r.created_at);
   if(key!==lastDay){nodes.push(el('div',dayLabel(r.created_at),'date-separator'));lastDay=key}
@@ -105,7 +117,7 @@ async function renderMessages(rows,initial=false){
   nodes.push(await messageNode(r));
  }
  $('messages').replaceChildren(...nodes);$('messages').dataset.ready='true';
- if(wasNear)setTimeout(()=>window.scrollTo({top:document.documentElement.scrollHeight,behavior:initial?'auto':'smooth'}),20);
+ if(wasNear)setTimeout(()=>scrollLatest(!initial),20);
  updateJump();
 }
 async function markChatState(seen){
@@ -128,7 +140,15 @@ async function loadBooking(){
  const {data,error}=await client.from('booking_requests').select('*').eq('id',booking.id).single();if(error)throw error;
  booking=data;otherId=user.id===booking.customer_id?booking.companion_id:booking.customer_id;
  const other=user.id===booking.customer_id?booking.companion_display_name:booking.customer_display_name;
- $('chat-title').textContent=other||'Sathivo chat';$('booking-summary').textContent=booking.category+' · '+fmt(booking.requested_for)+' · '+booking.status;const deal=$('deal-summary');if(booking.agreed_hourly_rate){const total=Math.round(Number(booking.agreed_hourly_rate)*Number(booking.duration_minutes)/60);deal.textContent='Agreed rate: ₹'+Number(booking.agreed_hourly_rate).toLocaleString('en-IN')+'/hour · Approx. ₹'+total.toLocaleString('en-IN')+' for '+booking.duration_minutes+' minutes. Coordinate the plan here. Payment is made directly between you outside Sathivo; never share a UPI PIN or OTP.';deal.hidden=false}else deal.hidden=true;syncComposer();
+ $('chat-title').textContent=other||'Sathivo chat';
+ const initial=String(other||'S').trim().charAt(0).toLocaleUpperCase('en-IN')||'S';
+ $('chat-avatar').textContent=initial;
+ $('chat-booking-pill').textContent=booking.status;
+ $('chat-booking-pill').dataset.status=booking.status;
+ $('booking-summary').textContent=booking.category+' · '+fmt(booking.requested_for)+' · '+booking.duration_minutes+' min';
+ const deal=$('deal-summary');
+ $('chat-deal-details').hidden=!booking.agreed_hourly_rate;
+ if(booking.agreed_hourly_rate){const total=Math.round(Number(booking.agreed_hourly_rate)*Number(booking.duration_minutes)/60);deal.textContent='Agreed rate: ₹'+Number(booking.agreed_hourly_rate).toLocaleString('en-IN')+'/hour · Approx. ₹'+total.toLocaleString('en-IN')+' for '+booking.duration_minutes+' minutes. Coordinate the plan here. Payment is made directly between you outside Sathivo; never share a UPI PIN or OTP.';deal.hidden=false}else deal.hidden=true;syncComposer();
 }
 function presenceText(){
  const p=$('presence-status');if(!p)return;
@@ -155,7 +175,7 @@ function sendTyping(){
 function clearPhotoDraft(){
  selectedPhotoFile=null;if(selectedPhotoPreviewUrl){URL.revokeObjectURL(selectedPhotoPreviewUrl);selectedPhotoPreviewUrl=null}
  if($('photo-input'))$('photo-input').value='';if($('photo-draft'))$('photo-draft').hidden=true;if($('photo-draft-image'))$('photo-draft-image').removeAttribute('src');if($('view-once'))$('view-once').checked=false;
- if($('message')){$('message').maxLength=2000;$('message').placeholder='Write a message…'}if($('photo-status'))$('photo-status').textContent='';
+ if($('message')){$('message').maxLength=2000;$('message').placeholder='Write a message…';fitComposer();}if($('photo-status'))$('photo-status').textContent='';
 }
 function stagePhoto(file){
  const ps=$('photo-status'),types=['image/jpeg','image/png','image/webp'];
@@ -173,7 +193,7 @@ async function sendStagedPhoto(){
  if(up.error){ps.textContent='Upload failed. Tap Send to retry.';return false}
  const msg=await client.from('booking_messages').insert({booking_id:booking.id,sender_id:user.id,message_type:'image',photo_path:path,body:caption,view_once:viewOnce}).select('id').single();
  if(msg.error){await client.storage.from('booking-chat-photos').remove([path]);ps.textContent='Send failed. Tap Send to retry.';return false}
- const sizeNote=formatBytes(prepared.originalBytes)+' → '+formatBytes(prepared.outputBytes);clearPhotoDraft();$('message').value='';$('photo-status').textContent=(viewOnce?'View-once photo sent.':'Photo sent.')+' Compressed '+sizeNote+'.';void sendMessagePush(client,booking.id,msg.data.id);return true;
+ const sizeNote=formatBytes(prepared.originalBytes)+' → '+formatBytes(prepared.outputBytes);clearPhotoDraft();$('message').value='';fitComposer();$('photo-status').textContent=(viewOnce?'View-once photo sent.':'Photo sent.')+' Compressed '+sizeNote+'.';void sendMessagePush(client,booking.id,msg.data.id);return true;
 }
 async function report(){const reason=prompt('Reason: safety, harassment, sexual-content, scam, fake-profile, spam, or other');if(!reason)return;const allowed=['safety','harassment','sexual-content','scam','fake-profile','spam','other'];if(!allowed.includes(reason)){alert('Please use one of the listed reasons.');return}const details=prompt('Brief details (optional)')||'';const {error}=await client.from('user_reports').insert({reporter_id:user.id,reported_user_id:otherId,booking_id:booking.id,reason,details});$('status').textContent=error?error.message:'Report submitted for review.'}
 async function block(){if(!confirm('Block this user? You will no longer be able to message each other.'))return;const {error}=await client.from('user_blocks').insert({blocker_id:user.id,blocked_id:otherId});$('status').textContent=error?(error.code==='23505'?'User is already blocked.':error.message):'User blocked.';if(!error)$('message-form').hidden=true}
@@ -191,8 +211,17 @@ async function init(){try{
  booking={id};await loadBooking();applySafetyWatermark();$('safety-actions').hidden=false;protectPrivateMedia();setupPresence();await loadMessages(true);
  messageChannel=client.channel('booking-messages:'+booking.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_messages',filter:'booking_id=eq.'+booking.id},()=>void loadMessages(false)).subscribe();
  bookingChannel=client.channel('booking-status:'+booking.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'booking_requests',filter:'id=eq.'+booking.id},()=>void loadBooking()).subscribe();
- $('message').addEventListener('input',sendTyping);$('jump-latest').onclick=()=>window.scrollTo({top:document.documentElement.scrollHeight,behavior:'smooth'});window.addEventListener('scroll',updateJump,{passive:true});
- $('message-form').onsubmit=async e=>{e.preventDefault();if(booking.status!=='accepted')return;const b=$('send-message');b.disabled=true;try{if(selectedPhotoFile){await sendStagedPhoto();return}const body=$('message').value.trim();if(!body)return;const {data,error}=await client.from('booking_messages').insert({booking_id:booking.id,sender_id:user.id,message_type:'text',body}).select('id').single();if(error){$('status').textContent=error.message;return}$('message').value='';void sendMessagePush(client,booking.id,data.id)}finally{b.disabled=false}};
+ $('message').addEventListener('input',()=>{sendTyping();fitComposer()});
+ $('message').addEventListener('keydown',event=>{
+  if(event.key!=='Enter'||event.shiftKey||event.isComposing||event.altKey||event.ctrlKey||event.metaKey)return;
+  event.preventDefault();
+  if(!$('send-message').disabled)$('message-form').requestSubmit();
+ });
+ $('attach-photo').onclick=()=>$('photo-input').click();
+ $('jump-latest').onclick=()=>scrollLatest(true);
+ $('messages').addEventListener('scroll',updateJump,{passive:true});
+ fitComposer();
+ $('message-form').onsubmit=async e=>{e.preventDefault();if(booking.status!=='accepted')return;const b=$('send-message');b.disabled=true;try{if(selectedPhotoFile){await sendStagedPhoto();return}const body=$('message').value.trim();if(!body)return;const {data,error}=await client.from('booking_messages').insert({booking_id:booking.id,sender_id:user.id,message_type:'text',body}).select('id').single();if(error){$('status').textContent=error.message;return}$('message').value='';fitComposer();void sendMessagePush(client,booking.id,data.id)}finally{b.disabled=false}};
  $('photo-input').onchange=e=>{const file=e.target.files?.[0];if(file)stagePhoto(file)};$('remove-photo').onclick=()=>clearPhotoDraft();$('report-user').onclick=()=>void report();$('block-user').onclick=()=>void block();
  }catch(e){$('status').textContent=e.message||'Could not load chat.'}}
 window.addEventListener('pagehide',()=>{closeViewer();clearPhotoDraft();clearTimeout(typingTimer);clearTimeout(markTimer);for(const url of messageBlobUrls)URL.revokeObjectURL(url);messageBlobUrls.clear();if(messageChannel)void client.removeChannel(messageChannel);if(bookingChannel)void client.removeChannel(bookingChannel);if(presenceChannel)void client.removeChannel(presenceChannel)});
