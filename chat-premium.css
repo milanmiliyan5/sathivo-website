@@ -160,3 +160,12 @@ body.sathivo-2d.chat-premium .chat-sr-only{position:absolute!important;width:1px
 @media(prefers-reduced-motion:reduce){
  body.sathivo-2d.chat-premium .messages .message{animation:none}
 }
+
+/* On-screen keyboard: temporarily use the space taken by the fixed bottom nav. */
+@media(max-width:640px){
+ body.sathivo-2d.chat-premium.chat-input-focused .mobile-bottom-nav{display:none!important}
+ body.sathivo-2d.chat-premium.chat-input-focused .chat-shell{
+  height:calc(var(--chat-visible-vh,100dvh) - 96px);min-height:270px;
+ }
+ body.sathivo-2d.chat-premium.chat-input-focused .chat-back{margin-bottom:4px}
+}
