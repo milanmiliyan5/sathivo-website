@@ -31,6 +31,12 @@ function fitComposer(){
  box.style.height=floor+'px';
  box.style.height=Math.max(floor,Math.min(126,box.scrollHeight))+'px';
 }
+function syncChatKeyboard(){
+ if(!document.body.classList.contains('chat-input-focused'))return;
+ const height=window.visualViewport?.height;
+ if(Number.isFinite(height))document.documentElement.style.setProperty('--chat-visible-vh',Math.round(height)+'px');
+}
+
 function applySafetyWatermark(){
  const main=$('main');if(!main||main.querySelector('.chat-watermark-layer'))return;
  const layer=el('div',undefined,'chat-watermark-layer');
@@ -220,6 +226,15 @@ async function init(){try{
  $('attach-photo').onclick=()=>$('photo-input').click();
  $('jump-latest').onclick=()=>scrollLatest(true);
  $('messages').addEventListener('scroll',updateJump,{passive:true});
+ const composer=$('message');
+ composer.addEventListener('focus',()=>{
+  if(window.matchMedia('(max-width: 640px)').matches){document.body.classList.add('chat-input-focused');syncChatKeyboard();}
+ });
+ composer.addEventListener('blur',()=>{
+  document.body.classList.remove('chat-input-focused');
+  document.documentElement.style.removeProperty('--chat-visible-vh');
+ });
+ window.visualViewport?.addEventListener('resize',syncChatKeyboard,{passive:true});
  fitComposer();
  $('message-form').onsubmit=async e=>{e.preventDefault();if(booking.status!=='accepted')return;const b=$('send-message');b.disabled=true;try{if(selectedPhotoFile){await sendStagedPhoto();return}const body=$('message').value.trim();if(!body)return;const {data,error}=await client.from('booking_messages').insert({booking_id:booking.id,sender_id:user.id,message_type:'text',body}).select('id').single();if(error){$('status').textContent=error.message;return}$('message').value='';fitComposer();void sendMessagePush(client,booking.id,data.id)}finally{b.disabled=false}};
  $('photo-input').onchange=e=>{const file=e.target.files?.[0];if(file)stagePhoto(file)};$('remove-photo').onclick=()=>clearPhotoDraft();$('report-user').onclick=()=>void report();$('block-user').onclick=()=>void block();
