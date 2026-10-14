@@ -218,6 +218,25 @@ async function load(){
 
 function closeSidebar(){$('admin-sidebar').classList.remove('is-open');$('sidebar-backdrop').hidden=true;$('sidebar-toggle').setAttribute('aria-expanded','false')}
 function initUi(){
+  // Bind sign-out before authorization checks so a user without admin access
+  // can always leave the current session and sign in with the owner account.
+  $('admin-logout').addEventListener('click',async()=>{
+    const button=$('admin-logout');
+    if(button.disabled)return;
+    button.disabled=true;
+    button.textContent='Signing out…';
+    setStatus('Signing out…');
+    try{
+      const authClient=client||await getSathivoClient();
+      const {error}=await authClient.auth.signOut();
+      if(error)throw error;
+      location.replace('account.html#login');
+    }catch(e){
+      setStatus('Could not sign out: '+(e?.message||'Please try again.'));
+      button.textContent='Log out';
+      button.disabled=false;
+    }
+  });
   $('sidebar-toggle').addEventListener('click',()=>{const open=!$('admin-sidebar').classList.contains('is-open');$('admin-sidebar').classList.toggle('is-open',open);$('sidebar-backdrop').hidden=!open;$('sidebar-toggle').setAttribute('aria-expanded',String(open))});
   $('sidebar-backdrop').addEventListener('click',closeSidebar);
   document.querySelectorAll('.sidebar-link').forEach(a=>a.addEventListener('click',()=>{document.querySelectorAll('.sidebar-link').forEach(x=>x.classList.remove('is-active'));a.classList.add('is-active');closeSidebar()}));
@@ -245,10 +264,10 @@ async function init(){
     const u=await client.auth.getUser();user=u.data.user;
     if(!user){location.replace('account.html#login');return}
     const a=await client.from('platform_admins').select('role').eq('user_id',user.id).maybeSingle();
-    if(a.error||!a.data)throw Error('This account is not authorized for Sathivo admin.');
+    if(a.error)throw Error('Could not verify admin access. Try Refresh or log out and sign in again.');
+    if(!a.data)throw Error('This account is not authorized for Sathivo admin. Log out and sign in with the owner account.');
     $('admin-email').textContent=user.email||a.data.role||'Authorized admin';
     $('refresh-dashboard').addEventListener('click',()=>void refreshAll(true));
-    $('admin-logout').addEventListener('click',async()=>{await client.auth.signOut();location.replace('account.html#login')});
     await refreshAll(true);startPresence();
     metricsTimer=setInterval(()=>{if(document.visibilityState==='visible')void loadStats()},10000);
   }catch(e){setStatus(e.message||'Could not load admin.')}
