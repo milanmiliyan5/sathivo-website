@@ -1,5 +1,5 @@
 export const adsConfig={
-  enabled:true,
+  enabled:false,
   testMode:true,
   provider:'adsense',
   publisherId:'ca-pub-9377266871455870',
@@ -10,5 +10,5 @@ export const adsConfig={
     'bookings-top':'',
     'booking-confirm':''
   },
-  note:'Sathivo test ads are enabled. Keep testMode true until AdSense approval and real ad unit IDs are available.'
+  note:'Ad placeholders are paused during AdSense quality review. Keep testMode true; enable live slots only after approval and real ad unit IDs are configured.'
 };
