@@ -1,4 +1,4 @@
-import { setupPublishing } from './listing-publish.js?v=20261008-1';
+import { setupPublishing } from './listing-publish.js?v=20261015-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { getSathivoClient } from './supabase-client.js?v=20261006-1';
 import { avatarOptions, avatarMarker, avatarAsset, isBuiltinAvatar } from './avatar-utils.js?v=20261007-1';
@@ -6,7 +6,7 @@ import { compressImageFile,formatBytes } from './image-compress.js?v=20261006-1'
 const $ = id => document.getElementById(id);
 const form = $('profile-form');
 const categories = ['Conversation','Coffee','Movies','Shopping','Events','Walking','Online chat','Phone conversation'];
-let client, user, locations = [], avatarPath = null, savedAvatarPath = null, dirty = false;
+let client, user, locations = [], avatarPath = null, savedAvatarPath = null, dirty = false, publishing = null;
 function message(text, error=false) { $('profile-status').textContent=text; $('profile-status').dataset.error=String(error); }
 function options(select, items, placeholder) {
   select.replaceChildren(new Option(placeholder,''));
@@ -186,6 +186,47 @@ async function showPhoto(path) {
 async function photoBlob(file) {
   return compressImageFile(file,{maxBytes:300*1024,maxDimension:900,minDimension:480,maxInputBytes:50*1024*1024});
 }
+
+function openPublishPrompt(){
+  if(!publishing||!isCompanionKind())return;
+  const dialog=$('publish-prompt'), alreadyPublic=publishing.isPublished();
+  $('publish-prompt-title').textContent=alreadyPublic?'Publish your latest changes?':'Ready to go public?';
+  $('publish-prompt-copy').textContent=alreadyPublic
+    ? 'Your existing companion listing is public. Publish these saved changes to update what visitors see.'
+    : 'Publish your companion profile so people can discover you on Sathivo and send booking requests.';
+  $('publish-prompt-confirm').textContent=alreadyPublic?'Yes, Update My Public Profile ↗':'Yes, Publish My Profile ↗';
+  $('publish-prompt-later').textContent=alreadyPublic?'Not Now, Keep Current Listing':'Not Now, Keep It Private';
+  $('publish-prompt-consent').checked=false;
+  $('publish-prompt-error').hidden=true;
+  $('publish-prompt-error').textContent='';
+  if(!dialog.open)dialog.showModal();
+}
+function initPublishPrompt(){
+  const dialog=$('publish-prompt'),confirm=$('publish-prompt-confirm');
+  const dismiss=()=>{if(!confirm.disabled)dialog.close();};
+  $('publish-prompt-close').addEventListener('click',dismiss);
+  $('publish-prompt-later').addEventListener('click',dismiss);
+  dialog.addEventListener('cancel',event=>{if(confirm.disabled)event.preventDefault();});
+  dialog.addEventListener('close',()=>{$('publish-prompt-consent').checked=false;$('publish-prompt-error').hidden=true;});
+  confirm.addEventListener('click',async()=>{
+    const error=$('publish-prompt-error');
+    if(!$('publish-prompt-consent').checked){
+      error.textContent='Please confirm that your saved companion details and photo/avatar may be public.';
+      error.hidden=false;$('publish-prompt-consent').focus();return;
+    }
+    if(!publishing)return;
+    confirm.disabled=true;$('publish-prompt-later').disabled=true;$('publish-prompt-close').disabled=true;
+    error.hidden=true;error.textContent='';
+    try{
+      const ok=await publishing.publishSavedProfile({confirmedInPrompt:true});
+      if(ok){dialog.close();message('Your companion profile is now public on Sathivo.');}
+      else{error.textContent=$('listing-status').textContent||'Could not publish. Please try again.';error.hidden=false;}
+    }catch(e){error.textContent=e.message||'Could not publish. Please try again.';error.hidden=false;}
+    finally{confirm.disabled=false;$('publish-prompt-later').disabled=false;$('publish-prompt-close').disabled=false;}
+  });
+}
+initPublishPrompt();
+
 form.addEventListener('submit',async event=>{
   event.preventDefault();if(!user||!form.reportValidity())return;
   const values=new FormData(form);
@@ -223,9 +264,10 @@ form.addEventListener('submit',async event=>{
     else message(companion?'Your companion profile is saved. Review it, then publish when you are ready.':'Your customer profile is saved. Taking you to Find a companion…');
     if(companion&&avatarPath)await showPhoto(avatarPath);else{$('avatar').hidden=true;syncAvatarChoice();}
     updateCompleteness();
-    if(!companion){window.setTimeout(()=>location.assign('companions.html'),450);}
+    if(companion)openPublishPrompt();
+     else window.setTimeout(()=>location.assign('companions.html'),450);
   }catch(error){message(error.message||'Could not save your profile. Please try again.',true);}
-  finally{$('fields').disabled=false;$('profile-status').focus();}
+  finally{$('fields').disabled=false;if(!$('publish-prompt').open)$('profile-status').focus();}
 });
 async function init(){
   try{
@@ -261,7 +303,7 @@ async function init(){
     syncModeUI();
     $('fields').disabled=false;message(p?'Your saved profile. Make it feel like you.':'Let’s create your free profile.');
     if(isCompanionKind()&&avatarPath)await showPhoto(avatarPath);updateCompleteness();
-    await setupPublishing({client,user,isDirty:()=>dirty});
+    publishing=await setupPublishing({client,user,isDirty:()=>dirty});
     $('publication').hidden=!isCompanionKind();
     client.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){dirty=false;location.replace('account.html');}});
   }catch(error){message(error.message||'Profile services are unavailable. Please refresh.',true);}
