@@ -1,6 +1,7 @@
 import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
 import {avatarAsset} from './avatar-utils.js?v=20261007-1';
+import {districtsByState,statesAndUTs,popularIndianCities} from './india-districts.js?v=20261015-1';
 
 const $=id=>document.getElementById(id),directory=!!$('filters');
 const fields='public_id,display_name,bio,location_id,city_name,languages,interests,categories,meeting_mode,availability,hourly_rate,photo_path,safety_id,joined_at,email_verified_at,adult_confirmed,boundaries_accepted';
@@ -24,28 +25,36 @@ function syncCitySearch(){
  $('city-custom').hidden=!custom;
  if(!custom)$('city-custom').value='';
 }
-async function refreshCitySuggestions(preferred=''){
- const seq=++citySuggestionRequest,select=$('city');if(!select)return;
- const names=new Set(matching().filter(r=>r.city!=='District-wide').map(r=>r.city).filter(Boolean));
- try{
-  const ids=selectedLocationIds();
-  const {data,error}=await client.rpc('browse_public_city_suggestions',{p_location_ids:ids?.length?ids:null});
-  if(!error)(data||[]).forEach(row=>{if(row.city_name)names.add(row.city_name);});
- }catch{}
- if(seq!==citySuggestionRequest)return;
- const sorted=[...names].sort((a,b)=>a.localeCompare(b,'en-IN'));
- opts('city',sorted.map(name=>[name,name]),'All cities / towns');
- $('city').add(new Option('Other city / town — type manually','__other__'));
- const exact=sorted.find(name=>normalized(name)===normalized(preferred));
- if(preferred){
-  if(exact){$('city').value=exact;$('city-custom').value='';}
-  else{$('city').value='__other__';$('city-custom').value=preferred;}
+async function refreshCitySuggestions(){
+ const seq=++citySuggestionRequest,select=$('city');
+ if(!select)return;
+ const state=$('state').value,district=$('district').value;
+ let names=[];
+ if(!state)names=[...popularIndianCities];
+ else{
+   try{
+     const ids=selectedLocationIds();
+     if(ids?.length){
+       const {data,error}=await client.rpc('browse_public_city_suggestions',{p_location_ids:ids});
+       if(!error)names=(data||[]).map(r=>r.city_name).filter(Boolean);
+     }
+   }catch{}
  }
- syncCitySearch();
+ if(seq!==citySuggestionRequest)return;
+ const filtered=[...new Set(names)].sort((a,b)=>a.localeCompare(b,'en-IN'));
+ opts('city',filtered.map(name=>[name,name]),'All cities / towns');
+ select.add(new Option('Other city / town — type to search','__other__'));
+ $('city-custom').value='';$('city-custom').hidden=true;
+ $('city-filter-hint').textContent=state
+   ? district?'Cities with published companions in '+district+'. Or type another city.':'Cities with published companions in '+state+'. Or type another city.'
+   : 'Top 25 popular Indian cities. Choose a state for local suggestions.';
 }
 function districts(){
- opts('district',[...new Set(locations.filter(r=>!$('state').value||r.state===$('state').value).map(r=>r.district))].sort().map(v=>[v,v]),'All districts');
- $('city-custom').value='';void refreshCitySuggestions();
+ const state=$('state').value;
+ opts('district',(districtsByState[state]||[]).map(v=>[v,v]),state?'All districts in '+state:'Choose a state first');
+ $('district').disabled=!state;
+ $('city').value='';$('city-custom').value='';$('city-custom').hidden=true;
+ void refreshCitySuggestions();
 }
 function locationName(id,cityName=''){
  const r=locations.find(r=>r.id===id);if(!r)return cityName||'Location unavailable';
@@ -138,6 +147,7 @@ async function list(){
  const savedIds=savedOnly?[...favoriteIds]:null;
  if(savedOnly&&!savedIds.length){$('results').replaceChildren();$('empty').hidden=false;$('status').textContent='No saved companions yet.';$('previous').disabled=$('next').disabled=true;$('page-label').textContent='';return}
  const locationIds=selectedLocationIds();
+ if(locationIds!==null&&!locationIds.length){$('results').replaceChildren();$('empty').hidden=false;$('status').textContent='No companions in '+scopeName()+' yet.';$('previous').disabled=$('next').disabled=true;$('page-label').textContent='';return;}
  try{
   const {data,error}=await client.rpc('browse_public_companions_v2',{
    p_location_ids:locationIds?.length?locationIds:null,
@@ -206,10 +216,11 @@ async function init(){
   client=await getSathivoClient();
   const [loc,u]=await Promise.all([client.from('profile_locations').select('*').order('state'),client.auth.getUser()]);if(loc.error)throw loc.error;locations=loc.data;currentUser=u.data?.user||null;await loadFavorites();
   if(directory){
-   opts('state',[...new Set(locations.map(r=>r.state))].sort().map(v=>[v,v]),'All India — all states / UTs');districts();
+   opts('state',statesAndUTs.map(v=>[v,v]),'All India — all states / UTs');districts();
    ['Conversation','Coffee','Movies','Shopping','Events','Walking','Online chat','Phone conversation'].forEach(v=>$('category').add(new Option(v,v)));
    $('filters').onsubmit=e=>{e.preventDefault();page=0;void list();};
-   $('filters').onchange=e=>{if(e.target.id==='state')districts();else if(e.target.id==='district'){$('city-custom').value='';void refreshCitySuggestions();}else if(e.target.id==='city')syncCitySearch();};
+   $('filters').onchange=e=>{if(e.target.id==='state')districts();else if(e.target.id==='district'){$('city').value='';$('city-custom').value='';$('city-custom').hidden=true;void refreshCitySuggestions();}else if(e.target.id==='city')syncCitySearch();if(['state','district','city'].includes(e.target.id)){page=0;void list();}};
+   $('city-custom').addEventListener('change',()=>{page=0;void list();});
    $('filters').onreset=e=>{e.preventDefault();$('state').value='';districts();$('city-custom').value='';$('category').value=$('mode').value='';$('sort').value='newest';$('saved-only').checked=false;page=0;void list();};
    $('saved-only').addEventListener('change',()=>{if($('saved-only').checked&&!currentUser){$('saved-only').checked=false;location.href='account.html#login';return}page=0;void list();});
    $('sort').addEventListener('change',()=>{page=0;void list();});
