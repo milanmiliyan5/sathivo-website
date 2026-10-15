@@ -58,3 +58,25 @@ body[data-profile-mode="customer"] #save-profile{background:var(--rose)}
 @media(max-width:640px){
   .profile-safety-confirmations{padding:14px}
 }
+
+/* Modal shown only after a successful companion / both profile save. */
+dialog.publish-prompt{position:fixed;inset:0;margin:auto;box-sizing:border-box;width:min(92vw,490px);max-width:calc(100vw - 28px);max-height:calc(100dvh - 30px);padding:0;overflow-y:auto;border:2px solid #5d3048;border-radius:22px;background:linear-gradient(145deg,#fffafd 0%,#fff3f7 60%,#f4edff 100%);color:#3b2531;box-shadow:0 24px 80px rgba(32,17,35,.3);z-index:2000}
+dialog.publish-prompt:not([open]){display:none!important}
+dialog.publish-prompt::backdrop{background:rgba(27,17,34,.64);backdrop-filter:blur(4px)}
+.publish-prompt-inner{position:relative;padding:34px 30px 28px;text-align:center}
+.publish-prompt-close{position:absolute;top:13px;right:15px;width:36px;height:36px;border:1px solid #dec6d1;border-radius:50%;background:#fff;color:#5d3048;font-size:24px;line-height:1;cursor:pointer}
+.publish-prompt-close:hover{background:#ffedf4}
+.publish-prompt-success{display:grid;place-items:center;width:56px;height:56px;margin:0 auto 13px;border:2px solid #4b8a65;border-radius:50%;background:#eaf9ed;color:#257146;font-size:30px;font-weight:700}
+.publish-prompt .eyebrow{color:#8d365a;font-weight:750;letter-spacing:.12em;font-size:.7rem;margin:0 0 8px}
+.publish-prompt h2{margin:0 0 12px;color:#452b3a;font-size:clamp(1.55rem,4vw,1.95rem);line-height:1.18}
+.publish-prompt #publish-prompt-copy{margin:0 auto 19px;line-height:1.55;font-size:.95rem;max-width:38ch}
+.publish-prompt-privacy{padding:14px;text-align:left;border:1px solid #e5cada;border-radius:12px;background:#fff;color:#5e4651;font-size:.85rem;line-height:1.5}
+.publish-prompt-consent{display:flex;gap:10px;align-items:flex-start;text-align:left;margin:15px 0 17px;font-size:.86rem;line-height:1.4;cursor:pointer}
+.publish-prompt-consent input{width:18px;height:18px;margin:2px 0 0;flex:none;accent-color:#a13a63}
+.publish-prompt-error{padding:10px;margin:0 0 12px;border-radius:9px;background:#fff0ef;color:#8b2032;font-size:.85rem;text-align:left}
+.publish-prompt-error[hidden]{display:none!important}
+.publish-prompt-actions{display:grid;gap:12px}
+body.sathivo-2d .publish-prompt-actions .button{display:block;width:100%;box-sizing:border-box;margin:0;padding:12px 14px;min-height:45px;font:inherit;font-size:.9rem;font-weight:700;text-align:center;cursor:pointer}
+.publish-prompt-actions button:disabled{opacity:.55;cursor:wait}
+@media(max-width:480px){.publish-prompt-inner{padding:30px 18px 20px}.publish-prompt h2{font-size:1.6rem}.publish-prompt-privacy{font-size:.8rem}.publish-prompt-consent{font-size:.82rem}}
+@media(prefers-reduced-motion:reduce){dialog.publish-prompt::backdrop{backdrop-filter:none}}
