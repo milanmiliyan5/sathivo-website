@@ -2,22 +2,23 @@ import { isBuiltinAvatar } from './avatar-utils.js?v=20261007-1';
 export async function setupPublishing({client,user,isDirty}) {
  const $=id=>document.getElementById(id);
  const panel=$('publication'), status=$('listing-status'), publish=$('publish-listing'), hide=$('hide-listing'), view=$('view-listing');
- panel.hidden=false;let busy=false;
+ panel.hidden=false;let busy=false,listingPublished=false;
  async function refresh(){
   const {data,error}=await client.from('companion_listings').select('public_id,published').eq('user_id',user.id).maybeSingle();
   if(error)throw Error('Could not load listing status. Refresh to retry.');
-  hide.hidden=!data?.published;view.hidden=!data?.published;
+  listingPublished=!!data?.published;
+  hide.hidden=!listingPublished;view.hidden=!listingPublished;
   status.textContent=data?.published?'Your listing is public.':'Your listing is hidden.';
   if(data?.published)view.href='companion.html?id='+encodeURIComponent(data.public_id);
  }
  async function run(task){
-  if(busy||$('fields').disabled)return;busy=true;publish.disabled=hide.disabled=true;$('fields').disabled=true;
-  try{await task();}catch(error){status.textContent=error.message||'Could not update your listing. Try again.';}
-  finally{busy=false;publish.disabled=hide.disabled=false;$('fields').disabled=false;status.focus();}
+  if(busy||$('fields').disabled)return false;busy=true;publish.disabled=hide.disabled=true;$('fields').disabled=true;
+  try{await task();return true;}catch(error){status.textContent=error.message||'Could not update your listing. Try again.';return false;}
+  finally{busy=false;publish.disabled=hide.disabled=false;$('fields').disabled=false;if(!$('publish-prompt')?.open)status.focus();}
  }
- publish.addEventListener('click',()=>void run(async()=>{
+ async function publishSavedProfile({confirmedInPrompt=false}={}){return run(async()=>{
   if(isDirty())throw Error('Save your profile changes first, then publish.');
-  if(!$('publish-consent').checked)throw Error('Confirm that your saved profile details and photo/avatar can be public.');
+  if(!confirmedInPrompt&&!$('publish-consent').checked)throw Error('Confirm that your saved profile details and photo/avatar can be public.');
   status.textContent='Publishing your saved profile…';
   const {data:p,error}=await client.from('member_profiles').select('*').eq('user_id',user.id).single();
   if(error||!p)throw Error('Save your profile first.');
@@ -46,11 +47,13 @@ export async function setupPublishing({client,user,isDirty}) {
   const saved=await client.from('companion_listings').upsert(row,{onConflict:'user_id'}).select('public_id').single();
   if(saved.error)throw Error('Listing remains hidden. Could not publish; try again.');
   $('publish-consent').checked=false;await refresh();
- }));
+ });}
+ publish.addEventListener('click',()=>void publishSavedProfile());
  hide.addEventListener('click',()=>void run(async()=>{
   const {error}=await client.from('companion_listings').update({published:false}).eq('user_id',user.id).select('public_id').single();
   if(error)throw Error('Could not hide your listing. Try again.');
   await refresh();
  }));
  try{await refresh();}catch(error){status.textContent=error.message;}
+ return {publishSavedProfile,isPublished:()=>listingPublished};
 }
