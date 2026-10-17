@@ -238,6 +238,9 @@ async function detail(){
   safetyActions.append(reportBtn,blockBtn);
   safetyControls.append(safetyHeading,safetyActions,safetyFeedback);
   copy.append(el('p',locationName(r.location_id,r.city_name)),el('div',rateText(r.hourly_rate),'detail-rate'),el('p',ratingText(r),'rating-line'),trustChips(r),tags(r));
+  // Prioritize the complete booking form immediately after rate and experience tags.
+  // Keep all trust, safety, About and payment information intact below it.
+  copy.append(bookingForm(r));
   const trust=el('section',undefined,'profile-trust-panel');trust.append(el('strong','Trust & account details'));const trustGrid=el('div',undefined,'profile-trust-grid');
   trustGrid.append(el('span',r.email_verified_at?'✓ Email verified':'Email verification unavailable'),el('span',r.adult_confirmed?'18+ self-declared':'Age declaration missing'),el('span',r.boundaries_accepted?'Platonic boundaries accepted':'Boundaries declaration missing'));
   if(r.joined_at)trustGrid.append(el('span','Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(r.joined_at))));if(r.safety_id)trustGrid.append(el('span','Safety ID '+r.safety_id));trust.append(trustGrid);copy.append(trust,safetyControls);
@@ -246,7 +249,7 @@ async function detail(){
   const safetyNote=el('section',undefined,'sathivo-safety-panel');
   safetyNote.append(el('h3','🛡️ First meeting? Stay in control.'),el('p','Choose a public place, tell someone you trust, arrange your own travel and never share passwords or UPI PINs.'));
   const moreSafety=el('a','Read our Safety & Community Guidelines ↗');moreSafety.href='safety.html#first-meeting';safetyNote.append(moreSafety);copy.append(safetyNote);
-  copy.append(el('p','The displayed amount is the companion’s own hourly rate. You can propose a different hourly amount in your request. A price becomes agreed only if the companion accepts your request. Payment happens directly between users outside Sathivo; Sathivo does not process payments.','payment-note'),el('p','Self-described profile. Identity and age have not been verified. Availability is a preference, not a confirmed booking.','launch-note'),el('p','18+ and strictly platonic. Respect boundaries and choose public places for in-person meetings.'),bookingForm(r));
+  copy.append(el('p','The displayed amount is the companion’s own hourly rate. You can propose a different hourly amount in your request. A price becomes agreed only if the companion accepts your request. Payment happens directly between users outside Sathivo; Sathivo does not process payments.','payment-note'),el('p','Self-described profile. Identity and age have not been verified. Availability is a preference, not a confirmed booking.','launch-note'),el('p','18+ and strictly platonic. Respect boundaries and choose public places for in-person meetings.'));
   $('detail').replaceChildren(portrait(r),copy);$('detail').hidden=false;$('status').textContent='';document.title=r.display_name+' — Sathivo';
  }catch(e){$('status').textContent=e.message||'Could not load this profile. Please try again.';$('retry').hidden=false;}
 }
