@@ -2,6 +2,7 @@ import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
 import {sendBookingEmail} from './booking-email-events.js?v=20261017-1';
 import {avatarAsset} from './avatar-utils.js?v=20261007-1';
+import {openSafetyReport,confirmSafetyBlock} from './safety-actions.js?v=20261018-1';
 import {districtsByState,statesAndUTs,popularIndianCities} from './india-districts.js?v=20261015-1';
 
 const $=id=>document.getElementById(id),directory=!!$('filters');
@@ -200,13 +201,45 @@ async function detail(){
   r.review_count=rating?.review_count||0;r.average_rating=rating?.average_rating||null;
   const copy=el('div',undefined,'detail-copy');copy.append(el('p','GOOD COMPANY, ON YOUR TERMS','eyebrow'));
   const titleRow=el('div',undefined,'detail-title-row');titleRow.append(el('h1',r.display_name),favoriteButton(r,true));copy.append(titleRow);
-  const profileActions=el('div',undefined,'profile-actions'),share=el('button','Share profile ↗','button button-outline');share.type='button';share.onclick=()=>void shareProfile(r,share);profileActions.append(share);copy.append(profileActions);
+  const profileActions=el('div',undefined,'profile-actions sathivo-profile-safety-actions'),share=el('button','Share profile ↗','button button-outline');
+  share.type='button';share.onclick=()=>void shareProfile(r,share);profileActions.append(share);
+  const safetyLink=el('a','🛡️ Safety & Help ↗','sathivo-help-link');safetyLink.href='safety.html#first-meeting';profileActions.append(safetyLink);
+  const reportBtn=el('button','⚑ Report Profile','button button-outline'),blockBtn=el('button','Block User','button button-outline');
+  const safetyFeedback=el('p',undefined,'sathivo-safety-feedback');safetyFeedback.setAttribute('role','status');
+  reportBtn.type=blockBtn.type='button';
+  async function targetForSafety(){
+   if(!currentUser){location.href='account.html#login';return null;}
+   const {data,error}=await client.from('companion_listings').select('user_id').eq('published',true).eq('moderation_status','active').eq('public_id',r.public_id).maybeSingle();
+   if(error||!data?.user_id){safetyFeedback.textContent='This profile is unavailable for reporting. Contact Support if needed.';return null;}
+   if(data.user_id===currentUser.id){safetyFeedback.textContent='You cannot report or block your own profile.';return null;}
+   return data.user_id;
+  }
+  reportBtn.onclick=async()=>{safetyFeedback.textContent='';reportBtn.disabled=true;try{
+   const target=await targetForSafety();
+   if(target){const submitted=await openSafetyReport({client,reporterId:currentUser.id,reportedUserId:target});
+    if(submitted)safetyFeedback.textContent='Report submitted privately to Sathivo for review.';}
+   }catch{ safetyFeedback.textContent='Could not open report. Please try again.';}finally{reportBtn.disabled=false;}};
+  blockBtn.onclick=async()=>{safetyFeedback.textContent='';blockBtn.disabled=true;try{
+   const target=await targetForSafety();
+   if(target&&await confirmSafetyBlock()){
+    const {error}=await client.from('user_blocks').insert({blocker_id:currentUser.id,blocked_id:target});
+    if(error&&error.code!=='23505')throw error;
+    blockBtn.textContent='User blocked';blockBtn.disabled=true;
+    safetyFeedback.textContent='This user is blocked. Any existing booking is not automatically cancelled.';
+    return;
+   }
+   }catch{ safetyFeedback.textContent='Could not block this user. Please try again.';}finally{if(blockBtn.textContent!=='User blocked')blockBtn.disabled=false;}};
+  profileActions.append(reportBtn,blockBtn);
+  copy.append(profileActions,safetyFeedback);
   copy.append(el('p',locationName(r.location_id,r.city_name)),el('div',rateText(r.hourly_rate),'detail-rate'),el('p',ratingText(r),'rating-line'),trustChips(r),tags(r));
   const trust=el('section',undefined,'profile-trust-panel');trust.append(el('strong','Trust & account details'));const trustGrid=el('div',undefined,'profile-trust-grid');
   trustGrid.append(el('span',r.email_verified_at?'✓ Email verified':'Email verification unavailable'),el('span',r.adult_confirmed?'18+ self-declared':'Age declaration missing'),el('span',r.boundaries_accepted?'Platonic boundaries accepted':'Boundaries declaration missing'));
   if(r.joined_at)trustGrid.append(el('span','Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(r.joined_at))));if(r.safety_id)trustGrid.append(el('span','Safety ID '+r.safety_id));trust.append(trustGrid);copy.append(trust);
   for(const [t,v] of [['About me',r.bio],['Languages',r.languages],['Interests & vibe',r.interests],['Usual availability',r.availability]])if(v)copy.append(el('h2',t),el('p',v));
   if(Number(r.review_count)>0)copy.append(el('h2','Completed-booking rating'),el('p',Number(r.average_rating).toFixed(1)+' / 5 · '+r.review_count+' review'+(Number(r.review_count)===1?'':'s')));
+  const safetyNote=el('section',undefined,'sathivo-safety-panel');
+  safetyNote.append(el('h3','🛡️ First meeting? Stay in control.'),el('p','Choose a public place, tell someone you trust, arrange your own travel and never share passwords or UPI PINs.'));
+  const moreSafety=el('a','Read our Safety & Community Guidelines ↗');moreSafety.href='safety.html#first-meeting';safetyNote.append(moreSafety);copy.append(safetyNote);
   copy.append(el('p','The displayed amount is the companion’s own hourly rate. You can propose a different hourly amount in your request. A price becomes agreed only if the companion accepts your request. Payment happens directly between users outside Sathivo; Sathivo does not process payments.','payment-note'),el('p','Self-described profile. Identity and age have not been verified. Availability is a preference, not a confirmed booking.','launch-note'),el('p','18+ and strictly platonic. Respect boundaries and choose public places for in-person meetings.'),bookingForm(r));
   $('detail').replaceChildren(portrait(r),copy);$('detail').hidden=false;$('status').textContent='';document.title=r.display_name+' — Sathivo';
  }catch(e){$('status').textContent=e.message||'Could not load this profile. Please try again.';$('retry').hidden=false;}
