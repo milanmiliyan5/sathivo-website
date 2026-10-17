@@ -19,7 +19,7 @@ let appClient = null;
 const emailBookingReturnRoute=(()=>{
   try {
     const candidate=new URL(location.href).searchParams.get('next')||'';
-    return /^(?:chat\.html\?booking=|requests\.html\?id=)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidate)?candidate:'';
+    return /^(?:chat\.html\?booking=|requests\.html\?id=|bookings\.html\?id=)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidate)?candidate:'';
   } catch { return ''; }
 })();
 
@@ -162,7 +162,7 @@ bindForm('#login-form', async values => {
     const pending=sessionStorage.getItem('sathivo.returnAfterLogin.v1')||'';
     sessionStorage.removeItem('sathivo.returnAfterLogin.v1');
     const candidate=emailBookingReturnRoute||pending;
-    if(/^(?:chat\.html\?booking=|requests\.html\?id=)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidate)) destination=candidate;
+    if(/^(?:chat\.html\?booking=|requests\.html\?id=|bookings\.html\?id=)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidate)) destination=candidate;
   }catch{}
   // The chat page still checks participant permissions server-side.
   window.location.replace(new URL(destination, window.location.href).href);
