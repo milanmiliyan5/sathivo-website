@@ -39,3 +39,6 @@
 .sathivo-profile-safety-actions .button{min-height:41px;font-size:.78rem}
 .sathivo-profile-safety-actions .sathivo-help-link{font-size:.78rem;font-weight:750;text-decoration:underline;text-underline-offset:3px;color:#8b3a6a}
 @media(max-width:640px){.sathivo-safety-grid{grid-template-columns:1fr}.sathivo-safety-center{padding:16px 13px;border-radius:17px}.sathivo-safety-tile{padding:15px}.sathivo-safety-dialog-actions{display:grid;grid-template-columns:1fr}.sathivo-safety-dialog-actions .button{width:100%}.sathivo-first-meeting{padding:12px 13px}}
+
+/* Do not show controls until the booking participant is authenticated. */
+.safety-actions[hidden],.sathivo-first-meeting[hidden]{display:none!important}
