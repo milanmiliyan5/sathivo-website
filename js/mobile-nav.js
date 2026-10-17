@@ -55,16 +55,25 @@ async function init(){
         client.from('booking_requests').select('id',{count:'exact',head:true}).eq('companion_id',user.id).eq('status','pending'),
         client.rpc('get_unread_chat_count')
       ]);
-      const rn=rq.error?0:(rq.count||0),cn=cq.error?0:Number(cq.data||0);
-      refs.Requests.textContent=rn>99?'99+':String(rn);
-      refs.Requests.hidden=rn===0;
-      refs.Chats.textContent=cn>99?'99+':String(cn);
-      refs.Chats.hidden=cn===0;
+      if(!rq.error){
+        const rn=rq.count||0;
+        refs.Requests.textContent=rn>99?'99+':String(rn);
+        refs.Requests.hidden=rn===0;
+        refs.Requests.parentElement?.setAttribute('aria-label',rn?'Requests, '+rn+' waiting':'Requests');
+      }
+      if(!cq.error){
+        const cn=Math.max(0,Number(cq.data)||0);
+        refs.Chats.textContent=cn>99?'99+':String(cn);
+        refs.Chats.hidden=cn===0;
+        refs.Chats.parentElement?.setAttribute('aria-label',cn?'Chats, '+cn+' unread messages':'Chats');
+      }
     };
 
     await refresh();
     const c1=client.channel('mobile-nav-bookings:'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_requests'},()=>void refresh()).subscribe();
     const c2=client.channel('mobile-nav-messages:'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_messages'},()=>void refresh()).subscribe();
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh()});
+    window.addEventListener('pageshow',()=>void refresh());
     window.addEventListener('pagehide',()=>{void client.removeChannel(c1);void client.removeChannel(c2)},{once:true});
   }catch{}
 }
