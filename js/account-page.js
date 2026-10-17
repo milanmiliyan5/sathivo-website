@@ -148,7 +148,14 @@ function bindForm(id, task, loadingMessage) {
 bindForm('#login-form', async values => {
   await flow.login(values);
   clearSecrets();
-  window.location.replace(new URL('./', window.location.href).href);
+  let destination='./';
+  try{
+    const pending=sessionStorage.getItem('sathivo.returnAfterLogin.v1')||'';
+    sessionStorage.removeItem('sathivo.returnAfterLogin.v1');
+    if(/^chat\.html\?booking=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(pending)) destination=pending;
+  }catch{}
+  // The chat page still checks participant permissions server-side.
+  window.location.replace(new URL(destination, window.location.href).href);
 }, 'Signing you in…');
 
 bindForm('#signup-form', async values => {
