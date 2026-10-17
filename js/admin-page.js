@@ -65,9 +65,9 @@ async function setListing(userId,status){
 
 function userRow(p){
   const tr=node('tr'),who=node('div',undefined,'user-cell');
-  who.append(node('strong',p.display_name||'Unnamed member'),node('small',p.profile_kind||'member'));
+  who.append(node('strong',p.display_name||'Unnamed member'),node('small',p.has_profile ? (p.profile_kind||'member') : 'Profile incomplete'));
   const sid=node('code',p.safety_id||'No Safety ID','safety-code');
-  const type=node('span',p.profile_kind||'member','gender-pill');
+  const type=node('span',p.has_profile ? (p.profile_kind||'member') : 'Signup only','gender-pill');
   const gender=p.gender==='male'?'Male':p.gender==='female'?'Female':p.gender==='other'?'Other':p.gender==='prefer_not_to_say'?'Prefer not to say':'Not set';
   const email=node('div',undefined,'primary-cell');
   email.append(node('strong',p.email_verified_at?'Verified':'Not verified'),node('small',p.email_verified_at?'Email verified':'Verification pending'));
@@ -83,7 +83,7 @@ function renderUsers(){
     return qOk&&gOk&&tOk;
   });
   $('users').replaceChildren(...(rows.length?rows.map(userRow):[emptyRow(7,'No matching users found.')]));
-  $('user-count').textContent=rows.length+' of '+profiles.length+' profile'+(profiles.length===1?'':'s')+' shown.';
+  $('user-count').textContent=rows.length+' of '+profiles.length+' registered account'+(profiles.length===1?'':'s')+' shown. '+profiles.filter(p=>!p.has_profile).length+' incomplete profile(s).';
 }
 
 function bookingRow(b){
@@ -207,12 +207,12 @@ async function load(){
   const [rr,ll,pp,ss,bb]=await Promise.all([
     client.from('user_reports').select('id,reporter_id,reported_user_id,booking_id,reason,details,status,created_at').order('created_at',{ascending:false}).limit(250),
     client.from('companion_listings').select('user_id,display_name,bio,published,moderation_status,moderation_note').order('display_name').limit(500),
-    client.from('member_profiles').select('user_id,display_name,profile_kind,gender,safety_id,joined_at,email_verified_at').order('joined_at',{ascending:false}).limit(1000),
+    client.functions.invoke('admin-users-list'),
     client.from('support_requests').select('id,email,category,subject,message,status,rating,feedback_type,created_at').order('created_at',{ascending:false}).limit(500),
     client.from('booking_requests').select('id,customer_id,companion_id,category,meeting_mode,requested_for,duration_minutes,status,created_at,customer_display_name,companion_display_name,listed_hourly_rate,offered_hourly_rate,agreed_hourly_rate,cancel_reason,cancel_note,cancelled_by,cancelled_at').order('created_at',{ascending:false}).limit(500)
   ]);
   const failure=[rr,ll,pp,ss,bb].find(x=>x.error);if(failure)throw failure.error;
-  reports=rr.data||[];listings=ll.data||[];profiles=pp.data||[];supports=ss.data||[];bookings=bb.data||[];
+  reports=rr.data||[];listings=ll.data||[];profiles=Array.isArray(pp.data?.users)?pp.data.users:[];supports=ss.data||[];bookings=bb.data||[];
   renderAll();$('admin-content').hidden=false;setStatus('');
 }
 
