@@ -1,10 +1,10 @@
 /* Sathivo notification centre — premium, readable, mobile-first. */
 .notify-toolbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin:16px 0 20px}
 .notify-filter-group{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.notify-filter{border:1px solid #e8d3e0;border-radius:999px;padding:9px 15px;min-height:42px;background:white;color:#6e536b;font:700 .81rem inherit;cursor:pointer}
+.notify-filter{border:1px solid #e8d3e0;border-radius:999px;padding:9px 15px;min-height:42px;background:white;color:#6e536b;font-family:inherit;font-size:.81rem;font-weight:700;cursor:pointer}
 .notify-filter[aria-pressed="true"]{background:#632c50;color:#fff;border-color:#632c50}
 .notify-filter:focus-visible,.notify-mark-all:focus-visible,.notify-card a:focus-visible{outline:3px solid #985483;outline-offset:2px}
-.notify-mark-all{border:1px solid #d9bfd2;background:#fffafc;color:#7d3b65;border-radius:11px;padding:10px 13px;min-height:42px;font:700 .8rem inherit;cursor:pointer}
+.notify-mark-all{border:1px solid #d9bfd2;background:#fffafc;color:#7d3b65;border-radius:11px;padding:10px 13px;min-height:42px;font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer}
 .notify-mark-all:disabled{opacity:.48;cursor:default}
 .notify-summary{display:flex;align-items:center;gap:7px;font-size:.85rem;color:#71566c}
 .notify-summary-count{display:inline-grid;place-items:center;min-width:30px;min-height:25px;padding:3px 8px;border-radius:999px;background:#fde8f3;color:#a22570;font-weight:800;font-size:.75rem}
@@ -23,7 +23,7 @@
 .notify-card-date{font-size:.72rem;color:#8c788a}
 .notify-card-actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:4px}
 .notify-card-actions .button{display:inline-flex;justify-content:center;align-items:center;min-height:41px;padding:9px 16px;font-size:.79rem}
-.notify-mark-single{padding:7px 11px;border:0;border-radius:9px;color:#864968;background:transparent;font:700 .75rem inherit;cursor:pointer}
+.notify-mark-single{padding:7px 11px;border:0;border-radius:9px;color:#864968;background:transparent;font-family:inherit;font-size:.75rem;font-weight:700;cursor:pointer}
 .notify-mark-single:hover{background:#f7e9f0}
 .notify-filter[hidden],.notify-summary[hidden],.notify-unread-dot[hidden],.notify-mark-all[hidden],.notify-mark-single[hidden]{display:none!important}
 .notify-error{color:#9d2a4b;font-size:.81rem}
