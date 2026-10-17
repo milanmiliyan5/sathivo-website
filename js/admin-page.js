@@ -211,9 +211,18 @@ async function load(){
     client.from('support_requests').select('id,email,category,subject,message,status,rating,feedback_type,created_at').order('created_at',{ascending:false}).limit(500),
     client.from('booking_requests').select('id,customer_id,companion_id,category,meeting_mode,requested_for,duration_minutes,status,created_at,customer_display_name,companion_display_name,listed_hourly_rate,offered_hourly_rate,agreed_hourly_rate,cancel_reason,cancel_note,cancelled_by,cancelled_at').order('created_at',{ascending:false}).limit(500)
   ]);
-  const failure=[rr,ll,pp,ss,bb].find(x=>x.error);if(failure)throw failure.error;
-  reports=rr.data||[];listings=ll.data||[];profiles=Array.isArray(pp.data?.users)?pp.data.users:[];supports=ss.data||[];bookings=bb.data||[];
-  renderAll();$('admin-content').hidden=false;setStatus('');
+  const failure=[rr,ll,ss,bb].find(x=>x.error);if(failure)throw failure.error;
+  let users=Array.isArray(pp.data?.users)?pp.data.users:null;
+  if(!users){
+    const fallback=await client.from('member_profiles')
+      .select('user_id,display_name,profile_kind,gender,safety_id,joined_at,email_verified_at')
+      .order('joined_at',{ascending:false}).limit(1000);
+    if(fallback.error)throw fallback.error;
+    users=(fallback.data||[]).map(p=>({...p,has_profile:true}));
+    setStatus('Some new signups may be missing. Account list is temporarily using saved profiles.');
+  }else setStatus('');
+  reports=rr.data||[];listings=ll.data||[];profiles=users;supports=ss.data||[];bookings=bb.data||[];
+  renderAll();$('admin-content').hidden=false;
 }
 
 function closeSidebar(){$('admin-sidebar').classList.remove('is-open');$('sidebar-backdrop').hidden=true;$('sidebar-toggle').setAttribute('aria-expanded','false')}
