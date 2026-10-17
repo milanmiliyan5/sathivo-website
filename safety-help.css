@@ -42,3 +42,78 @@
 
 /* Do not show controls until the booking participant is authenticated. */
 .safety-actions[hidden],.sathivo-first-meeting[hidden]{display:none!important}
+
+/* Companion detail: quiet Share link above, one dedicated Safety action row under trust. */
+body.sathivo-2d .detail-copy .sathivo-profile-share-row{
+  display:flex;justify-content:flex-start;align-items:center;
+  margin:4px 0 13px;gap:8px;
+}
+body.sathivo-2d .detail-copy .sathivo-profile-share-button{
+  appearance:none;display:inline-flex;align-items:center;justify-content:center;
+  min-height:40px;padding:9px 13px;
+  border:1px solid #e5c9d9;border-radius:10px;
+  background:#fff8fc;color:#80405f;
+  box-shadow:none;font:750 .8rem/1.3 var(--sans,system-ui,sans-serif);
+  cursor:pointer;
+}
+body.sathivo-2d .detail-copy .sathivo-profile-share-button:hover{
+  background:#fcebf5;border-color:#d7a6c2;
+}
+body.sathivo-2d .detail-copy .sathivo-profile-share-button:focus-visible,
+body.sathivo-2d .detail-copy .sathivo-profile-safety-actions :is(a,button):focus-visible{
+  outline:3px solid #df91ba;outline-offset:3px;
+}
+body.sathivo-2d .detail-copy .sathivo-profile-safety-tools{
+  box-sizing:border-box;min-width:0;margin:14px 0 22px;padding:15px 16px;
+  background:#fffafd;border:1px solid #ead8e4;border-radius:15px;
+}
+body.sathivo-2d .detail-copy .sathivo-profile-safety-heading{
+  margin:0 0 11px;color:#613c56;
+  font:800 .87rem/1.4 var(--sans,system-ui,sans-serif);
+}
+body.sathivo-2d .detail-copy .sathivo-profile-safety-actions{
+  display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;
+  align-items:stretch;margin:0;
+}
+body.sathivo-2d .detail-copy .sathivo-profile-safety-actions :is(a,button),
+body.sathivo-2d:not(.home-2d) .detail-copy .sathivo-profile-safety-actions .button{
+  box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;
+  min-width:0;width:100%;min-height:43px;padding:9px 8px;
+  border:1px solid #dfc9d6;border-radius:10px;
+  background:#fff;color:#6a3c56;
+  box-shadow:none;
+  font:750 .76rem/1.35 var(--sans,system-ui,sans-serif);
+  text-align:center;text-decoration:none;white-space:normal;
+  cursor:pointer;
+}
+body.sathivo-2d .detail-copy .sathivo-profile-safety-actions .sathivo-help-link{
+  background:#f9eef9;color:#703f83;border-color:#e4d4eb;
+}
+body.sathivo-2d .detail-copy .sathivo-profile-safety-actions #sathivo-no-id{display:none}
+body.sathivo-2d:not(.home-2d) .detail-copy .sathivo-profile-safety-actions .button:hover,
+body.sathivo-2d .detail-copy .sathivo-profile-safety-actions a:hover{
+  transform:none;box-shadow:none;background:#f9eef5;border-color:#d5aac3;
+}
+body.sathivo-2d .detail-copy .sathivo-profile-safety-actions :is(a,button):disabled{
+  opacity:.55;cursor:default;
+}
+body.sathivo-2d .detail-copy .sathivo-profile-safety-tools .sathivo-safety-feedback{
+  font-size:.75rem;margin:9px 0 0;color:#806079;line-height:1.5;
+}
+body.sathivo-2d .detail-copy .sathivo-profile-safety-tools .sathivo-safety-feedback:empty{
+  display:none;
+}
+@media(max-width:1040px){
+  body.sathivo-2d .detail-copy .sathivo-profile-safety-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+  body.sathivo-2d .detail-copy .sathivo-profile-safety-actions .sathivo-help-link{grid-column:1/-1}
+}
+@media(max-width:540px){
+  body.sathivo-2d .detail-copy .sathivo-profile-safety-tools{margin:13px 0 18px;padding:13px 12px;border-radius:13px}
+  body.sathivo-2d .detail-copy .sathivo-profile-safety-actions{gap:8px}
+  body.sathivo-2d .detail-copy .sathivo-profile-safety-actions :is(a,button),
+  body.sathivo-2d:not(.home-2d) .detail-copy .sathivo-profile-safety-actions .button{min-height:44px;font-size:.75rem}
+}
+@media(max-width:345px){
+  body.sathivo-2d .detail-copy .sathivo-profile-safety-actions{grid-template-columns:1fr}
+  body.sathivo-2d .detail-copy .sathivo-profile-safety-actions .sathivo-help-link{grid-column:auto}
+}
