@@ -27,8 +27,9 @@ function notificationType(r){
  return 'booking';
 }
 function actionText(r){
- if(r.kind==='message'||notificationType(r)==='accepted')return 'Open Private Chat ↗';
- if(String(r.title||'').toLowerCase().includes('request'))return 'View Booking Request ↗';
+ const link=safeLink(r.link);
+ if(link.startsWith('chat.html?'))return 'Open Private Chat ↗';
+ if(link.startsWith('requests.html'))return 'Review Request ↗';
  return 'View Booking ↗';
 }
 function friendlyTime(value){
