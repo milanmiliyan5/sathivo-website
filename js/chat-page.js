@@ -1,9 +1,11 @@
 import {getSathivoClient} from './supabase-client.js?v=20261006-1';
 import {sendMessagePush} from './push-events.js?v=20261004-2';
 import {compressImageFile,formatBytes} from './image-compress.js?v=20261006-1';
+import {openSafetyReport,confirmSafetyBlock} from './safety-actions.js?v=20261018-1';
 
 const $=id=>document.getElementById(id);
 let client,user,booking,otherId,messageChannel,bookingChannel,presenceChannel;
+let blockedByMe=false;
 let mediaViewer=null,viewerImage=null,viewerBlobUrl=null,viewerIsOnce=false;
 let selectedPhotoFile=null,selectedPhotoPreviewUrl=null;
 let mySafetyId='STV-PRIVATE',sessionUnreadBoundary=null,otherOnline=false,lastOtherActive=null;
@@ -181,8 +183,11 @@ async function loadMessages(initial=false){
  await markChatState(document.visibilityState==='visible');
 }
 function syncComposer(){
- const open=booking?.status==='accepted';$('message-form').hidden=!open;
- if(open)$('status').textContent='';else if(booking?.status==='pending')$('status').textContent='Chat and photo sharing will open after the companion accepts this request.';else $('status').textContent='This booking is '+booking.status+'. Chat history is read-only.';
+ const open=booking?.status==='accepted'&&!blockedByMe;$('message-form').hidden=!open;
+ if(blockedByMe)$('status').textContent='You have blocked this user. Messaging is disabled.';
+ else if(open)$('status').textContent='';
+ else if(booking?.status==='pending')$('status').textContent='Chat and photo sharing will open after the companion accepts this request.';
+ else $('status').textContent='This booking is '+booking.status+'. Chat history is read-only.';
 }
 async function loadBooking(){
  const {data,error}=await client.from('booking_requests').select('*').eq('id',booking.id).single();if(error)throw error;
@@ -196,7 +201,7 @@ async function loadBooking(){
  $('booking-summary').textContent=booking.category+' · '+fmt(booking.requested_for)+' · '+booking.duration_minutes+' min';
  const deal=$('deal-summary');
  $('chat-deal-details').hidden=!booking.agreed_hourly_rate;
- if(booking.agreed_hourly_rate){const total=Math.round(Number(booking.agreed_hourly_rate)*Number(booking.duration_minutes)/60);deal.textContent='Agreed rate: ₹'+Number(booking.agreed_hourly_rate).toLocaleString('en-IN')+'/hour · Approx. ₹'+total.toLocaleString('en-IN')+' for '+booking.duration_minutes+' minutes. Coordinate the plan here. Payment is made directly between you outside Sathivo; never share a UPI PIN or OTP.';deal.hidden=false}else deal.hidden=true;syncComposer();
+ if(booking.agreed_hourly_rate){const total=Math.round(Number(booking.agreed_hourly_rate)*Number(booking.duration_minutes)/60);deal.textContent='Agreed rate: ₹'+Number(booking.agreed_hourly_rate).toLocaleString('en-IN')+'/hour · Approx. ₹'+total.toLocaleString('en-IN')+' for '+booking.duration_minutes+' minutes. Coordinate the plan here. Payment is made directly between you outside Sathivo; never share a UPI PIN or OTP.';deal.hidden=false}else deal.hidden=true;const tips=$('chat-safety-tips');if(tips)tips.hidden=!(booking.status==='accepted'&&booking.meeting_mode==='in-person');syncComposer();
 }
 function presenceText(){
  const p=$('presence-status');if(!p)return;
@@ -243,8 +248,8 @@ async function sendStagedPhoto(){
  if(msg.error){await client.storage.from('booking-chat-photos').remove([path]);ps.textContent='Send failed. Tap Send to retry.';return false}
  const sizeNote=formatBytes(prepared.originalBytes)+' → '+formatBytes(prepared.outputBytes);clearPhotoDraft();$('message').value='';fitComposer();$('photo-status').textContent=(viewOnce?'View-once photo sent.':'Photo sent.')+' Compressed '+sizeNote+'.';void sendMessagePush(client,booking.id,msg.data.id);return true;
 }
-async function report(){const reason=prompt('Reason: safety, harassment, sexual-content, scam, fake-profile, spam, or other');if(!reason)return;const allowed=['safety','harassment','sexual-content','scam','fake-profile','spam','other'];if(!allowed.includes(reason)){alert('Please use one of the listed reasons.');return}const details=prompt('Brief details (optional)')||'';const {error}=await client.from('user_reports').insert({reporter_id:user.id,reported_user_id:otherId,booking_id:booking.id,reason,details});$('status').textContent=error?error.message:'Report submitted for review.'}
-async function block(){if(!confirm('Block this user? You will no longer be able to message each other.'))return;const {error}=await client.from('user_blocks').insert({blocker_id:user.id,blocked_id:otherId});$('status').textContent=error?(error.code==='23505'?'User is already blocked.':error.message):'User blocked.';if(!error)$('message-form').hidden=true}
+async function report(){const sent=await openSafetyReport({client,reporterId:user.id,reportedUserId:otherId,bookingId:booking.id});if(sent)$('status').textContent='Report submitted privately to Sathivo for review.';}
+async function block(){if(blockedByMe)return;if(!await confirmSafetyBlock())return;const {error}=await client.from('user_blocks').insert({blocker_id:user.id,blocked_id:otherId});if(error&&error.code!=='23505'){$('status').textContent='Could not block this user. Please try again.';return}blockedByMe=true;$('block-user').disabled=true;$('block-user').textContent='User blocked';syncComposer();}
 function protectPrivateMedia(){
  document.addEventListener('contextmenu',e=>{if(e.target.closest?.('.messages,.secure-media-viewer'))e.preventDefault()});document.addEventListener('dragstart',e=>{if(e.target.closest?.('.messages,.secure-media-viewer'))e.preventDefault()});
  document.addEventListener('keydown',e=>{if(e.key==='PrintScreen'&&mediaViewer&&!mediaViewer.hidden)closeViewer();if(e.key==='Escape'&&mediaViewer&&!mediaViewer.hidden)closeViewer()});
@@ -256,7 +261,7 @@ async function init(){try{
  client=await getSathivoClient();
  const u=await client.auth.getUser();user=u.data.user;if(!user){const next='chat.html?booking='+encodeURIComponent(id);const login=new URL('account.html',location.href);login.searchParams.set('next',next);login.hash='login';location.replace(login.href);return}
  const p=await client.from('member_profiles').select('safety_id').eq('user_id',user.id).maybeSingle();if(p.data?.safety_id)mySafetyId=p.data.safety_id;
- booking={id};await loadBooking();applySafetyWatermark();$('safety-actions').hidden=false;protectPrivateMedia();setupPresence();await loadMessages(true);
+ booking={id};await loadBooking();const blockState=await client.from('user_blocks').select('blocker_id').eq('blocker_id',user.id).eq('blocked_id',otherId).maybeSingle();if(!blockState.error&&blockState.data){blockedByMe=true;$('block-user').disabled=true;$('block-user').textContent='User blocked';syncComposer()}applySafetyWatermark();$('safety-actions').hidden=false;protectPrivateMedia();setupPresence();await loadMessages(true);
  messageChannel=client.channel('booking-messages:'+booking.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_messages',filter:'booking_id=eq.'+booking.id},()=>void loadMessages(false)).subscribe();
  bookingChannel=client.channel('booking-status:'+booking.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'booking_requests',filter:'id=eq.'+booking.id},()=>void loadBooking()).subscribe();
  $('message').addEventListener('input',()=>{sendTyping();fitComposer()});
