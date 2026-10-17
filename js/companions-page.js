@@ -201,9 +201,15 @@ async function detail(){
   r.review_count=rating?.review_count||0;r.average_rating=rating?.average_rating||null;
   const copy=el('div',undefined,'detail-copy');copy.append(el('p','GOOD COMPANY, ON YOUR TERMS','eyebrow'));
   const titleRow=el('div',undefined,'detail-title-row');titleRow.append(el('h1',r.display_name),favoriteButton(r,true));copy.append(titleRow);
-  const profileActions=el('div',undefined,'profile-actions sathivo-profile-safety-actions'),share=el('button','Share profile ↗','button button-outline');
-  share.type='button';share.onclick=()=>void shareProfile(r,share);profileActions.append(share);
-  const safetyLink=el('a','🛡️ Safety & Help ↗','sathivo-help-link');safetyLink.href='safety.html#first-meeting';profileActions.append(safetyLink);
+  // Keep the lightweight share action below the name; safety controls live
+  // together under Trust & account details so the profile header stays clean.
+  const shareRow=el('div',undefined,'profile-actions sathivo-profile-share-row'),share=el('button','Share Profile ↗','sathivo-profile-share-button');
+  share.type='button';share.onclick=()=>void shareProfile(r,share);shareRow.append(share);copy.append(shareRow);
+  const safetyControls=el('section',undefined,'sathivo-profile-safety-tools');
+  safetyControls.setAttribute('aria-label','Safety and help actions');
+  const safetyHeading=el('h3','Safety & Help','sathivo-profile-safety-heading');
+  const safetyActions=el('div',undefined,'sathivo-profile-safety-actions');
+  const safetyLink=el('a','🛡️ Safety & Help ↗','sathivo-help-link');safetyLink.href='safety.html#first-meeting';safetyActions.append(safetyLink);
   const reportBtn=el('button','⚑ Report Profile','button button-outline'),blockBtn=el('button','Block User','button button-outline');
   const safetyFeedback=el('p',undefined,'sathivo-safety-feedback');safetyFeedback.setAttribute('role','status');
   reportBtn.type=blockBtn.type='button';
@@ -229,12 +235,12 @@ async function detail(){
     return;
    }
    }catch{ safetyFeedback.textContent='Could not block this user. Please try again.';}finally{if(blockBtn.textContent!=='User blocked')blockBtn.disabled=false;}};
-  profileActions.append(reportBtn,blockBtn);
-  copy.append(profileActions,safetyFeedback);
+  safetyActions.append(reportBtn,blockBtn);
+  safetyControls.append(safetyHeading,safetyActions,safetyFeedback);
   copy.append(el('p',locationName(r.location_id,r.city_name)),el('div',rateText(r.hourly_rate),'detail-rate'),el('p',ratingText(r),'rating-line'),trustChips(r),tags(r));
   const trust=el('section',undefined,'profile-trust-panel');trust.append(el('strong','Trust & account details'));const trustGrid=el('div',undefined,'profile-trust-grid');
   trustGrid.append(el('span',r.email_verified_at?'✓ Email verified':'Email verification unavailable'),el('span',r.adult_confirmed?'18+ self-declared':'Age declaration missing'),el('span',r.boundaries_accepted?'Platonic boundaries accepted':'Boundaries declaration missing'));
-  if(r.joined_at)trustGrid.append(el('span','Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(r.joined_at))));if(r.safety_id)trustGrid.append(el('span','Safety ID '+r.safety_id));trust.append(trustGrid);copy.append(trust);
+  if(r.joined_at)trustGrid.append(el('span','Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(r.joined_at))));if(r.safety_id)trustGrid.append(el('span','Safety ID '+r.safety_id));trust.append(trustGrid);copy.append(trust,safetyControls);
   for(const [t,v] of [['About me',r.bio],['Languages',r.languages],['Interests & vibe',r.interests],['Usual availability',r.availability]])if(v)copy.append(el('h2',t),el('p',v));
   if(Number(r.review_count)>0)copy.append(el('h2','Completed-booking rating'),el('p',Number(r.average_rating).toFixed(1)+' / 5 · '+r.review_count+' review'+(Number(r.review_count)===1?'':'s')));
   const safetyNote=el('section',undefined,'sathivo-safety-panel');
