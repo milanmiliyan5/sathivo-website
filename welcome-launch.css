@@ -1,0 +1,113 @@
+/* Sathivo launch welcome: discreet, mobile-first, and dismissible. */
+body.launch-welcome-open{overflow:hidden}
+dialog.launch-welcome{
+  box-sizing:border-box;
+  position:fixed;
+  width:min(525px,calc(100vw - 28px));
+  max-width:525px;
+  max-height:calc(100dvh - 28px);
+  margin:auto;
+  padding:0;
+  overflow:auto;
+  border:1px solid #f1d8e7;
+  border-radius:25px;
+  background:#fffafa;
+  color:#302039;
+  box-shadow:0 32px 110px #19091e66;
+  overscroll-behavior:contain;
+  scrollbar-width:thin;
+}
+dialog.launch-welcome::backdrop{
+  background:rgba(25,11,31,.63);
+  -webkit-backdrop-filter:blur(6px);
+  backdrop-filter:blur(6px);
+}
+.launch-welcome-inner{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  padding:25px 25px 20px;
+  background:linear-gradient(150deg,#fffdfd 6%,#fff0f7 48%,#f6eafe 100%);
+}
+.launch-welcome-inner::before{
+  content:"";position:absolute;z-index:-1;right:-80px;top:-122px;
+  width:290px;height:290px;border-radius:50%;
+  background:radial-gradient(circle,#ff72bc3b 0%,transparent 71%);
+  pointer-events:none;
+}
+.launch-welcome-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-right:28px}
+.launch-welcome-brand{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:1.42rem;line-height:1.2;letter-spacing:-.035em;color:#be2084}
+.launch-welcome-heart{font-size:1.9rem;color:#ed2482;line-height:1;font-family:Arial,sans-serif;font-weight:700}
+.launch-welcome-tag{
+  display:inline-flex;align-items:center;border:1px solid #f9b8d7;
+  background:#fff5fb;border-radius:99px;padding:6px 9px;
+  font-size:.64rem;line-height:1.2;letter-spacing:.08em;font-weight:800;color:#982073;
+  white-space:nowrap;
+}
+.launch-welcome-close{
+  position:absolute;z-index:2;right:9px;top:9px;
+  width:36px;height:36px;display:grid;place-items:center;border-radius:50%;
+  background:#ffffffc9;color:#72536c;font-size:1.65rem;font-weight:400;line-height:1;
+}
+.launch-welcome-close:hover,.launch-welcome-later:hover{background:#f8dfeb}
+.launch-welcome-intro{text-align:center;padding:25px 6px 20px}
+.launch-welcome-kicker{font-size:.7rem;font-weight:800;letter-spacing:.15em;color:#a14488}
+dialog.launch-welcome h2{
+  font-family:'DM Sans',Arial,sans-serif;
+  font-size:clamp(1.65rem,5.9vw,2.16rem);
+  font-weight:800;letter-spacing:-.05em;line-height:1.16;
+  margin:12px 0;
+}
+dialog.launch-welcome h2 em{font-style:normal;color:#cb2287;background:linear-gradient(92deg,#f12a7e,#7b22d5);background-clip:text;-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+dialog.launch-welcome p{margin:0;color:#665367;font-size:.885rem;line-height:1.65}
+.launch-welcome-intro p{max-width:390px;margin-inline:auto!important}
+.launch-welcome-options{display:grid;gap:11px}
+.launch-welcome-option{
+  display:grid;grid-template-columns:48px minmax(0,1fr) 16px;align-items:center;
+  gap:13px;padding:15px 13px;
+  background:#fff;border:1px solid #f0d7e6;border-radius:17px;
+  box-shadow:0 6px 16px #852b7710;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease;
+  color:#2f2137;
+}
+.launch-welcome-option:hover,.launch-welcome-option:focus-visible{transform:translateY(-2px);border-color:#dc85bb;box-shadow:0 8px 22px #ad478128}
+.launch-welcome-option-icon{
+  display:grid;place-items:center;width:48px;height:48px;border-radius:14px;
+  background:linear-gradient(140deg,#ffe1ef,#ffb5d3);font-size:1.45rem;color:#bd2385;
+}
+.launch-welcome-earn .launch-welcome-option-icon{background:linear-gradient(140deg,#f3dbff,#d7b4fb);color:#791cc2;font-weight:800}
+.launch-welcome-option strong,.launch-welcome-option small{display:block}
+.launch-welcome-option strong{font-size:.94rem;line-height:1.3;font-weight:800}
+.launch-welcome-option small{font-size:.75rem;line-height:1.5;color:#685967;margin-top:4px}
+.launch-welcome-arrow{font-size:1.15rem;font-weight:800;color:#ba2ba5}
+dialog.launch-welcome .launch-welcome-community-note{
+  margin-top:15px;text-align:center;color:#776674;font-size:.735rem;line-height:1.55
+}
+.launch-welcome-footer{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  margin-top:17px;padding-top:14px;border-top:1px solid #eccedc
+}
+.launch-welcome-footer span{color:#6b5265;font-size:.71rem;font-weight:700;line-height:1.35}
+.launch-welcome-later{
+  flex-shrink:0;min-height:35px;padding:7px 12px;border-radius:99px;
+  background:#fff;color:#784167;font-weight:700;font-size:.74rem;border:1px solid #edcedf;
+}
+@media(max-width:520px){
+  dialog.launch-welcome{border-radius:20px;width:calc(100vw - 24px);max-height:calc(100dvh - 24px)}
+  .launch-welcome-inner{padding:20px 17px 17px}
+  .launch-welcome-top{gap:6px;padding-right:22px}
+  .launch-welcome-brand{font-size:1.22rem}
+  .launch-welcome-tag{font-size:.55rem;padding:5px 6px}
+  .launch-welcome-intro{padding:16px 0 18px}
+  dialog.launch-welcome h2{margin:8px 0 9px}
+  dialog.launch-welcome p{font-size:.8rem;line-height:1.55}
+  .launch-welcome-option{padding:12px 10px;gap:10px;grid-template-columns:42px minmax(0,1fr) 14px}
+  .launch-welcome-option-icon{width:42px;height:42px;font-size:1.25rem}
+  .launch-welcome-option strong{font-size:.84rem}
+  .launch-welcome-option small{font-size:.72rem}
+  .launch-welcome-footer span{font-size:.64rem}
+  .launch-welcome-later{font-size:.7rem;padding:5px 10px}
+}
+@media(prefers-reduced-motion:reduce){
+  .launch-welcome-option{transition:none}
+  .launch-welcome-option:hover{transform:none}
+}
