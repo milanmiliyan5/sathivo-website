@@ -1,0 +1,153 @@
+/* Customer booking progress — intentionally scoped to My Bookings. */
+.booking-progress{
+  min-width:0;
+  padding:18px 17px 16px;
+  border:1px solid #eed7e8;
+  border-radius:17px;
+  background:linear-gradient(140deg,#fffafe 3%,#fff2f9 58%,#f8f1ff);
+}
+.booking-progress-kicker{
+  margin:0 0 17px!important;
+  font-size:.66rem!important;
+  font-weight:800;
+  letter-spacing:.11em;
+  color:#8c4783;
+}
+.booking-progress-steps{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:10px;
+  margin:0;
+  padding:0;
+  list-style:none;
+}
+.booking-progress-step{
+  min-width:0;
+  position:relative;
+  display:flex;
+  align-items:center;
+  flex-direction:column;
+  gap:6px;
+  text-align:center;
+}
+.booking-progress-step:not(:last-child):before{
+  content:'';
+  position:absolute;
+  z-index:0;
+  left:calc(50% + 30px);
+  top:24px;
+  width:calc(100% - 50px);
+  height:2px;
+  border-radius:99px;
+  background:#ebd9e6;
+}
+.booking-progress-icon{
+  position:relative;
+  z-index:1;
+  display:grid;
+  place-items:center;
+  width:50px;
+  height:50px;
+  border-radius:50%;
+  box-sizing:border-box;
+  border:1px solid #e6d7e4;
+  background:#f7f2f7;
+  color:#85748a;
+  font-size:1.34rem;
+  font-weight:800;
+  line-height:1;
+}
+.booking-progress-step.is-complete .booking-progress-icon{
+  color:#157a4f;
+  border-color:#b5e5cf;
+  background:#e1f6eb;
+}
+.booking-progress-step.is-ready .booking-progress-icon{
+  color:#7828ba;
+  border-color:#d9c3f3;
+  background:#f1e4ff;
+}
+.booking-progress-step.is-waiting .booking-progress-icon{
+  color:#9a691c;
+  border-color:#f4dfaf;
+  background:#fff3d4;
+}
+.booking-progress-step.is-declined .booking-progress-icon,
+.booking-progress-step.is-cancelled .booking-progress-icon,
+.booking-progress-step.is-closed .booking-progress-icon{
+  color:#b43f65;
+  border-color:#f4cbd7;
+  background:#ffebf0;
+}
+.booking-progress-label{
+  display:block;
+  overflow-wrap:anywhere;
+  font-size:.77rem;
+  line-height:1.35;
+  color:#30243b;
+  font-weight:750;
+}
+.booking-progress-caption{
+  display:block;
+  font-size:.69rem;
+  line-height:1.4;
+  font-weight:650;
+  color:#806e85;
+}
+.booking-progress-step.is-complete .booking-progress-caption{color:#178257}
+.booking-progress-step.is-ready .booking-progress-caption{color:#7a30bd}
+.booking-progress-step.is-declined .booking-progress-caption,
+.booking-progress-step.is-cancelled .booking-progress-caption,
+.booking-progress-step.is-closed .booking-progress-caption{color:#a8375f}
+.booking-progress-note{
+  display:grid;
+  gap:6px;
+  margin-top:19px;
+  padding:15px 16px;
+  background:#fff;
+  border:1px solid #ecdbe9;
+  border-radius:13px;
+}
+.booking-progress-heading{
+  font-size:.91rem;
+  line-height:1.35;
+  color:#3d294b;
+}
+.booking-progress-note p{
+  margin:0;
+  font-size:.78rem;
+  line-height:1.7;
+  color:#6e5d73;
+}
+.booking-progress-pending .booking-progress-heading{color:#806025}
+.booking-progress-accepted .booking-progress-heading,
+.booking-progress-completed .booking-progress-heading{color:#207349}
+.booking-progress-declined .booking-progress-heading,
+.booking-progress-cancelled .booking-progress-heading{color:#a43d5c}
+.booking-progress-chat{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:fit-content;
+  min-height:44px;
+  margin-top:9px;
+  padding:10px 17px;
+  text-align:center;
+}
+@media(max-width:640px){
+  .booking-progress{padding:16px 12px 12px;border-radius:15px}
+  .booking-progress-kicker{margin-bottom:15px!important}
+  .booking-progress-steps{gap:5px}
+  .booking-progress-icon{width:43px;height:43px;font-size:1.13rem}
+  .booking-progress-step:not(:last-child):before{left:calc(50% + 25px);top:21px;width:calc(100% - 42px)}
+  .booking-progress-label{font-size:.71rem}
+  .booking-progress-caption{font-size:.63rem}
+  .booking-progress-note{padding:13px;margin-top:17px}
+  .booking-progress-chat{width:100%;box-sizing:border-box;margin-top:10px}
+}
+@media(max-width:360px){
+  .booking-progress-label{font-size:.66rem}
+  .booking-progress-caption{font-size:.60rem}
+  .booking-progress-icon{width:39px;height:39px}
+  .booking-progress-step:not(:last-child):before{top:19px}
+}
