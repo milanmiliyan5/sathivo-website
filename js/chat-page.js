@@ -254,7 +254,7 @@ function protectPrivateMedia(){
 async function init(){try{
  const id=new URL(location.href).searchParams.get('booking');if(!/^[0-9a-f-]{36}$/i.test(id||''))throw Error('Invalid booking link.');
  client=await getSathivoClient();
- const u=await client.auth.getUser();user=u.data.user;if(!user){location.replace('account.html#login');return}
+ const u=await client.auth.getUser();user=u.data.user;if(!user){try{const bid=new URL(location.href).searchParams.get('booking');if(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(bid||''))sessionStorage.setItem('sathivo.returnAfterLogin.v1','chat.html?booking='+bid)}catch{}location.replace('account.html#login');return}
  const p=await client.from('member_profiles').select('safety_id').eq('user_id',user.id).maybeSingle();if(p.data?.safety_id)mySafetyId=p.data.safety_id;
  booking={id};await loadBooking();applySafetyWatermark();$('safety-actions').hidden=false;protectPrivateMedia();setupPresence();await loadMessages(true);
  messageChannel=client.channel('booking-messages:'+booking.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_messages',filter:'booking_id=eq.'+booking.id},()=>void loadMessages(false)).subscribe();
