@@ -7,13 +7,36 @@ const el=(t,x,c)=>{const n=document.createElement(t);if(x!==undefined)n.textCont
 function showBookingConfirmation(){
  const url=new URL(location.href);
  if(url.searchParams.get('booked')!=='1')return;
- const box=el('section',undefined,'booking-confirmation');
- box.append(el('strong','Booking request sent ✓'),el('p','Your request is saved. You can track its status below while the companion reviews it.'));
- const ad=el('div',undefined,'ad-slot ad-slot-large');ad.dataset.adSlot='booking-confirm';ad.hidden=true;
- $('status').before(box,ad);
  url.searchParams.delete('booked');
  history.replaceState(null,'',url.pathname+url.search+url.hash);
+ const dialog=document.createElement('dialog');
+ dialog.className='booking-success-dialog';
+ dialog.setAttribute('aria-labelledby','booking-success-title');
+ dialog.innerHTML=[
+  '<div class="booking-success-content">',
+   '<div class="booking-success-icon" aria-hidden="true">✓</div>',
+   '<h2 id="booking-success-title">Your booking request is sent! 💖</h2>',
+   '<p>We’ve saved your request. Your companion can now review it and choose to accept or decline.</p>',
+   '<div class="booking-success-note"><span aria-hidden="true">✉️</span><p>',
+   '<strong>How will you know?</strong>',
+   'You can always see the latest status in <b>My Bookings</b>. When booking emails are enabled, we’ll also email you at your registered address if the request is accepted. Check your inbox and spam folder.',
+   '</p></div>',
+   '<div class="booking-success-actions">',
+    '<button type="button" class="button button-primary booking-success-view">View My Bookings ↗</button>',
+    '<button type="button" class="booking-success-later">Got it</button>',
+   '</div>',
+  '</div>'
+ ].join('');
+ document.body.append(dialog);
+ const close=()=>dialog.close();
+ dialog.querySelector('.booking-success-view').addEventListener('click',close);
+ dialog.querySelector('.booking-success-later').addEventListener('click',close);
+ dialog.addEventListener('click',event=>{if(event.target===dialog)close()});
+ dialog.addEventListener('close',()=>dialog.remove(),{once:true});
+ if(typeof dialog.showModal==='function')dialog.showModal();
+ else dialog.remove();
 }
+
 function visible(r){if(filter==='all')return true;if(filter==='closed')return ['declined','cancelled'].includes(r.status);return r.status===filter}
 function card(r){const mine=r.customer_id===user.id,other=mine?r.companion_display_name:r.customer_display_name,n=el('article',undefined,'booking-card');
  const top=el('div',undefined,'booking-top'),left=el('div');left.append(el('h2',other||'Sathivo member'),el('div',undefined,'booking-meta'));left.lastChild.append(el('span',r.category),el('span',r.meeting_mode==='in-person'?'In person':'Online'),el('span',fmt(r.requested_for)),el('span',r.duration_minutes+' min'));top.append(left,el('span',r.status,'status-pill'));n.append(top);
