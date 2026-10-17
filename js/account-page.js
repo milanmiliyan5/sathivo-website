@@ -14,6 +14,14 @@ let flow = null;
 let busy = false;
 let activePanel = 'login';
 let appClient = null;
+// Remember only a validated relative chat route before the account screen
+// removes URL query parameters (which may also contain unwanted auth tokens).
+const emailChatReturnRoute=(()=>{
+  try{
+    const candidate=new URL(location.href).searchParams.get('next')||'';
+    return /^chat\\.html\\?booking=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidate)?candidate:'';
+  }catch{return ''}
+})();
 
 document.querySelector('#account-year').textContent = new Date().getFullYear();
 
@@ -152,11 +160,9 @@ bindForm('#login-form', async values => {
   try{
     // Query param survives a fresh browser tab opened from a booking email.
     // Only allow a strictly relative booking URL; never external redirects.
-    const params=new URL(window.location.href).searchParams;
-    const linked=params.get('next')||'';
     const pending=sessionStorage.getItem('sathivo.returnAfterLogin.v1')||'';
     sessionStorage.removeItem('sathivo.returnAfterLogin.v1');
-    const candidate=linked||pending;
+    const candidate=emailChatReturnRoute||pending;
     if(/^chat\.html\?booking=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidate)) destination=candidate;
   }catch{}
   // The chat page still checks participant permissions server-side.
