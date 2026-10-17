@@ -3,3 +3,36 @@
 
 .card-heading-row,.detail-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.card-heading-row h2,.detail-title-row h1{margin:0}.favorite-button{width:42px;height:42px;display:grid;place-items:center;flex:0 0 auto;border:1.5px solid #c89aad;border-radius:14px;background:#fff8fb;color:var(--rose);font-size:1.35rem;cursor:pointer;box-shadow:2px 2px 0 #ead0da;transition:transform .14s ease,background .14s ease}.favorite-button:hover{transform:translateY(-1px)}.favorite-button.saved{background:#ffe2ec;color:#982e59}.favorite-button-large{width:48px;height:48px;font-size:1.55rem}.rating-line{font-size:.76rem!important;color:#7a5968!important;font-weight:700}.card-actions,.profile-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.card-actions{margin-top:auto;justify-content:space-between}.card-actions .text-link{margin-top:0}.share-link{border:0;background:none;padding:0;cursor:pointer;font:inherit}.saved-filter{display:flex!important;align-items:center;gap:9px;align-self:end;min-height:46px;padding:10px 12px;border:1px solid #d8c5cf;border-radius:10px;background:#fff8fb;cursor:pointer}.saved-filter input{width:18px;height:18px;margin:0}.saved-filter span{font-size:.78rem;font-weight:700}.filters .button-primary{align-self:end}.detail-title-row{align-items:center}.profile-actions{margin:10px 0 16px}
 @media(max-width:540px){.card-actions{align-items:flex-start}.detail-title-row{align-items:flex-start}.favorite-button-large{width:44px;height:44px}.saved-filter{width:100%}}
+
+
+/* Explore directory: the existing "Get to know" anchor covers its whole card.
+   Wishlist and Share stay independent, accessible controls above the link hit-area.
+   No delegated card click JS: keyboard and open-in-new-tab behavior remain native. */
+.directory #results .companion-card:not(.companion-skeleton){
+  position:relative;
+  cursor:pointer;
+}
+.directory #results .companion-card .companion-profile-link::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:1;
+  border-radius:inherit;
+  cursor:pointer;
+}
+.directory #results .companion-card .favorite-button,
+.directory #results .companion-card .card-actions .share-link{
+  position:relative;
+  z-index:2;
+  cursor:pointer;
+}
+/* Visible focus for keyboard users when the full-card profile link is selected. */
+.directory #results .companion-card .companion-profile-link:focus-visible::after{
+  outline:3px solid #a33b79;
+  outline-offset:-4px;
+}
+@media(hover:hover){
+  .directory #results .companion-card:has(.companion-profile-link:hover) .card-actions .companion-profile-link{
+    color:#a33b79;
+  }
+}
