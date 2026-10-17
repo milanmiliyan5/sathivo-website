@@ -14,13 +14,13 @@ let flow = null;
 let busy = false;
 let activePanel = 'login';
 let appClient = null;
-// Remember only a validated relative chat route before the account screen
-// removes URL query parameters (which may also contain unwanted auth tokens).
-const emailChatReturnRoute=(()=>{
-  try{
+// Only allow known relative booking email destinations, never external URLs.
+// Capture the query before the account page strips it for auth safety.
+const emailBookingReturnRoute=(()=>{
+  try {
     const candidate=new URL(location.href).searchParams.get('next')||'';
-    return /^chat\\.html\\?booking=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidate)?candidate:'';
-  }catch{return ''}
+    return /^(?:chat\.html\?booking=|requests\.html\?id=)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidate)?candidate:'';
+  } catch { return ''; }
 })();
 
 document.querySelector('#account-year').textContent = new Date().getFullYear();
@@ -158,12 +158,11 @@ bindForm('#login-form', async values => {
   clearSecrets();
   let destination='./';
   try{
-    // Query param survives a fresh browser tab opened from a booking email.
-    // Only allow a strictly relative booking URL; never external redirects.
+    // Use only a validated local booking destination after sign-in.
     const pending=sessionStorage.getItem('sathivo.returnAfterLogin.v1')||'';
     sessionStorage.removeItem('sathivo.returnAfterLogin.v1');
-    const candidate=emailChatReturnRoute||pending;
-    if(/^chat\.html\?booking=[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidate)) destination=candidate;
+    const candidate=emailBookingReturnRoute||pending;
+    if(/^(?:chat\.html\?booking=|requests\.html\?id=)[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(candidate)) destination=candidate;
   }catch{}
   // The chat page still checks participant permissions server-side.
   window.location.replace(new URL(destination, window.location.href).href);
@@ -308,6 +307,10 @@ async function initialize() {
     });
     setBusy(true);
     const user = await flow.currentUser();
+    if (user && emailBookingReturnRoute && !['forgot','verify-email'].includes(initialRoute)) {
+      window.location.replace(new URL(emailBookingReturnRoute,window.location.href).href);
+      return;
+    }
     if (user && !['forgot', 'verify-email'].includes(initialRoute)) renderAccount(user);
   } catch {
     if (!flow) {
