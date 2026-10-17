@@ -5,7 +5,7 @@ import {openSafetyReport,confirmSafetyBlock} from './safety-actions.js?v=2026101
 
 const $=id=>document.getElementById(id);
 let client,user,booking,otherId,messageChannel,bookingChannel,presenceChannel;
-let blockedByMe=false;
+let blockedByMe=false,blockedByOther=false;
 let mediaViewer=null,viewerImage=null,viewerBlobUrl=null,viewerIsOnce=false;
 let selectedPhotoFile=null,selectedPhotoPreviewUrl=null;
 let mySafetyId='STV-PRIVATE',sessionUnreadBoundary=null,otherOnline=false,lastOtherActive=null;
@@ -183,8 +183,9 @@ async function loadMessages(initial=false){
  await markChatState(document.visibilityState==='visible');
 }
 function syncComposer(){
- const open=booking?.status==='accepted'&&!blockedByMe;$('message-form').hidden=!open;
+ const open=booking?.status==='accepted'&&!blockedByMe&&!blockedByOther;$('message-form').hidden=!open;
  if(blockedByMe)$('status').textContent='You have blocked this user. Messaging is disabled.';
+ else if(blockedByOther)$('status').textContent='Messaging is unavailable because one participant has blocked the other.';
  else if(open)$('status').textContent='';
  else if(booking?.status==='pending')$('status').textContent='Chat and photo sharing will open after the companion accepts this request.';
  else $('status').textContent='This booking is '+booking.status+'. Chat history is read-only.';
@@ -261,7 +262,7 @@ async function init(){try{
  client=await getSathivoClient();
  const u=await client.auth.getUser();user=u.data.user;if(!user){const next='chat.html?booking='+encodeURIComponent(id);const login=new URL('account.html',location.href);login.searchParams.set('next',next);login.hash='login';location.replace(login.href);return}
  const p=await client.from('member_profiles').select('safety_id').eq('user_id',user.id).maybeSingle();if(p.data?.safety_id)mySafetyId=p.data.safety_id;
- booking={id};await loadBooking();const blockState=await client.from('user_blocks').select('blocker_id').eq('blocker_id',user.id).eq('blocked_id',otherId).maybeSingle();if(!blockState.error&&blockState.data){blockedByMe=true;$('block-user').disabled=true;$('block-user').textContent='User blocked';syncComposer()}applySafetyWatermark();$('safety-actions').hidden=false;protectPrivateMedia();setupPresence();await loadMessages(true);
+ booking={id};await loadBooking();const blockState=await client.from('user_blocks').select('blocker_id').or('and(blocker_id.eq.'+user.id+',blocked_id.eq.'+otherId+'),and(blocker_id.eq.'+otherId+',blocked_id.eq.'+user.id+')');if(!blockState.error){blockedByMe=(blockState.data||[]).some(b=>b.blocker_id===user.id);blockedByOther=(blockState.data||[]).some(b=>b.blocker_id===otherId);if(blockedByMe){$('block-user').disabled=true;$('block-user').textContent='User blocked'}if(blockedByMe||blockedByOther)syncComposer()}applySafetyWatermark();$('safety-actions').hidden=false;protectPrivateMedia();setupPresence();await loadMessages(true);
  messageChannel=client.channel('booking-messages:'+booking.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_messages',filter:'booking_id=eq.'+booking.id},()=>void loadMessages(false)).subscribe();
  bookingChannel=client.channel('booking-status:'+booking.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'booking_requests',filter:'id=eq.'+booking.id},()=>void loadBooking()).subscribe();
  $('message').addEventListener('input',()=>{sendTyping();fitComposer()});
