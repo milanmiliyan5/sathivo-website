@@ -188,6 +188,61 @@ function bookingForm(r){
  form.onsubmit=async e=>{e.preventDefault();const chosen=new Date(when.value);if(!when.value||Number.isNaN(chosen.getTime())||chosen<=new Date()){status.textContent='Please choose a future date and time.';when.focus();return}b.disabled=true;status.textContent='Sending request…';try{const iso=chosen.toISOString();const offerRate=Number(offer.value);if(!Number.isInteger(offerRate)||offerRate<1||offerRate>100000){status.textContent='Enter a valid hourly offer between ₹1 and ₹1,00,000.';offer.focus();b.disabled=false;return}const {data,error}=await client.rpc('create_booking_request_with_offer',{p_companion_public_id:r.public_id,p_category:category.value,p_meeting_mode:mode.value,p_requested_for:iso,p_duration_minutes:Number(duration.value),p_note:note.value.trim(),p_offer_hourly_rate:offerRate});if(error)throw error;status.textContent='Request sent. Notifying the companion…';await Promise.all([sendBookingPush(client,data,'request'),sendBookingEmail(client,data,'request')]);status.textContent='Request sent. Opening your bookings…';location.href='bookings.html?id='+encodeURIComponent(data)+'&booked=1'}catch(err){status.textContent=err.message||'Could not send request.';b.disabled=false;}};
  wrap.append(form);return wrap;
 }
+// Detail-only photo overlay. Use a sibling layer because the photo may load
+// asynchronously and portrait() replaces its own children after signing its URL.
+function detailPhotoFrame(row){
+ const frame=el('div',undefined,'detail-photo-frame');
+ const portraitNode=portrait(row);
+ frame.append(portraitNode);
+ const about=String(row.bio||'').trim();
+ const extras=[
+  ['Languages',row.languages],
+  ['Interests & vibe',row.interests],
+  ['Usual availability',row.availability]
+ ].map(([label,value])=>[label,Array.isArray(value)?value.filter(Boolean).join(' · '):String(value||'').trim()])
+  .filter(([,value])=>value.length>0);
+ if(!about&&!extras.length)return frame;
+ const shade=el('div',undefined,'photo-info-shade');
+ shade.setAttribute('aria-hidden','true');
+ const info=el('section',undefined,'photo-info');
+ info.setAttribute('aria-label','About and preferences for '+row.display_name);
+ info.append(el('span','A LITTLE ABOUT ME ♡','photo-info-kicker'),el('strong',about?'About Me':'At a Glance','photo-info-title'));
+ const normalized=about.replace(/\s+/g,' ').trim();
+ const longAbout=normalized.length>155;
+ const extraLength=extras.reduce((n,[label,value])=>n+label.length+value.length,0);
+ const needsMore=longAbout||extraLength>145||(normalized.length+extraLength>275);
+ const addExtras=host=>{
+  for(const [label,value] of extras){
+   const pair=el('div',undefined,'photo-info-pair');
+   pair.append(el('span',label,'photo-info-key'),el('p',value,'photo-info-value'));
+   host.append(pair);
+  }
+ };
+ if(about){
+  let preview=about;
+  if(longAbout){
+   let truncated=normalized.slice(0,139);
+   const lastSpace=truncated.lastIndexOf(' ');
+   if(lastSpace>104)truncated=truncated.slice(0,lastSpace);
+   preview=truncated.trimEnd()+'…';
+  }
+  info.append(el('p',preview,'photo-info-summary'));
+ }
+ if(needsMore){
+  const expandable=el('details',undefined,'photo-info-expand');
+  const summary=el('summary');
+  summary.append(el('span','See More ↓','photo-info-see-more'),el('span','See Less ↑','photo-info-see-less'));
+  const expanded=el('div',undefined,'photo-info-extended');
+  if(longAbout)expanded.append(el('p',about,'photo-info-full'));
+  addExtras(expanded);
+  expandable.append(summary,expanded);
+  expandable.addEventListener('toggle',()=>frame.classList.toggle('is-expanded',expandable.open));
+  info.append(expandable);
+ }else addExtras(info);
+ frame.append(shade,info);
+ return frame;
+}
+
 async function detail(){
  $('retry').hidden=true;$('detail').hidden=true;
  const id=new URL(location.href).searchParams.get('id');
@@ -244,13 +299,14 @@ async function detail(){
   const trust=el('section',undefined,'profile-trust-panel');trust.append(el('strong','Trust & account details'));const trustGrid=el('div',undefined,'profile-trust-grid');
   trustGrid.append(el('span',r.email_verified_at?'✓ Email verified':'Email verification unavailable'),el('span',r.adult_confirmed?'18+ self-declared':'Age declaration missing'),el('span',r.boundaries_accepted?'Platonic boundaries accepted':'Boundaries declaration missing'));
   if(r.joined_at)trustGrid.append(el('span','Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(r.joined_at))));if(r.safety_id)trustGrid.append(el('span','Safety ID '+r.safety_id));trust.append(trustGrid);copy.append(trust,safetyControls);
-  for(const [t,v] of [['About me',r.bio],['Languages',r.languages],['Interests & vibe',r.interests],['Usual availability',r.availability]])if(v)copy.append(el('h2',t),el('p',v));
+  // About, languages, interests and availability appear on the photo overlay
+  // (with full text available through See More), instead of repeating below the form.
   if(Number(r.review_count)>0)copy.append(el('h2','Completed-booking rating'),el('p',Number(r.average_rating).toFixed(1)+' / 5 · '+r.review_count+' review'+(Number(r.review_count)===1?'':'s')));
   const safetyNote=el('section',undefined,'sathivo-safety-panel');
   safetyNote.append(el('h3','🛡️ First meeting? Stay in control.'),el('p','Choose a public place, tell someone you trust, arrange your own travel and never share passwords or UPI PINs.'));
   const moreSafety=el('a','Read our Safety & Community Guidelines ↗');moreSafety.href='safety.html#first-meeting';safetyNote.append(moreSafety);copy.append(safetyNote);
   copy.append(el('p','The displayed amount is the companion’s own hourly rate. You can propose a different hourly amount in your request. A price becomes agreed only if the companion accepts your request. Payment happens directly between users outside Sathivo; Sathivo does not process payments.','payment-note'),el('p','Self-described profile. Identity and age have not been verified. Availability is a preference, not a confirmed booking.','launch-note'),el('p','18+ and strictly platonic. Respect boundaries and choose public places for in-person meetings.'));
-  $('detail').replaceChildren(portrait(r),copy);$('detail').hidden=false;$('status').textContent='';document.title=r.display_name+' — Sathivo';
+  $('detail').replaceChildren(detailPhotoFrame(r),copy);$('detail').hidden=false;$('status').textContent='';document.title=r.display_name+' — Sathivo';
  }catch(e){$('status').textContent=e.message||'Could not load this profile. Please try again.';$('retry').hidden=false;}
 }
 async function init(){
