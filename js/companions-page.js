@@ -132,7 +132,7 @@ function card(row){
  const n=el('article',undefined,'companion-card'),copy=el('div',undefined,'card-copy'),head=el('div',undefined,'card-heading-row'),name=el('h2',row.display_name);
  head.append(name,favoriteButton(row));
  copy.append(head,el('p',locationName(row.location_id,row.city_name)),el('strong',rateText(row.hourly_rate),'rate-chip'),el('span',ratingText(row),'rating-line'),trustChips(row,true),tags(row),el('p',row.bio.length>150?row.bio.slice(0,147)+'…':row.bio));
- const actions=el('div',undefined,'card-actions'),link=el('a','Get to know '+row.display_name+' ↗','text-link'),share=el('button','Share ↗','text-link share-link');
+ const actions=el('div',undefined,'card-actions'),link=el('a','Get to know '+row.display_name+' ↗','text-link companion-profile-link'),share=el('button','Share ↗','text-link share-link');
  link.href='companion.html?id='+encodeURIComponent(row.public_id);share.type='button';share.onclick=()=>void shareProfile(row,share);actions.append(link,share);copy.append(actions);n.append(portrait(row),copy);return n;
 }
 function feedNodes(rows){
