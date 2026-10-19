@@ -5,34 +5,19 @@
 @media(max-width:540px){.card-actions{align-items:flex-start}.detail-title-row{align-items:flex-start}.favorite-button-large{width:44px;height:44px}.saved-filter{width:100%}}
 
 
-/* Explore directory: the existing "Get to know" anchor covers its whole card.
-   Wishlist and Share stay independent, accessible controls above the link hit-area.
-   No delegated card click JS: keyboard and open-in-new-tab behavior remain native. */
+/* Explore directory: direct card click handling lives in js/companions-page.js.
+   Keep the visible Get to know link, Wishlist and Share as separate controls. */
 .directory #results .companion-card:not(.companion-skeleton){
-  position:relative;
   cursor:pointer;
-}
-.directory #results .companion-card .companion-profile-link::after{
-  content:"";
-  position:absolute;
-  inset:0;
-  z-index:1;
-  border-radius:inherit;
-  cursor:pointer;
-}
-.directory #results .companion-card .favorite-button,
-.directory #results .companion-card .card-actions .share-link{
-  position:relative;
-  z-index:2;
-  cursor:pointer;
-}
-/* Visible focus for keyboard users when the full-card profile link is selected. */
-.directory #results .companion-card .companion-profile-link:focus-visible::after{
-  outline:3px solid #a33b79;
-  outline-offset:-4px;
+  transition:border-color .16s ease,box-shadow .16s ease;
 }
 @media(hover:hover){
-  .directory #results .companion-card:has(.companion-profile-link:hover) .card-actions .companion-profile-link{
-    color:#a33b79;
+  .directory #results .companion-card:not(.companion-skeleton):hover{
+    border-color:#c89aad;
+    box-shadow:0 8px 22px rgba(88,38,69,.09);
   }
+}
+.directory #results .companion-card:focus-within{
+  outline:2px solid #a33b79;
+  outline-offset:2px;
 }
