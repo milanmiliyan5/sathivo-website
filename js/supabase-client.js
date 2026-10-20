@@ -3,6 +3,7 @@ import {createAuthFetch} from './auth-transport.js?v=20260926-1';
 
 let sdkPromise=null;
 let sharedClient=null;
+let publicClient=null;
 const reports=new Set();
 const rateLimitHandlers=new Set();
 
@@ -60,4 +61,24 @@ export async function getSathivoClient(){
   });
   globalThis.__sathivoSupabaseClient=sharedClient;
   return sharedClient;
+}
+
+
+// Public discovery must never inherit a user's expired/revoked login JWT.
+// Use the publishable key with a sessionless, isolated client only for content
+// whose Postgres RLS / Storage policies already permit anonymous access.
+export async function getSathivoPublicClient(){
+  if(publicClient)return publicClient;
+  await ensureSupabaseSdk();
+  if(!globalThis.supabase?.createClient)throw Error('Supabase SDK unavailable');
+  publicClient=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{
+    global:{fetch:sharedAuthFetch},
+    auth:{
+      persistSession:false,
+      autoRefreshToken:false,
+      detectSessionInUrl:false,
+      storageKey:'sathivo.public.v1'
+    }
+  });
+  return publicClient;
 }
