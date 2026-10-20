@@ -6,8 +6,8 @@ function createBell(){
 }
 function placeBell(bell){
  const host=document.querySelector('.site-header .container');if(!host||host.querySelector('.request-bell'))return null;
- // On the homepage, Requests stays in the More menu with an unread badge;
- // do not show a second indistinguishable bell next to Notifications.
+ // On the homepage, Requests has a dedicated main-nav link with an unread badge;
+ // do not add a duplicate bell next to the Notifications shortcut.
  if(document.body.classList.contains('home-2d')){
   const requestsLink=host.querySelector('#navigation a[href="requests.html"]');
   if(requestsLink){
