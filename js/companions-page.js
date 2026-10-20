@@ -1,4 +1,4 @@
-import {getSathivoClient} from './supabase-client.js?v=20261006-1';
+import {getSathivoClient,getSathivoPublicClient} from './supabase-client.js?v=20261020-public-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
 import {sendBookingEmail} from './booking-email-events.js?v=20261017-1';
 import {avatarAsset} from './avatar-utils.js?v=20261007-1';
@@ -7,7 +7,7 @@ import {districtsByState,statesAndUTs,popularIndianCities} from './india-distric
 
 const $=id=>document.getElementById(id),directory=!!$('filters');
 const fields='public_id,display_name,bio,location_id,city_name,languages,interests,categories,meeting_mode,availability,hourly_rate,photo_path,safety_id,joined_at,email_verified_at,adult_confirmed,boundaries_accepted';
-let client,locations=[],page=0,request=0,currentUser=null,favoriteIds=new Set(),citySuggestionRequest=0;
+let client,publicClient,locations=[],locationsLoaded=false,page=0,request=0,currentUser=null,favoriteIds=new Set(),citySuggestionRequest=0,authStarted=false,filtersReady=false;
 
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
 function opts(id,rows,title){$(id).replaceChildren(new Option(title,''));rows.forEach(([v,t])=>$(id).add(new Option(t,String(v))));}
@@ -37,7 +37,7 @@ async function refreshCitySuggestions(){
    try{
      const ids=selectedLocationIds();
      if(ids?.length){
-       const {data,error}=await client.rpc('browse_public_city_suggestions',{p_location_ids:ids});
+       const {data,error}=await publicClient.rpc('browse_public_city_suggestions',{p_location_ids:ids});
        if(!error)names=(data||[]).map(r=>r.city_name).filter(Boolean);
      }
    }catch{}
@@ -79,7 +79,7 @@ function portrait(row){
  if(!row.photo_path)return n;
  const builtIn=avatarAsset(row.photo_path);
  if(builtIn){const img=el('img');img.alt=row.display_name+' — profile avatar';img.loading='lazy';img.src=builtIn;n.classList.add('is-builtin-avatar');n.replaceChildren(img);return n;}
- void client.storage.from('listing-photos').createSignedUrl(row.photo_path,60).then(({data,error})=>{if(error||!data)return;const img=el('img');img.alt=row.display_name+' — profile photo';img.loading='lazy';img.src=data.signedUrl;img.onerror=()=>n.replaceChildren(document.createTextNode(initial));n.replaceChildren(img);});
+ void publicClient.storage.from('listing-photos').createSignedUrl(row.photo_path,60).then(({data,error})=>{if(error||!data)return;const img=el('img');img.alt=row.display_name+' — profile photo';img.loading='lazy';img.src=data.signedUrl;img.onerror=()=>n.replaceChildren(document.createTextNode(initial));n.replaceChildren(img);});
  return n;
 }
 function trustChips(row,compact=false){const n=el('div',undefined,'trust-chips'+(compact?' compact':''));if(row.email_verified_at)n.append(el('span','✓ Email verified'));if(row.adult_confirmed)n.append(el('span','18+ self-declared'));if(row.boundaries_accepted)n.append(el('span','Platonic boundaries'));return n;}
@@ -158,10 +158,13 @@ async function list(){
  if(savedOnly&&!currentUser){location.href='account.html#login';return}
  const savedIds=savedOnly?[...favoriteIds]:null;
  if(savedOnly&&!savedIds.length){$('results').replaceChildren();$('empty').hidden=false;$('status').textContent='No saved companions yet.';$('previous').disabled=$('next').disabled=true;$('page-label').textContent='';return}
+ if(!locationsLoaded&&($('state').value||$('district').value)){
+  $('results').replaceChildren();$('status').textContent='Location filters are temporarily unavailable. Please try again.';$('retry').hidden=false;$('page-label').textContent='';return;
+ }
  const locationIds=selectedLocationIds();
  if(locationIds!==null&&!locationIds.length){$('results').replaceChildren();$('empty').hidden=false;$('status').textContent='No companions in '+scopeName()+' yet.';$('previous').disabled=$('next').disabled=true;$('page-label').textContent='';return;}
  try{
-  const {data,error}=await client.rpc('browse_public_companions_v2',{
+  const {data,error}=await publicClient.rpc('browse_public_companions_v2',{
    p_location_ids:locationIds?.length?locationIds:null,
    p_city:selectedCity()||null,
    p_category:$('category').value||null,
@@ -259,8 +262,8 @@ async function detail(){
  if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id||'')){$('status').textContent='Invalid profile link. Browse companions to choose a profile.';return;}
  try{
   const [{data:r,error},{data:rating}]=await Promise.all([
-   client.from('companion_listings').select(fields).eq('published',true).eq('moderation_status','active').eq('public_id',id).maybeSingle(),
-   client.from('companion_rating_public').select('review_count,average_rating').eq('public_id',id).maybeSingle()
+   publicClient.from('companion_listings').select(fields).eq('published',true).eq('moderation_status','active').eq('public_id',id).maybeSingle(),
+   publicClient.from('companion_rating_public').select('review_count,average_rating').eq('public_id',id).maybeSingle()
   ]);
   if(error)throw error;if(!r){$('status').textContent='This profile is unavailable or has been hidden by its owner.';return;}
   r.review_count=rating?.review_count||0;r.average_rating=rating?.average_rating||null;
@@ -319,22 +322,70 @@ async function detail(){
   $('detail').replaceChildren(detailPhotoFrame(r),copy);$('detail').hidden=false;$('status').textContent='';document.title=r.display_name+' — Sathivo';
  }catch(e){$('status').textContent=e.message||'Could not load this profile. Please try again.';$('retry').hidden=false;}
 }
-async function init(){
- try{
-  if(!globalThis.supabase)throw Error();
-  client=await getSathivoClient();
-  const [loc,u]=await Promise.all([client.from('profile_locations').select('*').order('state'),client.auth.getUser()]);if(loc.error)throw loc.error;locations=loc.data;currentUser=u.data?.user||null;await loadFavorites();
-  if(directory){
-   opts('state',statesAndUTs.map(v=>[v,v]),'All India — all states / UTs');districts();
-   ['Conversation','Coffee','Movies','Shopping','Events','Walking','Online chat','Phone conversation'].forEach(v=>$('category').add(new Option(v,v)));
-   $('filters').onsubmit=e=>{e.preventDefault();page=0;void list();};
-   $('filters').onchange=e=>{if(e.target.id==='state')districts();else if(e.target.id==='district'){$('city').value='';$('city-custom').value='';$('city-custom').hidden=true;void refreshCitySuggestions();}else if(e.target.id==='city')syncCitySearch();if(['state','district','city'].includes(e.target.id)){page=0;void list();}};
-   $('city-custom').addEventListener('change',()=>{page=0;void list();});
-   $('filters').onreset=e=>{e.preventDefault();$('state').value='';districts();$('city-custom').value='';$('category').value=$('mode').value='';$('sort').value='newest';$('saved-only').checked=false;page=0;void list();};
-   $('saved-only').addEventListener('change',()=>{if($('saved-only').checked&&!currentUser){$('saved-only').checked=false;location.href='account.html#login';return}page=0;void list();});
-   $('sort').addEventListener('change',()=>{page=0;void list();});
-   $('previous').onclick=()=>{if(page>0){page--;void list();}};$('next').onclick=()=>{page++;void list();};await list();
-  }else await detail();
- }catch{$('status').textContent='Discovery could not load. Please refresh the page.';}
+// State/district options are bundled locally, so they remain usable even when
+// Auth refreshes or the network is slow. Avoid registering handlers twice on retry.
+function setupDirectory(){
+ if(!directory||filtersReady)return;
+ filtersReady=true;
+ opts('state',statesAndUTs.map(v=>[v,v]),'All India — all states / UTs');
+ districts();
+ ['Conversation','Coffee','Movies','Shopping','Events','Walking','Online chat','Phone conversation'].forEach(v=>$('category').add(new Option(v,v)));
+ $('filters').onsubmit=e=>{e.preventDefault();page=0;void list();};
+ $('filters').onchange=e=>{
+  if(e.target.id==='state')districts();
+  else if(e.target.id==='district'){$('city').value='';$('city-custom').value='';$('city-custom').hidden=true;void refreshCitySuggestions();}
+  else if(e.target.id==='city')syncCitySearch();
+  if(['state','district','city'].includes(e.target.id)){page=0;void list();}
+ };
+ $('city-custom').addEventListener('change',()=>{page=0;void list();});
+ $('filters').onreset=e=>{e.preventDefault();$('state').value='';districts();$('city-custom').value='';$('category').value=$('mode').value='';$('sort').value='newest';$('saved-only').checked=false;page=0;void list();};
+ $('saved-only').addEventListener('change',()=>{if($('saved-only').checked&&!currentUser){$('saved-only').checked=false;location.href='account.html#login';return}page=0;void list();});
+ $('sort').addEventListener('change',()=>{page=0;void list();});
+ $('previous').onclick=()=>{if(page>0){page--;void list();}};
+ $('next').onclick=()=>{page++;void list();};
 }
-$('retry').onclick=()=>void(directory?list():detail());void init();
+function refreshAccountInBackground(){
+ if(authStarted)return;
+ authStarted=true;
+ // Auth is optional for public browsing. A 403/invalid saved login must not
+ // prevent guests or signed-in users from seeing public companion profiles.
+ void client.auth.getUser().then(async({data,error})=>{
+  if(error)return;
+  currentUser=data?.user||null;
+  if(!currentUser)return;
+  await loadFavorites();
+  document.querySelectorAll('[data-favorite-id]').forEach(button=>syncFavoriteButtons(button.dataset.favoriteId));
+  // If detail loaded before the session, upgrade its sign-in CTA to the
+  // authenticated booking form without interrupting a form in progress.
+  if(!directory&&$('detail')&&!$('detail').hidden&&!$('detail').querySelector('.booking-form form'))void detail();
+ }).catch(()=>{});
+}
+async function loadPublicLocations(){
+ const {data,error}=await publicClient.from('profile_locations').select('id,state,district,city').order('state');
+ if(error)throw error;
+ locations=data||[];
+ locationsLoaded=true;
+}
+async function init(){
+ setupDirectory();
+ try{
+  // Public data uses its own isolated anonymous client, never the user's
+  // potentially expired browser session.
+  publicClient=await getSathivoPublicClient();
+  client=await getSathivoClient();
+  refreshAccountInBackground();
+  try{await loadPublicLocations();}
+  catch(error){
+   locationsLoaded=false;
+   console.warn('Sathivo location index temporarily unavailable:',error?.code||error?.message||'network error');
+  }
+  if(directory)await list();
+  else await detail();
+ }catch(error){
+  $('status').textContent='Could not connect to Sathivo right now. Please try again.';
+  $('retry').hidden=false;
+  console.warn('Sathivo discovery initialization failed:',error?.message||'network error');
+ }
+}
+$('retry').onclick=()=>void init();
+void init();
