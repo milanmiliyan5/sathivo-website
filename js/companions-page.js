@@ -79,7 +79,7 @@ function portrait(row){
  if(!row.photo_path)return n;
  const builtIn=avatarAsset(row.photo_path);
  if(builtIn){const img=el('img');img.alt=row.display_name+' — profile avatar';img.loading='lazy';img.src=builtIn;n.classList.add('is-builtin-avatar');n.replaceChildren(img);return n;}
- void publicClient.storage.from('listing-photos').createSignedUrl(row.photo_path,60).then(({data,error})=>{if(error||!data)return;const img=el('img');img.alt=row.display_name+' — profile photo';img.loading='lazy';img.src=data.signedUrl;img.onerror=()=>n.replaceChildren(document.createTextNode(initial));n.replaceChildren(img);});
+ void publicClient.storage.from('listing-photos').createSignedUrl(row.photo_path,60).then(({data,error})=>{if(error||!data)return;const img=el('img');img.alt=row.display_name+' — profile photo';img.loading='lazy';img.src=data.signedUrl;img.onerror=()=>n.replaceChildren(document.createTextNode(initial));n.replaceChildren(img);}).catch(()=>{/* Keep the initial if the image request fails. */});
  return n;
 }
 function trustChips(row,compact=false){const n=el('div',undefined,'trust-chips'+(compact?' compact':''));if(row.email_verified_at)n.append(el('span','✓ Email verified'));if(row.adult_confirmed)n.append(el('span','18+ self-declared'));if(row.boundaries_accepted)n.append(el('span','Platonic boundaries'));return n;}
@@ -367,8 +367,8 @@ async function loadPublicLocations(){
  locationsLoaded=true;
 }
 async function init(){
- setupDirectory();
  try{
+  setupDirectory();
   // Public data uses its own isolated anonymous client, never the user's
   // potentially expired browser session.
   publicClient=await getSathivoPublicClient();
