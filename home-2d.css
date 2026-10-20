@@ -441,8 +441,9 @@ body.home-2d{
 .home-2d #navigation .nav-more-menu>a{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:39px;padding:10px 12px;border-radius:10px;color:#50384a;font-size:.85rem;font-weight:600;text-decoration:none}
 .home-2d #navigation .nav-more-menu>a:hover,
 .home-2d #navigation .nav-more-menu>a:focus-visible{background:#fce8f1;color:#8d2e57}
-.home-2d #navigation .nav-more-menu .request-badge{position:static;display:inline-grid;flex:0 0 auto;min-width:21px;height:21px;border:0;font-size:.62rem}
-.home-2d #navigation .nav-more-menu .request-badge[hidden]{display:none!important}
+.home-2d #navigation .homepage-requests-link{display:inline-flex;align-items:center;gap:6px}
+.home-2d #navigation .homepage-requests-link .request-badge{position:static;display:inline-grid;flex:0 0 auto;min-width:21px;height:21px;border:0;font-size:.62rem}
+.home-2d #navigation .homepage-requests-link .request-badge[hidden]{display:none!important}
 .home-2d #navigation .nav-more>summary:focus-visible,
 .home-2d #navigation .nav-more-menu>a:focus-visible{outline:2px solid #a3326b;outline-offset:2px}
 
@@ -482,4 +483,36 @@ body.home-2d{
   .home-2d .faq-help{margin-top:18px;padding:17px 18px}
   .home-2d .become-choices{display:grid;grid-template-columns:1fr;gap:10px}
   .home-2d .become-choices .button{width:100%}
+}
+
+/* Main user actions stay visible in the desktop header. On smaller desktops,
+   use the existing accessible hamburger instead of squeezing or wrapping links. */
+@media(min-width:1021px) and (max-width:1180px){
+  .home-2d .nav-wrap{gap:10px}
+  .home-2d #navigation{gap:clamp(7px,.7vw,10px)}
+  .home-2d #navigation>a:not(.button),
+  .home-2d #navigation .nav-more>summary{font-size:.75rem}
+  .home-2d #navigation>.button{max-width:140px;padding-inline:10px;font-size:.7rem}
+}
+@media(min-width:851px) and (max-width:1020px){
+  .home-2d .menu-toggle{
+    display:flex;flex-direction:column;justify-content:center;
+    width:44px;height:44px;gap:6px;background:transparent;
+  }
+  .home-2d .menu-toggle span{display:block;width:23px;height:1.5px;background:var(--plum);transition:transform .2s}
+  .home-2d .menu-toggle[aria-expanded=true] span:first-child{transform:translateY(3.75px) rotate(45deg)}
+  .home-2d .menu-toggle[aria-expanded=true] span:last-child{transform:translateY(-3.75px) rotate(-45deg)}
+  .home-2d #navigation{
+    display:none;position:absolute;top:90px;left:0;right:0;
+    flex-direction:column;align-items:stretch;gap:4px;
+    padding:14px 22px;background:var(--cream);
+    border-bottom:1px solid var(--line);box-shadow:0 15px 24px #572c431b;
+    max-height:min(77dvh,720px);overflow-y:auto;
+  }
+  .home-2d #navigation.is-open{display:flex}
+  .home-2d #navigation>a:not(.button){padding:11px 12px}
+  .home-2d #navigation .nav-more{width:100%}
+  .home-2d #navigation .nav-more>summary{padding:10px 12px;min-height:42px;justify-content:space-between}
+  .home-2d #navigation .nav-more-menu{position:static;box-shadow:none;width:100%;border-radius:12px;background:#fff3f8;padding:5px 7px}
+  .home-2d #navigation>.button{max-width:none;min-height:46px;justify-content:center;font-size:.83rem}
 }
