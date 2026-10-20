@@ -34,7 +34,7 @@ document.addEventListener('keydown', event => {
     }
   }
 });
-window.matchMedia('(min-width: 851px)').addEventListener('change', event => { if (event.matches) closeMenu(); });
+window.matchMedia('(min-width: 1021px)').addEventListener('change', event => { if (event.matches) closeMenu(); });
 
 const experiences = {
   conversation: { title: 'Just a conversation', text: 'Sometimes a little space to talk makes a difference. Share everyday thoughts, chat about your interests, or spend some time with someone who listens.', boundary: 'Everyday companionship only. This is not therapy, counselling, or crisis support.' },
