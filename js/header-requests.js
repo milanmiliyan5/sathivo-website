@@ -5,20 +5,30 @@ function createBell(){
  return a;
 }
 function placeBell(bell){
- const host=document.querySelector('.site-header .container');if(!host||host.querySelector('.request-bell'))return false;
+ const host=document.querySelector('.site-header .container');if(!host||host.querySelector('.request-bell'))return null;
+ // On the homepage, Requests stays in the More menu with an unread badge;
+ // do not show a second indistinguishable bell next to Notifications.
+ if(document.body.classList.contains('home-2d')){
+  const requestsLink=host.querySelector('#navigation a[href="requests.html"]');
+  if(requestsLink){
+   requestsLink.classList.add('homepage-requests-link');
+   requestsLink.append(bell.querySelector('.request-badge'));
+   return requestsLink;
+  }
+ }
  if(host.classList.contains('nav-wrap')){const toggle=host.querySelector('.menu-toggle');if(toggle)toggle.before(bell);else host.append(bell)}
  else if(host.classList.contains('directory-nav'))(host.querySelector(':scope > div')||host).append(bell);
  else if(host.classList.contains('profile-nav'))(host.querySelector(':scope > span')||host).append(bell);
  else if(host.classList.contains('marketplace-nav'))(host.querySelector('nav')||host).append(bell);
  else host.append(bell);
- return true;
+ return bell;
 }
 async function init(){
  try{
   const client=await getSathivoClient();
   const u=await client.auth.getUser(),user=u.data.user;if(!user)return;
-  const bell=createBell();if(!placeBell(bell))return;const badge=bell.querySelector('.request-badge');
-  const refresh=async()=>{const {count,error}=await client.from('booking_requests').select('id',{count:'exact',head:true}).eq('companion_id',user.id).eq('status','pending');if(error)return;const n=count||0;badge.textContent=n>99?'99+':String(n);badge.hidden=n===0;bell.setAttribute('aria-label',n?(String(n)+' incoming request'+(n===1?'':'s')):'No pending incoming requests')};
+  const indicator=placeBell(createBell());if(!indicator)return;const badge=indicator.querySelector('.request-badge');
+  const refresh=async()=>{const {count,error}=await client.from('booking_requests').select('id',{count:'exact',head:true}).eq('companion_id',user.id).eq('status','pending');if(error)return;const n=count||0;badge.textContent=n>99?'99+':String(n);badge.hidden=n===0;indicator.setAttribute('aria-label',n?(String(n)+' incoming request'+(n===1?'':'s')):'Requests, no pending incoming requests')};
   await refresh();
   const channel=client.channel('header-requests:'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_requests'},()=>void refresh()).subscribe();
   window.addEventListener('pagehide',()=>void client.removeChannel(channel),{once:true});
