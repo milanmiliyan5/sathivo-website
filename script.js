@@ -5,6 +5,7 @@ const menuButton = document.querySelector('.menu-toggle');
 const navigation = document.querySelector('#navigation');
 function closeMenu() {
   navigation.classList.remove('is-open');
+  navigation.querySelectorAll('details.nav-more').forEach(details => { details.open = false; });
   menuButton.setAttribute('aria-expanded', 'false');
   menuButton.setAttribute('aria-label', 'Open navigation');
 }
@@ -15,11 +16,22 @@ menuButton.addEventListener('click', () => {
   menuButton.setAttribute('aria-label', isOpen ? 'Close navigation' : 'Open navigation');
 });
 navigation.addEventListener('click', event => { if (event.target.closest('a')) closeMenu(); });
-document.addEventListener('click', event => { if (!event.target.closest('.nav-wrap')) closeMenu(); });
+document.addEventListener('click', event => {
+  if (!event.target.closest('.nav-wrap')) closeMenu();
+  else if (!event.target.closest('details.nav-more')) {
+    navigation.querySelectorAll('details.nav-more').forEach(details => { details.open = false; });
+  }
+});
 document.addEventListener('keydown', event => {
-  if (event.key === 'Escape' && menuButton.getAttribute('aria-expanded') === 'true') {
-    closeMenu();
-    menuButton.focus();
+  if (event.key === 'Escape') {
+    const more = navigation.querySelector('details.nav-more[open]');
+    if (more) {
+      more.open = false;
+      more.querySelector('summary')?.focus();
+    } else if (menuButton.getAttribute('aria-expanded') === 'true') {
+      closeMenu();
+      menuButton.focus();
+    }
   }
 });
 window.matchMedia('(min-width: 851px)').addEventListener('change', event => { if (event.matches) closeMenu(); });
