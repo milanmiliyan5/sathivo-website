@@ -21,10 +21,35 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="stylesheet" href="styles.css">
   <script src="script.js?v=20261025-polish-1" defer></script>
-<script type="module" src="js/ads.js?v=20261006-1"></script><link rel="stylesheet" href="responsive.css?v=20261025-polish-1"><link rel="stylesheet" href="home-2d.css?v=20261020-home-nav-2"><script type="module" src="js/mobile-nav.js?v=20261025-polish-1"></script><script type="module" src="js/header-requests.js?v=20261025-polish-1"></script><script type="module" src="js/header-notifications.js?v=20261025-polish-1"></script><script type="module" src="js/site-presence.js?v=20261025-tracking-1"></script><script src="js/home-motion.js?v=20261006-1" defer></script><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9377266871455870" crossorigin="anonymous"></script><link rel="stylesheet" href="site-2d.css?v=20261018-alerts-1"><link rel="stylesheet" href="guides.css?v=20261014-1"><script src="js/site-motion.js?v=20261006-1" defer></script><link rel="stylesheet" href="welcome-launch.css?v=20261017-1"><link rel="stylesheet" href="how-sathivo-works.css?v=20261018-1"><script type="module" src="js/welcome-launch.js?v=20261025-polish-1"></script></head>
+<script type="module" src="js/ads.js?v=20261006-1"></script><link rel="stylesheet" href="responsive.css?v=20261025-polish-1"><link rel="stylesheet" href="home-2d.css?v=20261020-home-nav-2"><script type="module" src="js/mobile-nav.js?v=20261025-polish-1"></script><script type="module" src="js/header-requests.js?v=20261025-polish-1"></script><script type="module" src="js/header-notifications.js?v=20261025-polish-1"></script><script type="module" src="js/site-presence.js?v=20261025-tracking-1"></script><script src="js/home-motion.js?v=20261006-1" defer></script><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9377266871455870" crossorigin="anonymous"></script><link rel="stylesheet" href="site-2d.css?v=20261018-alerts-1"><link rel="stylesheet" href="guides.css?v=20261014-1"><script src="js/site-motion.js?v=20261006-1" defer></script><link rel="stylesheet" href="welcome-launch.css?v=20261017-1"><link rel="stylesheet" href="how-sathivo-works.css?v=20261018-1"><script type="module" src="js/welcome-launch.js?v=20261025-polish-1"></script>  <style id="sathivo-launch-ticker-styles">
+    .announcement.sathivo-ticker{padding:0;background:linear-gradient(110deg,#fceaf0 0%,#f4eaf5 55%,#fff5f7 100%);color:#693349;border-bottom:1px solid #eddae5;text-align:left;letter-spacing:normal}
+    .sathivo-ticker-shell{width:min(1400px,100%);margin:auto;padding:0 22px;min-height:44px;display:flex;align-items:center;gap:16px}
+    .sathivo-ticker-label{flex:none;font-size:.64rem;letter-spacing:.11em;line-height:1.2;padding:7px 12px;border-radius:999px;background:#71344e;color:#fff;font-weight:750;white-space:nowrap}
+    .sathivo-ticker-window{flex:1;min-width:0;overflow:hidden;position:relative;mask-image:linear-gradient(to right,transparent,#000 2%,#000 98%,transparent)}
+    .sathivo-ticker-sr{position:absolute!important;width:1px;height:1px;padding:0!important;margin:-1px!important;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    .sathivo-ticker-track{display:flex;width:max-content;align-items:center;animation:sathivo-ticker-move 34s linear infinite;will-change:transform}
+    .sathivo-ticker-set{flex:0 0 auto;display:flex;align-items:center;gap:28px;padding-right:28px}
+    .announcement.sathivo-ticker .sathivo-ticker-set span{display:inline-block;margin:0;padding:0;border:0;white-space:nowrap;font-size:.74rem;font-weight:700;letter-spacing:.015em;line-height:1.3}
+    .sathivo-ticker-cta{flex:none;min-height:31px;padding:5px 11px;border-radius:7px;background:#fff;color:#71344e;border:1px solid #d9b8c8;font-weight:750;font-size:.7rem;line-height:1.2;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+    .sathivo-ticker-cta:hover{background:#71344e;color:#fff}
+    .sathivo-ticker-window:hover .sathivo-ticker-track,.sathivo-ticker-window:focus-within .sathivo-ticker-track{animation-play-state:paused}
+    @keyframes sathivo-ticker-move{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+    @media(max-width:600px){.sathivo-ticker-shell{padding:0 10px;gap:8px;min-height:39px}.sathivo-ticker-label{font-size:.55rem;padding:6px 8px;letter-spacing:.02em}.announcement.sathivo-ticker .sathivo-ticker-set span{font-size:.68rem}.sathivo-ticker-set{gap:20px;padding-right:20px}.sathivo-ticker-cta{min-height:29px;font-size:.64rem;padding:5px 7px}.sathivo-ticker-track{animation-duration:30s}}
+    @media(prefers-reduced-motion:reduce){.sathivo-ticker-track{animation:none;will-change:auto}}
+  </style>
+</head>
 <body class="home-2d sathivo-2d">
   <a class="skip-link" href="#main">Skip to content</a>
-  <div class="announcement">A little company. A lot more life. <span>Introducing Sathivo</span></div>
+  <div class="announcement sathivo-ticker" role="region" aria-label="Sathivo launch announcement">
+    <div class="sathivo-ticker-shell">
+      <strong class="sathivo-ticker-label" aria-hidden="true">✦ JUST LAUNCHED</strong>
+      <div class="sathivo-ticker-window">
+        <p class="sathivo-ticker-sr">Sathivo is free to join. Companion profiles and booking requests are free. Sathivo currently charges no platform fees. Companions set their own rates, and any payment is arranged directly between users. Adults 18 and older only. Strictly platonic.</p>
+        <div class="sathivo-ticker-track" aria-hidden="true"><div class="sathivo-ticker-set"><span>✦ FREE TO JOIN</span><span>✦ FREE COMPANION PROFILE</span><span>✦ FREE BOOKING REQUESTS</span><span>✦ NO SATHIVO PLATFORM FEES CURRENTLY</span><span>✦ COMPANION RATES MAY APPLY</span><span>✦ 18+ · STRICTLY PLATONIC</span></div><div class="sathivo-ticker-set"><span>✦ FREE TO JOIN</span><span>✦ FREE COMPANION PROFILE</span><span>✦ FREE BOOKING REQUESTS</span><span>✦ NO SATHIVO PLATFORM FEES CURRENTLY</span><span>✦ COMPANION RATES MAY APPLY</span><span>✦ 18+ · STRICTLY PLATONIC</span></div></div>
+      </div>
+      <a class="sathivo-ticker-cta" href="profile.html" aria-label="Create a free Sathivo profile">Join Free <span aria-hidden="true">↗</span></a>
+    </div>
+  </div>
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="#" aria-label="Sathivo home"><span class="brand-mark" aria-hidden="true">♡</span>sathivo<span class="brand-period">.</span></a>
