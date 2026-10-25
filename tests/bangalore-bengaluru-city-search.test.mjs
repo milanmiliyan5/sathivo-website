@@ -27,6 +27,6 @@ test('location suggestions merge Bangalore/Bengaluru under a readable name', asy
   assert.match(js, /browse_public_companions_v2/);
   for (const page of ['companions.html','companion.html']) {
     const html = await read(page);
-    assert.match(html, /js\\/companions-page\\.js\\?v=20261026-city-alias-1/);
+    assert.match(html, /js\/companions-page\.js\?v=20261026-city-alias-1/);
   }
 });
