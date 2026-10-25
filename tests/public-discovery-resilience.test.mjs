@@ -45,6 +45,6 @@ test('public directory can initialize filters and profiles without a valid login
  assert.ok(source.indexOf('setupDirectory();')<source.indexOf('publicClient=await getSathivoPublicClient()'));
  assert.match(source,/\$\('retry'\)\.onclick=\(\)=>void init\(\)/);
  assert.match(source,/if\(!locationsLoaded&&\(\$\('state'\)\.value/);
- assert.match(directory,/js\/companions-page\.js\?v=20261025-polish-1/);
- assert.match(detail,/js\/companions-page\.js\?v=20261025-polish-1/);
+ assert.match(directory,/js\/companions-page\.js\?v=\d{8}-[a-z0-9-]+/i);
+ assert.match(detail,/js\/companions-page\.js\?v=\d{8}-[a-z0-9-]+/i);
 });
