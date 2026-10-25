@@ -44,7 +44,7 @@ async function refreshCitySuggestions(){
  }
  if(seq!==citySuggestionRequest)return;
  const filtered=[...new Set(names)].sort((a,b)=>a.localeCompare(b,'en-IN'));
- opts('city',filtered.map(name=>[name,name]),'All cities / towns');
+ opts('city',filtered.map(name=>[name,normalized(name)==='bengaluru'?'Bengaluru (Bangalore)':name]),'All cities / towns');
  select.add(new Option('Other city / town — type to search','__other__'));
  $('city-custom').value='';$('city-custom').hidden=true;
  $('city-filter-hint').textContent=state
