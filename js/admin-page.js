@@ -39,11 +39,15 @@ async function loadStats(){
 
 function updateOnline(){if(!presenceChannel)return;metric('metric-online',Object.keys(presenceChannel.presenceState()||{}).length)}
 function startPresence(){
+  $('metric-online').textContent='—';
   presenceChannel=client.channel('site-presence-v1')
     .on('presence',{event:'sync'},updateOnline)
     .on('presence',{event:'join'},updateOnline)
     .on('presence',{event:'leave'},updateOnline)
-    .subscribe(status=>{if(status==='SUBSCRIBED')updateOnline()});
+    .subscribe(status=>{
+      if(status==='SUBSCRIBED')updateOnline();
+      else if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status))$('metric-online').textContent='—';
+    });
 }
 
 async function setSupport(id,status){
@@ -281,5 +285,14 @@ async function init(){
     metricsTimer=setInterval(()=>{if(document.visibilityState==='visible')void loadStats()},10000);
   }catch(e){setStatus(e.message||'Could not load admin.')}
 }
-window.addEventListener('pagehide',()=>{if(metricsTimer)clearInterval(metricsTimer);if(presenceChannel&&client)void client.removeChannel(presenceChannel)},{once:true});
+window.addEventListener('pagehide',event=>{
+  if(metricsTimer)clearInterval(metricsTimer);
+  if(!event.persisted&&presenceChannel&&client)void client.removeChannel(presenceChannel);
+});
+window.addEventListener('pageshow',event=>{
+  if(!event.persisted||!presenceChannel)return;
+  void refreshAll(true);updateOnline();
+  if(metricsTimer)clearInterval(metricsTimer);
+  metricsTimer=setInterval(()=>{if(document.visibilityState==='visible')void loadStats()},10000);
+});
 void init();

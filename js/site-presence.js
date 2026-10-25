@@ -1,4 +1,4 @@
-import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
+import {getSathivoPublicClient} from './supabase-client.js?v=20261025-polish-1';
 
 function browserKey(){
   const storageKey='sathivo.presence.browser.v1';
@@ -34,7 +34,7 @@ async function recordVisit(client,visitorId){
 
 async function init(){
   try{
-    const client=await getSathivoClient();
+    const client=await getSathivoPublicClient();
     const visitorId=browserKey();
     void recordVisit(client,visitorId);
 
@@ -48,7 +48,14 @@ async function init(){
       if(document.visibilityState==='visible'){void track();void recordVisit(client,visitorId)}
       else void channel.untrack();
     });
-    window.addEventListener('pagehide',()=>{void channel.untrack();void client.removeChannel(channel)},{once:true});
+    // Keep the channel available when the browser caches this document for Back.
+    window.addEventListener('pagehide',event=>{
+      void channel.untrack();
+      if(!event.persisted)void client.removeChannel(channel);
+    });
+    window.addEventListener('pageshow',event=>{
+      if(event.persisted){void track();void recordVisit(client,visitorId)}
+    });
   }catch{}
 }
 void init();
