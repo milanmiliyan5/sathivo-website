@@ -1,4 +1,4 @@
-import {getSathivoClient,getSathivoPublicClient} from './supabase-client.js?v=20261020-public-1';
+import {getSathivoClient,getSathivoPublicClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
 import {sendBookingEmail} from './booking-email-events.js?v=20261017-1';
 import {avatarAsset} from './avatar-utils.js?v=20261007-1';
@@ -98,6 +98,7 @@ function syncFavoriteButtons(publicId){
   button.classList.toggle('saved',saved);
   button.setAttribute('aria-pressed',String(saved));
   button.title=saved?'Remove from saved':'Save companion';
+  button.setAttribute('aria-label',button.title);
   button.textContent=saved?'♥':'♡';
  });
 }
@@ -116,6 +117,7 @@ async function toggleFavorite(publicId){
 function favoriteButton(row,large=false){
  const b=el('button',favoriteIds.has(row.public_id)?'♥':'♡','favorite-button'+(large?' favorite-button-large':''));
  b.type='button';b.dataset.favoriteId=row.public_id;b.setAttribute('aria-pressed',String(favoriteIds.has(row.public_id)));b.title=favoriteIds.has(row.public_id)?'Remove from saved':'Save companion';
+ b.setAttribute('aria-label',b.title);
  b.onclick=()=>void toggleFavorite(row.public_id);
  return b;
 }

@@ -91,3 +91,12 @@ Sathivo now publishes Privacy Policy, Terms of Use, Safety & Community Guideline
 - Today/Total visitor counters use a locally generated browser UUID that is SHA-256 hashed server-side before storage.
 - The same browser is counted once per India calendar day for Today Visitors and once overall for Total Visitors; another browser/device or cleared site storage may count separately.
 - Visitor counters start from the deployment of this analytics feature; historical visits before tracking was enabled are not reconstructed.
+
+## Polish and regression checks — 2026-10-25
+
+- Prevent concurrent page modules from creating multiple persistent Auth clients; shared client import versions are aligned.
+- Restore request action controls after provider/network failures and prevent duplicate in-flight updates.
+- Improve mobile input readability, long-name/note wrapping, keyboard focus, favorite button names and active navigation on detail pages.
+- Align shared CSS/script cache versions and replace outdated pre-launch copy.
+- Validation: 47 automated tests, JavaScript syntax checks and local references/cache versions across 21 HTML pages pass. Regression coverage includes concurrent Auth initialization and failed request retries.
+- Live guest homepage and Explore were inspected; Explore returned published profiles. A complete signed-in two-account booking/chat/OTP test, mobile device visual check and hosted database security audit were not performed in this pass. Local browser installation was unavailable, so CSS changes still need device-level visual verification.

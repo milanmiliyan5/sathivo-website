@@ -1,4 +1,4 @@
-import {getSathivoClient} from './supabase-client.js?v=20261006-1';
+import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 const VAPID_PUBLIC_KEY='BKZgH_Qwry4r7h6n5YfFFsB_PslPCB_QNmavbjs4dxSnZe1YbmOiDJWsBOjnQcDBHUIcYEtHY6apcDVBUQrdYLs';
 let client,currentUser=null;
 const boxes=[...document.querySelectorAll('[data-push-settings]')];

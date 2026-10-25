@@ -1,7 +1,7 @@
-import {getSathivoClient} from './supabase-client.js?v=20261006-1';
+import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
 import {askCancellationReason,cancellationLabel} from './booking-cancel.js?v=20261006-1';
-import {renderBookingProgress} from './booking-progress.js?v=20261018-1';
+import {renderBookingProgress} from './booking-progress.js?v=20261025-polish-1';
 const $=id=>document.getElementById(id); let client,user,rows=[],filter='all';
 
 const linkedBookingId=(()=>{

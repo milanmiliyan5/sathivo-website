@@ -1,4 +1,4 @@
-import {getSathivoClient} from './supabase-client.js?v=20261006-1';
+import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 const $=id=>document.getElementById(id);
 let client,user,messageChannel,bookingChannel;
 const el=(t,x,c)=>{const n=document.createElement(t);if(x!==undefined)n.textContent=x;if(c)n.className=c;return n};

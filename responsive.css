@@ -348,3 +348,11 @@ input,select,textarea{font-size:16px}
 .ad-slot-test .ad-test-body strong{font-size:.84rem}
 .ad-slot-test .ad-test-body small{font-size:.67rem;color:var(--muted);line-height:1.45}
 @media(max-width:640px){.ad-slot-test{min-height:82px;margin:16px 0;padding:12px 13px;gap:10px;border-radius:13px}.ad-slot-test .ad-test-body strong{font-size:.78rem}.ad-slot-test .ad-test-body small{font-size:.62rem}}
+
+/* Final interaction polish: readable inputs and resilient user-generated text. */
+.card-copy,.detail-copy,.booking-card,.request-identity>div{min-width:0}
+.card-copy h2,.card-copy p,.booking-note,.cancellation-note,.booking-card h2{overflow-wrap:anywhere}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #9e527c;outline-offset:3px}
+@media(max-width:640px){
+ input:not([type=checkbox]):not([type=radio]),select,textarea{font-size:16px!important}
+}

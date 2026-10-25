@@ -1,4 +1,4 @@
-import {getSathivoClient} from './supabase-client.js?v=20261006-1';
+import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 function createBell(){
  const a=document.createElement('a');a.className='request-bell';a.href='requests.html';a.setAttribute('aria-label','Incoming requests');
  a.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span class="request-badge" hidden>0</span>';

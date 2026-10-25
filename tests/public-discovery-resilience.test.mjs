@@ -13,8 +13,11 @@ test('public Supabase client never restores or persists expired account sessions
    created.push({url,key,opts});
    return {url,key,opts};
   }};
-  const anonymous=await getSathivoPublicClient();
-  const loggedIn=await getSathivoClient();
+  const [anonymous,anonymousAgain,loggedIn,loggedInAgain]=await Promise.all([
+   getSathivoPublicClient(),getSathivoPublicClient(),getSathivoClient(),getSathivoClient()
+  ]);
+  assert.equal(anonymous,anonymousAgain);
+  assert.equal(loggedIn,loggedInAgain);
   assert.equal(created.length,2);
   assert.equal(anonymous.opts.auth.persistSession,false);
   assert.equal(anonymous.opts.auth.autoRefreshToken,false);
@@ -42,6 +45,6 @@ test('public directory can initialize filters and profiles without a valid login
  assert.ok(source.indexOf('setupDirectory();')<source.indexOf('publicClient=await getSathivoPublicClient()'));
  assert.match(source,/\$\('retry'\)\.onclick=\(\)=>void init\(\)/);
  assert.match(source,/if\(!locationsLoaded&&\(\$\('state'\)\.value/);
- assert.match(directory,/js\/companions-page\.js\?v=20261020-public-1/);
- assert.match(detail,/js\/companions-page\.js\?v=20261020-public-1/);
+ assert.match(directory,/js\/companions-page\.js\?v=20261025-polish-1/);
+ assert.match(detail,/js\/companions-page\.js\?v=20261025-polish-1/);
 });

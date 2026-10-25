@@ -44,7 +44,7 @@ const experiences = {
   event: { title: 'Wedding & event plus-one', text: 'A friendly face by your side at a wedding or social event. Attend together as platonic companions with clear expectations.', boundary: 'Respect the event host’s rules. Agree on timing and costs, and never require romantic role-play or physical intimacy.' },
   walking: { title: 'Walks & outings', text: 'Take a leisurely walk or explore a local public spot together. A little fresh air, conversation, and company.', boundary: 'Choose well-used public places and sensible meeting times. Share your plans with someone you trust.' },
   chat: { title: 'Online chat', text: 'Connect over everyday interests, a shared hobby, or a conversation from the comfort of your own space.', boundary: 'Keep conversations respectful and non-sexual. Protect your personal information and never share passwords or payment codes.' },
-  phone: { title: 'Phone conversations', text: 'Make time for a friendly voice and an unhurried conversation, wherever you are in India.', boundary: 'Call arrangements will be shared when the service launches. Respect privacy; do not record someone without their consent.' },
+  phone: { title: 'Phone conversations', text: 'Make time for a friendly voice and an unhurried conversation, wherever you are in India.', boundary: 'Agree on call arrangements in your booking chat after acceptance. Respect privacy; do not record someone without their consent.' },
   social: { title: 'Other social plans', text: 'A bookshop visit, a public exhibition, or another safe social activity. There is room for different interests and everyday plans.', boundary: 'All activities must be legal, public where applicable, and strictly platonic. Agree on the activity and boundaries in advance.' }
 };
 const dialog = document.querySelector('#info-dialog');
@@ -97,7 +97,7 @@ document.querySelectorAll('[data-info]').forEach(button => {
         const item = document.createElement('li'); item.textContent = text; list.append(item);
       });
       openDialog(button, 'OUR COMMUNITY EXPECTATIONS', 'Kindness. Respect. Boundaries.', [
-        paragraph('These principles define the service we are building. Full service terms, verification details, and reporting procedures will be published before bookings open.'), list
+        paragraph('These principles apply to every Sathivo booking. Read our Terms of Use and Safety pages for service boundaries and reporting options. Profiles are self-described; identity and age are not verified.'), list
       ]);
     } else if (button.dataset.info === 'privacy') {
       openDialog(button, 'ABOUT THIS WEBSITE RELEASE', 'Website privacy', [

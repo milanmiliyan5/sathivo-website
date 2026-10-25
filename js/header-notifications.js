@@ -1,4 +1,4 @@
-import {getSathivoClient} from './supabase-client.js?v=20261006-1';
+import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 
 function addBadge(link,kind){
  const cls=kind==='chat'?'chat-header-badge':'notification-badge';

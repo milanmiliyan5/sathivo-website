@@ -1,4 +1,4 @@
-import {getSathivoClient} from './supabase-client.js?v=20261006-1';
+import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 
 // First-time visitor welcome for public Sathivo landing pages.
 // No user data is sent or collected; browser storage only remembers dismissal.

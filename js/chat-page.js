@@ -1,4 +1,4 @@
-import {getSathivoClient} from './supabase-client.js?v=20261006-1';
+import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendMessagePush} from './push-events.js?v=20261004-2';
 import {compressImageFile,formatBytes} from './image-compress.js?v=20261006-1';
 import {openSafetyReport,confirmSafetyBlock} from './safety-actions.js?v=20261018-1';

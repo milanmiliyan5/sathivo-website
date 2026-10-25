@@ -49,6 +49,12 @@ export async function getSathivoClient(){
     return sharedClient;
   }
   await ensureSupabaseSdk();
+  // Multiple page modules can arrive here while the SDK is loading. Recheck
+  // after the await so only one persistent client owns the auth storage key.
+  if(globalThis.__sathivoSupabaseClient){
+    sharedClient=globalThis.__sathivoSupabaseClient;
+    return sharedClient;
+  }
   if(!globalThis.supabase?.createClient)throw Error('Supabase SDK unavailable');
   sharedClient=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{
     global:{fetch:sharedAuthFetch},
@@ -70,6 +76,7 @@ export async function getSathivoClient(){
 export async function getSathivoPublicClient(){
   if(publicClient)return publicClient;
   await ensureSupabaseSdk();
+  if(publicClient)return publicClient;
   if(!globalThis.supabase?.createClient)throw Error('Supabase SDK unavailable');
   publicClient=globalThis.supabase.createClient(authConfig.supabaseUrl,authConfig.publishableKey,{
     global:{fetch:sharedAuthFetch},

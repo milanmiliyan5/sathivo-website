@@ -1,4 +1,4 @@
-import {getSathivoClient} from './supabase-client.js?v=20261006-1';
+import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
 import {sendBookingEmail} from './booking-email-events.js?v=20261017-1';
 import {askCancellationReason,cancellationLabel} from './booking-cancel.js?v=20261006-1';
@@ -68,7 +68,26 @@ async function load(){
  render();
 }
 async function cancelBooking(r){const answer=await askCancellationReason();if(!answer)return;await update(r.id,'cancelled',{cancel_reason:answer.reason,cancel_note:answer.note||null})}
-async function update(id,status,extra={}){$('status').textContent=status==='accepted'?'Accepting request…':'Updating request…';const {error}=await client.from('booking_requests').update({status,...extra}).eq('id',id);if(error){$('status').textContent=error.message;return}$('status').textContent='Sending notification…';if(status==='accepted'){await Promise.all([sendBookingPush(client,id,status),sendBookingEmail(client,id,'accepted')]);location.href='chat.html?booking='+encodeURIComponent(id);return}await sendBookingPush(client,id,status);await load()}
+async function update(id,status,extra={}){
+ const card=document.getElementById('request-'+id);
+ if(card?.dataset.updating==='true')return;
+ if(card){card.dataset.updating='true';card.setAttribute('aria-busy','true');card.querySelectorAll('button').forEach(b=>b.disabled=true);}
+ $('status').textContent=status==='accepted'?'Accepting request…':'Updating request…';
+ try{
+  const {error}=await client.from('booking_requests').update({status,...extra}).eq('id',id);
+  if(error)throw error;
+  $('status').textContent='Sending notification…';
+  if(status==='accepted'){
+   await Promise.all([sendBookingPush(client,id,status),sendBookingEmail(client,id,'accepted')]);
+   location.href='chat.html?booking='+encodeURIComponent(id);return;
+  }
+  await sendBookingPush(client,id,status);await load();
+ }catch{
+  $('status').textContent='Could not update this request. Please try again.';
+ }finally{
+  if(card){delete card.dataset.updating;card.removeAttribute('aria-busy');card.classList.remove('request-accepting');card.querySelectorAll('button').forEach(b=>b.disabled=false);}
+ }
+}
 async function markLinkedNotification(){if(!linkedRequestId)return;await client.from('notifications').update({read_at:new Date().toISOString()}).eq('user_id',user.id).eq('link','requests.html?id='+linkedRequestId).is('read_at',null)}
 async function init(){try{
  client=await getSathivoClient();

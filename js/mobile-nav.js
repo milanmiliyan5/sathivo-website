@@ -1,4 +1,4 @@
-import {getSathivoClient} from './supabase-client.js?v=20261006-1';
+import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 
 const items=[
   ['Home','./','<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 3.6l8.5 6.9v9.1a1.4 1.4 0 0 1-1.4 1.4h-5.2v-6.1h-3.8V21H4.9a1.4 1.4 0 0 1-1.4-1.4z"/></svg>'],
@@ -22,10 +22,11 @@ async function init(){
   nav.setAttribute('aria-label','Primary mobile navigation');
 
   const path=location.pathname.split('/').pop()||'index.html',refs={};
+  const activePath=({'companion.html':'companions.html','chat.html':'chats.html','profile.html':'account.html','delete-account.html':'account.html'})[path]||path;
   for(const [label,href,icon] of items){
     const a=document.createElement('a');
     a.href=href;
-    if((href==='./'&&['','index.html'].includes(path))||path===href)a.setAttribute('aria-current','page');
+    if((href==='./'&&['','index.html'].includes(path))||activePath===href)a.setAttribute('aria-current','page');
 
     const iconWrap=document.createElement('span');
     iconWrap.className='mobile-nav-icon';

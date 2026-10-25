@@ -1,4 +1,4 @@
-import {getSathivoClient} from './supabase-client.js?v=20261006-1';
+import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 const $=id=>document.getElementById(id);
 let client,user;
 function status(message,tone='info'){const n=$('delete-status');n.textContent=message;n.dataset.tone=tone}

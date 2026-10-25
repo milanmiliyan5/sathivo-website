@@ -56,7 +56,9 @@ test('exact city and town entry is shared by profiles and discovery', async()=>{
   const migration=await read('supabase/migrations/20261008180738_exact_city_town_profile_discovery.sql');
 
   assert.match(profile,/city_name/);
-  assert.match(profile,/browse_public_city_suggestions/);
+  assert.match(profile,/city_name.*value/);
+  assert.match(await read('profile.html'), /<input[^>]*id="city_name"/);
+  assert.doesNotMatch(profile,/browse_public_city_suggestions/);
   assert.match(discovery,/browse_public_companions_v2/);
   assert.match(discovery,/p_city:/);
   assert.match(discovery,/browse_public_city_suggestions/);
@@ -114,8 +116,8 @@ test('ad placements stay in safe test mode until real unit IDs are configured', 
   assert.match(companions,/booked=1/);
 
   const bookings=await read('js/bookings-page.js');
-  assert.match(bookings,/booking-confirm/);
-  assert.match(bookings,/Booking request sent/);
+  assert.doesNotMatch(bookings,/data-ad-slot=["']booking-confirm/); // Keep confirmation free of ad placements.
+  assert.match(bookings,/Your booking request is sent/);
 });
 
 

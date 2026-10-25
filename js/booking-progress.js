@@ -20,7 +20,7 @@ export function renderBookingProgress(booking){
    captions:['Done','Waiting','Locked'],
    marks:['✓','◷','🔒'],
    heading:'Waiting for companion’s response',
-   description:'Your request has been sent. You can check its status here anytime. We’ll also email you when your companion accepts.'
+   description:'Your request has been sent. You can check its status here anytime. When booking emails are enabled, we’ll also email you when your companion accepts.'
   },
   accepted:{
    states:['complete','complete','ready'],
