@@ -217,13 +217,28 @@ form.addEventListener('submit',async event=>{
     if(savedAvatarPath&&!isBuiltinAvatar(savedAvatarPath)&&savedAvatarPath!==avatarPath){
       try{await client.storage.from('profile-photos').remove([savedAvatarPath])}catch{}
     }
+    let nearbyPreferenceWarning='';
+    try{
+      const prefs=await client.from('nearby_alert_preferences').select('email_enabled').eq('user_id',user.id).maybeSingle();
+      if(prefs.error)throw prefs.error;
+      const wantsEmail=!!form.elements.nearby_email_opt_in.checked;
+      if(prefs.data && prefs.data.email_enabled!==wantsEmail){
+        const update=await client.from('nearby_alert_preferences').update({email_enabled:wantsEmail,updated_at:new Date().toISOString()}).eq('user_id',user.id);
+        if(update.error)throw update.error;
+      }else if(!prefs.data&&wantsEmail){
+        const insert=await client.from('nearby_alert_preferences').insert({user_id:user.id,email_enabled:true,in_app_enabled:true});
+        if(insert.error)throw insert.error;
+      }
+      // No preference row means website notifications follow the default ON
+      // rule, while promotional email notifications remain OFF.
+    }catch(error){nearbyPreferenceWarning=' Profile saved, but the nearby email choice could not be saved. Please retry it in Account settings.'}
     savedAvatarPath=companion?avatarPath:null;dirty=false;$('photo').value='';if(localPreviewUrl){URL.revokeObjectURL(localPreviewUrl);localPreviewUrl=null;}showSystemInfo(data);
-    if(preparedPhoto)message('Your profile is saved. Photo compressed '+formatBytes(preparedPhoto.originalBytes)+' → '+formatBytes(preparedPhoto.outputBytes)+'.');
-    else message(companion?'Your companion profile is saved. Review it, then publish when you are ready.':'Your customer profile is saved. Taking you to Find a companion…');
+    if(preparedPhoto)message('Your profile is saved. Photo compressed '+formatBytes(preparedPhoto.originalBytes)+' → '+formatBytes(preparedPhoto.outputBytes)+'.'+nearbyPreferenceWarning,!!nearbyPreferenceWarning);
+    else message((companion?'Your companion profile is saved. Review it, then publish when you are ready.':'Your customer profile is saved. Taking you to Find a companion…')+nearbyPreferenceWarning,!!nearbyPreferenceWarning);
     if(companion&&avatarPath)await showPhoto(avatarPath);else{$('avatar').hidden=true;syncAvatarChoice();}
     updateCompleteness();
     if(companion)openPublishPrompt();
-     else window.setTimeout(()=>location.assign('companions.html'),450);
+     else if(!nearbyPreferenceWarning)window.setTimeout(()=>location.assign('companions.html'),450);
   }catch(error){message(error.message||'Could not save your profile. Please try again.',true);}
   finally{$('fields').disabled=false;if(!$('publish-prompt').open)$('profile-status').focus();}
 });
@@ -233,9 +248,12 @@ async function init(){
     client=await getSathivoClient();
     const result=await client.auth.getUser();user=result.data?.user;
     if(!user){message('Sign in to create or edit your free profile.');$('signin').hidden=false;return;}
-    const [loc,profile]=await Promise.all([client.from('profile_locations').select('*').order('state'),client.from('member_profiles').select('*').eq('user_id',user.id).maybeSingle()]);
-    if(loc.error||profile.error)throw Error('Your profile could not load. Refresh to retry; your saved details are safe.');
+    const [loc,profile,nearbyPrefs]=await Promise.all([client.from('profile_locations').select('*').order('state'),client.from('member_profiles').select('*').eq('user_id',user.id).maybeSingle(),client.from('nearby_alert_preferences').select('in_app_enabled,email_enabled').eq('user_id',user.id).maybeSingle()]);
+    if(loc.error||profile.error||nearbyPrefs.error)throw Error('Your profile or notification preferences could not load. Refresh to retry; your saved details are safe.');
     locations=loc.data;states();districts();
+    // The only source of email marketing consent is an explicit choice:
+    // saved preferences, or the unchecked-by-default signup checkbox.
+    form.elements.nearby_email_opt_in.checked=nearbyPrefs.data ? nearbyPrefs.data.email_enabled===true : user.user_metadata?.nearby_email_opt_in===true;
     const p=profile.data;
     if(p){
       for(const name of ['display_name','profile_kind','gender','bio','languages','interests','meeting_mode','availability'])$(name).value=p[name]||'';
