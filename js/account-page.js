@@ -1,5 +1,5 @@
 import { authConfig } from './auth-config.js?v=20260926-1';
-import { createAuthFlow } from './auth-flow.js?v=20261004-2';
+import { createAuthFlow } from './auth-flow.js?v=20261027-nearbyconsent-1';
 import { createAuthFetch } from './auth-transport.js?v=20260926-1';
 import { getSathivoClient, ensureSupabaseSdk, onAuthTransport } from './supabase-client.js?v=20261025-polish-1';
 
