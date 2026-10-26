@@ -1,4 +1,4 @@
-import { setupPublishing } from './listing-publish.js?v=20261015-1';
+import { setupPublishing } from './listing-publish.js?v=20261027-nearby-1';
 import {districtsByState,statesAndUTs} from './india-districts.js?v=20261015-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { getSathivoClient } from './supabase-client.js?v=20261025-polish-1';
