@@ -273,7 +273,12 @@ showPanel(publicRoutes.has(initialRoute) ? initialRoute : 'login', { focus: fals
 if (hadTokenUrl) announce('Use the verification code from your email on this page. Request a fresh code to continue.', 'info');
 
 async function initialize() {
-  if (!authConfig.accountsEnabled) return;
+  if (!authConfig.accountsEnabled) {
+    notice.textContent = 'Accounts are temporarily unavailable. Please try again later.';
+    document.body.classList.remove('auth-pending');
+    return;
+  }
+  let navigating = false;
   try {
     await ensureSupabaseSdk();
     if (!globalThis.supabase?.createClient) throw new Error('SDK unavailable');
@@ -294,7 +299,6 @@ async function initialize() {
       auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false, storageKey: 'sathivo.recovery.v1' },
     });
     flow = createAuthFlow({ auth: client.auth, recoveryAuth: recoveryClient.auth, enabled: true });
-    notice.hidden = true;
     client.auth.onAuthStateChange(event => {
       // Keep callbacks synchronous; SDK auth calls inside this callback can deadlock.
       if (event === 'SIGNED_OUT' && activePanel === 'account' && !busy) {
@@ -308,6 +312,7 @@ async function initialize() {
     setBusy(true);
     const user = await flow.currentUser();
     if (user && emailBookingReturnRoute && !['forgot','verify-email'].includes(initialRoute)) {
+      navigating = true;
       window.location.replace(new URL(emailBookingReturnRoute,window.location.href).href);
       return;
     }
@@ -317,7 +322,15 @@ async function initialize() {
       notice.hidden = false;
       notice.textContent = 'Account services could not load. Please refresh the page or try again shortly.';
     } else announce('We could not restore your session. Please sign in again.', 'info');
-  } finally { setBusy(false); }
+  } finally {
+    setBusy(false);
+    if (!navigating) {
+      // Reveal exactly one resolved screen; while checking, only the loader
+      // is visible, never a misleading Login form for signed-in members.
+      if (flow) notice.hidden = true;
+      document.body.classList.remove('auth-pending');
+    }
+  }
 }
 
 const timer = setInterval(updateResend, 1000);
