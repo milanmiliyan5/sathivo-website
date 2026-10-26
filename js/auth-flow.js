@@ -112,7 +112,7 @@ export function createAuthFlow({ auth, recoveryAuth, enabled, clock = Date.now }
     getChallenge: () => challenge && { ...challenge },
     resendSeconds: () => Math.max(0, Math.ceil((resendAt - clock()) / 1000)),
     deferEmailRequests,
-    async signup({ name, email, password, confirmation, gender, adult, boundaries }) {
+    async signup({ name, email, password, confirmation, gender, adult, boundaries, nearbyEmail }) {
       requireEnabled();
       requireSendWindow();
       const displayName = String(name ?? '').trim();
@@ -132,6 +132,9 @@ export function createAuthFlow({ auth, recoveryAuth, enabled, clock = Date.now }
           // A self-declaration, never an age/identity verification or permission.
           adult_declaration: true,
           community_rules_version: '2026-09-08',
+          // Optional, explicitly unchecked-by-default signup consent.
+          // Activated only after the member saves a location in My Profile.
+          nearby_email_opt_in: nearbyEmail === true,
         } },
       }), 'signup'); }
       catch (error) {
