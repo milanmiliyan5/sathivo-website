@@ -10,10 +10,10 @@
   <title>Your account — Sathivo</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="stylesheet" href="styles.css">
-  <link rel="stylesheet" href="account.css?v=20261012-1">
-  <script type="module" src="js/account-page.js?v=20261027-nearbyconsent-1"></script>
+  <link rel="stylesheet" href="account.css?v=20261027-authflash-1">
+  <script type="module" src="js/account-page.js?v=20261027-authflash-1"></script>
 <link rel="stylesheet" href="responsive.css?v=20261025-polish-1"><script type="module" src="js/mobile-nav.js?v=20261025-polish-1"></script><script type="module" src="js/header-requests.js?v=20261025-polish-1"></script><script type="module" src="js/header-notifications.js?v=20261025-polish-1"></script><script type="module" src="js/push-settings.js?v=20261025-polish-1"></script><script type="module" src="js/site-presence.js?v=20261025-tracking-1"></script><link rel="stylesheet" href="site-2d.css?v=20261018-alerts-1"><script src="js/site-motion.js?v=20261006-1" defer></script><link rel="stylesheet" href="nearby-alert-settings.css?v=20261027-1"><script type="module" src="js/nearby-alert-settings.js?v=20261027-defaultsite-1"></script></head>
-<body class="account-page sathivo-2d">
+<body class="account-page sathivo-2d auth-pending">
   <a class="skip-link" href="#account-main">Skip to account</a>
   <header class="site-header"><div class="container account-nav">
     <a class="brand" href="./" aria-label="Sathivo home"><span class="brand-mark" aria-hidden="true">♡</span>sathivo<span class="brand-period">.</span></a>
@@ -28,7 +28,7 @@
       <div class="account-assurance"><span>18+ only</span><span>Strictly platonic</span><span>Made for India</span></div>
     </aside>
     <section class="account-card" aria-label="Your Sathivo account">
-      <div id="launch-notice" class="account-notice" role="status"><strong>Getting your account ready…</strong><p>Please wait while account services load.</p></div>
+      <div id="launch-notice" class="account-notice account-loading-notice" role="status" aria-live="polite"><span class="account-loading-spinner" aria-hidden="true"></span><div><strong>Opening your Sathivo account…</strong><p>Securely checking your sign-in status.</p></div></div>
       <noscript><div class="account-notice">Please enable JavaScript to use account features. You can still <a href="./">explore Sathivo</a>.</div></noscript>
       <div id="account-tabs" class="account-tabs" aria-label="Account options"><a href="#login" data-route="login" aria-current="page">Sign in</a><a href="#signup" data-route="signup">Create account</a></div>
       <p id="account-status" class="account-status" role="status" aria-live="polite" aria-atomic="true" tabindex="-1"></p>
