@@ -63,7 +63,17 @@ test('signup uses email and password; metadata grants no role or verified age', 
   assert.equal(calls[0].method, 'signUp');
   assert.equal(calls[0].args.email, user.email);
   assert.equal(calls[0].args.password, password);
-  assert.deepEqual(calls[0].args.options.data, { display_name: 'Asha', gender: 'female', adult_declaration: true, community_rules_version: '2026-09-08' });
+  assert.deepEqual(calls[0].args.options.data, { display_name: 'Asha', gender: 'female', adult_declaration: true, community_rules_version: '2026-09-08', nearby_email_opt_in: false });
+});
+
+test('nearby promotional email permission is never enabled without explicit signup consent', async () => {
+  const withoutConsent = setup();
+  await withoutConsent.flow.signup(validSignup);
+  assert.equal(withoutConsent.calls[0].args.options.data.nearby_email_opt_in, false);
+
+  const withConsent = setup();
+  await withConsent.flow.signup({ ...validSignup, nearbyEmail: true });
+  assert.equal(withConsent.calls[0].args.options.data.nearby_email_opt_in, true);
 });
 
 test('unexpected automatic email confirmation does not enter the account screen', async () => {
