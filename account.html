@@ -54,6 +54,8 @@
           <label for="signup-confirmation">Confirm password</label><input id="signup-confirmation" name="confirmation" type="password" autocomplete="new-password" minlength="12" maxlength="128" required>
           <label class="check-label"><input type="checkbox" name="adult" required><span>I confirm that I am 18 years or older.</span></label>
           <label class="check-label"><input type="checkbox" name="boundaries" required><span>I agree to the <a href="terms.html" class="form-link">Terms</a> and <a href="safety.html" class="form-link">Safety & Community Guidelines</a>, and I have read the <a href="privacy.html" class="form-link">Privacy Policy</a>.</span></label>
+          <p class="field-hint">Nearby website alerts are ON by default once you save your city in My Profile. You can switch them OFF anytime in Account or Notifications.</p>
+          <label class="check-label"><input type="checkbox" name="nearby_email_opt_in"><span><strong>Optional:</strong> Email me when new public Sathivo companions join my city (maximum one nearby email per day). I can unsubscribe anytime. This box is not required.</span></label>
           <button class="button button-primary form-submit" type="submit" data-email-send aria-describedby="signup-send-wait">Create account <span aria-hidden="true">↗</span></button>
         </fieldset></form>
         <p class="field-hint" id="signup-send-wait" data-email-countdown></p>
@@ -144,7 +146,7 @@
   <p>Get optional updates when a <strong>new public companion profile</strong> is published in your saved city. Customer profiles stay private.</p>
   <p class="nearby-location" data-nearby-location></p>
   <form data-nearby-form hidden>
-    <label class="nearby-choice"><input type="checkbox" name="in_app_enabled"><span><strong>Website notifications</strong><small>See new local companion profiles in your Sathivo notifications.</small></span></label>
+    <label class="nearby-choice"><input type="checkbox" name="in_app_enabled"><span><strong>Website notifications (ON by default)</strong><small>See newly published local companion profiles in Sathivo. Untick and save to stop.</small></span></label>
     <label class="nearby-choice"><input type="checkbox" name="email_enabled"><span><strong>Email updates (max 1 per day)</strong><small>Get an email when a new local public companion joins. You can turn this off any time.</small></span></label>
     <button type="submit" class="button button-primary">Save nearby alert settings</button>
   </form>
