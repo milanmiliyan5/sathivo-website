@@ -128,3 +128,15 @@
 @media(max-width:380px){
   .account-activity-grid{grid-template-columns:1fr}
 }
+
+/* Keep sign-in/signup panels hidden until Supabase has checked the session.
+   Avoid flashing the login form for returning signed-in members. */
+.account-page.auth-pending #account-tabs,
+.account-page.auth-pending [data-panel]{display:none!important}
+.account-loading-notice{display:flex;align-items:center;gap:15px;min-height:85px}
+.account-loading-notice[hidden]{display:none!important}
+.account-loading-notice strong{margin-bottom:4px}
+.account-loading-notice p{margin:0;line-height:1.5}
+.account-loading-spinner{display:inline-block;flex:none;width:27px;height:27px;border-radius:50%;border:3px solid #ecd7e0;border-top-color:#a73c75;animation:sathivo-account-spin .8s linear infinite}
+@keyframes sathivo-account-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.account-loading-spinner{animation:none}}
