@@ -47,6 +47,13 @@ export async function setupPublishing({client,user,isDirty}) {
   const saved=await client.from('companion_listings').upsert(row,{onConflict:'user_id'}).select('public_id').single();
   if(saved.error)throw Error('Listing remains hidden. Could not publish; try again.');
   $('publish-consent').checked=false;await refresh();
+  // Matching and in-app notices are created atomically by the database.
+  // Nearby emails are opt-in, at most one per recipient per day, and never
+  // block an otherwise successful companion publication.
+  if(saved.data?.public_id){
+   void client.functions.invoke('send-nearby-email',{body:{public_id:saved.data.public_id}})
+    .catch(()=>{ /* Email is optional; publication already succeeded. */ });
+  }
  });}
  publish.addEventListener('click',()=>void publishSavedProfile());
  hide.addEventListener('click',()=>void run(async()=>{
