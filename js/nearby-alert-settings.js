@@ -12,6 +12,9 @@ async function setup(box){
  const button=form.querySelector('button[type="submit"]');
  const location=box.querySelector('[data-nearby-location]');
  form.hidden=true;
+ location.textContent='';
+ box.querySelector('[data-nearby-signin]').hidden=true;
+ box.querySelector('[data-nearby-profile]').hidden=true;
  feedback(box,'Loading nearby alert settings…');
  if(!user){
   feedback(box,'Sign in to choose your nearby alerts. No nearby alerts are enabled automatically.');
@@ -36,7 +39,7 @@ async function setup(box){
  email.checked=!!prefs.data?.email_enabled;
  form.hidden=false;
  feedback(box,'Both alerts are optional and off unless you enable them.');
- form.addEventListener('submit',async e=>{
+ form.onsubmit=async e=>{
   e.preventDefault();button.disabled=true;feedback(box,'Saving your choices…');
   try{
    const result=await client.auth.getUser();
@@ -51,7 +54,7 @@ async function setup(box){
    feedback(box,(inApp.checked||email.checked)?'Saved! Nearby alerts are enabled as selected. Future new public companion profiles in your city can trigger updates.':'Saved! Both nearby alerts are OFF.');
   }catch(err){feedback(box,err.message||'Could not save alerts. Try again.',true)}
   finally{button.disabled=false}
- });
+ };
 }
 async function init(){
  if(!boxes.length)return;
@@ -60,6 +63,13 @@ async function init(){
   const {data,error}=await client.auth.getUser();
   if(error)throw error;user=data.user||null;
   await Promise.all(boxes.map(setup));
+  client.auth.onAuthStateChange((event,session)=>{
+   if(event!=='SIGNED_IN'&&event!=='SIGNED_OUT')return;
+   user=session?.user||null;
+   // Defer Supabase queries until its auth-state callback has completed.
+   Promise.resolve().then(()=>Promise.all(boxes.map(setup)))
+    .catch(e=>boxes.forEach(box=>feedback(box,e.message||'Could not refresh nearby settings.',true)));
+  });
  }catch(e){boxes.forEach(box=>feedback(box,e.message||'Nearby settings unavailable. Refresh to retry.',true))}
 }
 void init();
