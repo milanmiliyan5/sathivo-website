@@ -17,7 +17,7 @@ async function setup(box){
  box.querySelector('[data-nearby-profile]').hidden=true;
  feedback(box,'Loading nearby alert settings…');
  if(!user){
-  feedback(box,'Sign in to choose your nearby alerts. No nearby alerts are enabled automatically.');
+  feedback(box,'Sign in to manage nearby alerts. Website alerts are ON by default after you save your location; email alerts require your permission.');
   box.querySelector('[data-nearby-signin]').hidden=false;
   return;
  }
@@ -28,17 +28,17 @@ async function setup(box){
  if(profile.error||prefs.error)throw Error('Could not load nearby alert preferences.');
  const p=profile.data;
  if(!p?.city_name||!p?.location_id||!p.adult_confirmed||!p.boundaries_accepted){
-  feedback(box,'Save your city, state and district in My Profile first. Nearby alerts are OFF until you choose to enable them.');
+  feedback(box,'Save your city, state and district in My Profile first. Website alerts are ON by default when your location is saved; email alerts are OFF unless you opt in.');
   box.querySelector('[data-nearby-profile]').hidden=false;
   return;
  }
  const {data:region,error:regionError}=await client.from('profile_locations').select('state,district').eq('id',p.location_id).maybeSingle();
  if(regionError||!region)throw Error('Could not read your saved city.');
  location.textContent='Matching: '+p.city_name+', '+region.district+', '+region.state;
- inApp.checked=!!prefs.data?.in_app_enabled;
+ inApp.checked=prefs.data?.in_app_enabled ?? true;
  email.checked=!!prefs.data?.email_enabled;
  form.hidden=false;
- feedback(box,'Both alerts are optional and off unless you enable them.');
+ feedback(box,'Website alerts are ON by default. Email alerts stay OFF unless you opt in. Uncheck either box and save to turn it off.');
  form.onsubmit=async e=>{
   e.preventDefault();button.disabled=true;feedback(box,'Saving your choices…');
   try{
