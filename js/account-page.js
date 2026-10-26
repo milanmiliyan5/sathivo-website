@@ -169,7 +169,7 @@ bindForm('#login-form', async values => {
 }, 'Signing you in…');
 
 bindForm('#signup-form', async values => {
-  const result = await flow.signup({ ...values, gender: values.gender, adult: values.adult === 'on', boundaries: values.boundaries === 'on' });
+  const result = await flow.signup({ ...values, gender: values.gender, adult: values.adult === 'on', boundaries: values.boundaries === 'on', nearbyEmail: values.nearby_email_opt_in === 'on' });
   if (result.kind === 'sign-in') {
     document.querySelector('#login-email').value = result.email;
     showPanel('login');
