@@ -1,3 +1,4 @@
+import {withCurrentBookingNames} from './booking-name-sync.js?v=20261030-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 const $=id=>document.getElementById(id);
 let client,user,messageChannel,bookingChannel;
@@ -22,7 +23,7 @@ function skeletons(){
 async function load(){
  $('empty').hidden=true;$('chats').replaceChildren(...skeletons());$('status').textContent='Loading chats…';
  const {data,error}=await client.rpc('get_chat_list');if(error)throw error;
- const rows=data||[];$('chats').replaceChildren(...rows.map(card));$('empty').hidden=rows.length>0;$('status').textContent=rows.length?rows.length+' chat'+(rows.length===1?'':'s'):'';
+ const rows=await withCurrentBookingNames(client,data||[]);$('chats').replaceChildren(...rows.map(card));$('empty').hidden=rows.length>0;$('status').textContent=rows.length?rows.length+' chat'+(rows.length===1?'':'s'):'';
 }
 async function init(){try{
  
