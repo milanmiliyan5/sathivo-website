@@ -1,3 +1,4 @@
+import {withCurrentBookingNames} from './booking-name-sync.js?v=20261030-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendMessagePush} from './push-events.js?v=20261004-2';
 import {compressImageFile,formatBytes} from './image-compress.js?v=20261006-1';
@@ -192,7 +193,7 @@ function syncComposer(){
 }
 async function loadBooking(){
  const {data,error}=await client.from('booking_requests').select('*').eq('id',booking.id).single();if(error)throw error;
- booking=data;otherId=user.id===booking.customer_id?booking.companion_id:booking.customer_id;
+ booking=(await withCurrentBookingNames(client,[data]))[0];otherId=user.id===booking.customer_id?booking.companion_id:booking.customer_id;
  const other=user.id===booking.customer_id?booking.companion_display_name:booking.customer_display_name;
  $('chat-title').textContent=other||'Sathivo chat';
  const initial=String(other||'S').trim().charAt(0).toLocaleUpperCase('en-IN')||'S';
