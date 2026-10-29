@@ -1,3 +1,4 @@
+import {withCurrentBookingNames} from './booking-name-sync.js?v=20261030-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
 import {askCancellationReason,cancellationLabel} from './booking-cancel.js?v=20261006-1';
@@ -76,7 +77,7 @@ function render(){
   $('status').textContent='This booking was not found in your account. Please sign in with the account linked to the booking.';
  }
 }
-async function load(){const {data,error}=await client.from('booking_requests').select('*').order('created_at',{ascending:false});if(error)throw error;rows=data||[];$('filters').hidden=false;render()}
+async function load(){const {data,error}=await client.from('booking_requests').select('*').order('created_at',{ascending:false});if(error)throw error;rows=await withCurrentBookingNames(client,data||[]);$('filters').hidden=false;render()}
 async function cancelBooking(r){const answer=await askCancellationReason();if(!answer)return;await update(r.id,'cancelled',{cancel_reason:answer.reason,cancel_note:answer.note||null})}
 async function update(id,status,extra={}){$('status').textContent='Updating…';const {error}=await client.from('booking_requests').update({status,...extra}).eq('id',id);if(error){$('status').textContent=error.message;return}if(['cancelled','completed'].includes(status)){ $('status').textContent='Sending notification…';await sendBookingPush(client,id,status)}await load()}
 async function submitReview(r,form){const rating=Number(form.querySelector('select').value),comment=form.querySelector('textarea').value.trim();const {error}=await client.from('booking_reviews').insert({booking_id:r.id,reviewer_id:user.id,companion_id:r.companion_id,rating,comment});if(error){$('status').textContent=error.code==='23505'?'You already reviewed this booking.':error.message;return}form.replaceWith(el('p','Thanks for your review.','launch-note'))}
