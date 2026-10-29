@@ -100,10 +100,17 @@ async function refreshAccountActions(user) {
   try {
     const { data, error } = await appClient
       .from('member_profiles')
-      .select('profile_kind')
+      .select('profile_kind,display_name')
       .eq('user_id', user.id)
       .maybeSingle();
-    if (!error && ['companion', 'both'].includes(data?.profile_kind)) incoming.hidden = false;
+    if (error) return;
+    // Read the canonical profile name, not potentially stale signup metadata.
+    // A profile edit from Android is now reflected on the website account page.
+    if (activePanel === 'account' && appClient.auth.currentUser?.id === user.id) {
+      const latestName = typeof data?.display_name === 'string' ? data.display_name.trim() : '';
+      if (latestName) document.querySelector('#account-name').textContent = latestName;
+    }
+    if (['companion', 'both'].includes(data?.profile_kind)) incoming.hidden = false;
   } catch {}
 }
 
