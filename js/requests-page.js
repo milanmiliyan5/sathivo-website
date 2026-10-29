@@ -1,3 +1,4 @@
+import {withCurrentBookingNames} from './booking-name-sync.js?v=20261030-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
 import {sendBookingEmail} from './booking-email-events.js?v=20261017-1';
@@ -53,7 +54,7 @@ async function load(){
  $('requests').replaceChildren(...Array.from({length:3},()=>{const n=el('article',undefined,'booking-card request-skeleton');n.innerHTML='<div class="request-identity"><span class="skeleton-dot"></span><div class="skeleton-lines"><i></i><i></i></div></div>';return n}));
  const {data,error}=await client.from('booking_requests').select('*').eq('companion_id',user.id).order('created_at',{ascending:false});
  if(error)throw error;
- rows=data||[];
+ rows=await withCurrentBookingNames(client,data||[]);
  if(linkedRequestId&&!linkedRequestChecked){
   linkedRequestChecked=true;
   const requested=rows.find(r=>r.id===linkedRequestId);
