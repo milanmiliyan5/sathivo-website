@@ -106,7 +106,7 @@ async function refreshAccountActions(user) {
     if (error) return;
     // Read the canonical profile name, not potentially stale signup metadata.
     // A profile edit from Android is now reflected on the website account page.
-    if (activePanel === 'account' && appClient.auth.currentUser?.id === user.id) {
+    if (activePanel === 'account' && document.querySelector('#account-email').textContent === (user.email ?? '')) {
       const latestName = typeof data?.display_name === 'string' ? data.display_name.trim() : '';
       if (latestName) document.querySelector('#account-name').textContent = latestName;
     }
