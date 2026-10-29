@@ -34,12 +34,12 @@ test('booking and chat display latest names without modifying booking records', 
       booking_id: 'booking-1',
       customer_id: 'customer-1',
       companion_id: 'companion-1',
-      customer_display_name: 'Dipu Panda',
+      customer_display_name: 'Updated Customer',
       companion_display_name: 'Updated Companion',
     }], error: null };
   } };
   const result = await withCurrentBookingNames(client, original);
-  assert.equal(result[0].customer_display_name, 'Dipu Panda');
+  assert.equal(result[0].customer_display_name, 'Updated Customer');
   assert.equal(result[0].companion_display_name, 'Updated Companion');
   assert.equal(result[1].other_display_name, 'Updated Companion');
   assert.equal(original[0].customer_display_name, 'Old customer');
