@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>Sathivo — Official Email Signature</title>
+<style>body{margin:0;background:#fff6fa;color:#322030;font:15px Arial,Helvetica,sans-serif;padding:42px 16px}.wrap{max-width:690px;margin:auto}.intro h1{font-size:25px;margin-bottom:7px}.intro p,.note{color:#6d5e68;line-height:1.6}.paper{margin:22px 0;background:white;padding:25px;border-radius:15px;box-shadow:0 12px 36px #68334c1c}.action{display:flex;gap:9px;flex-wrap:wrap}button{padding:12px 16px;border-radius:10px;border:0;background:#8e3655;color:white;font-weight:bold;cursor:pointer}.sub{background:#efdfeb;color:#74304a}.msg{min-height:22px;color:#247345;font-weight:bold;margin-top:13px}.note{font-size:13px}</style></head>
+<body><div class="wrap"><div class="intro"><h1>💗 Sathivo Email Signature</h1><p>Official branded signature for Sathivo Support Team. Pick static or animated, then copy into Gmail.</p></div>
+<div class="paper"><div id="signature">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="font-family:Arial,Helvetica,sans-serif;border-collapse:collapse;width:100%;max-width:520px;color:#31212f">
+<tr><td style="border-left:3px solid #8e3655;padding:12px 0 10px 14px;vertical-align:top">
+<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse"><tr>
+<td style="vertical-align:top;padding:2px 12px 0 0"><a href="https://sathivo.co/" target="_blank" style="text-decoration:none"><img src="https://sathivo.co/assets/sathivo-email-logo.png" alt="Sathivo" width="62" height="62" style="width:62px;height:62px;border:0;border-radius:15px;display:block"></a></td>
+<td style="vertical-align:middle"><div style="font-size:22px;line-height:27px;font-weight:700;color:#33202f">Sathivo <img id="heartGif" src="https://sathivo.co/assets/sathivo-email-heart.gif" alt="" width="18" height="18" style="display:none;width:18px;height:18px;vertical-align:middle;border:0"></div><div style="font-size:11px;line-height:18px;font-weight:700;letter-spacing:1.4px;color:#8e3655">SUPPORT TEAM</div></td>
+</tr></table>
+<div style="height:1px;line-height:1px;font-size:1px;background:#eadce5;margin:11px 0 9px 0">&nbsp;</div>
+<div style="font-size:12px;line-height:19px;color:#685765">Meaningful connections. Strictly platonic.</div>
+<div style="padding-top:8px;font-size:13px;line-height:20px;font-weight:700"><a href="https://sathivo.co/" target="_blank" style="color:#a42f60;text-decoration:none">sathivo.co</a></div>
+<div style="padding-top:5px;font-size:10px;line-height:16px;color:#8b7d88">18+ only &nbsp;&bull;&nbsp; Free platform &nbsp;&bull;&nbsp; India</div>
+</td></tr></table></div></div>
+<div class="action"><button type="button" onclick="copySig()">Copy Signature</button><button type="button" class="sub" id="animate" onclick="toggleHeart()">Add animated heart GIF</button></div><div id="msg" class="msg" aria-live="polite"></div>
+<p class="note"><b>Gmail:</b> Settings → See all settings → General → Signature → Create new. Paste this signature, select it for new emails and replies, then Save Changes.</p>
+<p class="note">Remote images may require the recipient to allow images. Animated GIFs are optional; some email apps show only a static first frame.</p>
+</div><script>
+let animated=false;
+function toggleHeart(){animated=!animated;document.getElementById('heartGif').style.display=animated?'inline-block':'none';document.getElementById('animate').textContent=animated?'Use static version':'Add animated heart GIF';document.getElementById('msg').textContent=animated?'Animated heart selected. Copy the signature to use it.':'Static signature selected.'}
+function copySig(){const el=document.getElementById('signature'),range=document.createRange(),selection=window.getSelection();range.selectNodeContents(el);selection.removeAllRanges();selection.addRange(range);let copied=false;try{copied=document.execCommand('copy')}catch(e){}document.getElementById('msg').textContent=copied?'Signature copied! Paste into Gmail settings.':'Select the signature and press Ctrl+C, then paste into Gmail settings.';selection.removeAllRanges()}
+</script></body></html>
