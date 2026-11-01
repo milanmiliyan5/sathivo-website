@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plan a Platonic Meetup: Hourly Cost & Safety Checklist | Sathivo</title>
+<meta name="description" content="Use Sathivo's free, private meetup planning tool to estimate an hourly companion offer, transport, tickets and other costs; then check your safety plan before sending a request.">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<link rel="canonical" href="https://sathivo.co/meetup-planner.html">
+<link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="guides.css?v=20261014-1">
+<style>
+.plan-card{margin:22px 0 30px;padding:clamp(18px,4vw,30px);border:1px solid #e7d3dd;background:#fff;border-radius:20px;box-shadow:0 10px 32px #5528440b}
+.plan-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.plan-field label{display:block;margin-bottom:7px;font-size:.9rem;font-weight:700;color:#4d2440}
+.plan-field input,.plan-field select{display:block;width:100%;min-height:46px;border:1px solid #cfbcc5;border-radius:10px;padding:10px 13px;background:white;color:#322330;font:inherit}
+.plan-field input:focus-visible,.plan-field select:focus-visible{outline:3px solid #c56b91;outline-offset:2px}
+.plan-field small{display:block;margin:6px 0;color:#6f6570;line-height:1.5}
+.plan-output{padding:19px 21px;background:#fbf3f6;border-radius:16px;margin:22px 0;border:1px solid #e8d4de}
+.plan-output strong{font-size:clamp(1.8rem,6vw,2.8rem);color:#682951;display:block;margin:5px 0}
+.plan-output p,.plan-output small{line-height:1.7}
+.plan-breakdown{margin:13px 0 0;display:grid;gap:8px}
+.plan-breakdown div{display:flex;justify-content:space-between;gap:16px}
+.plan-check{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid #f0e5eb}
+.plan-check input{width:18px;height:18px;margin-top:4px;accent-color:#a94471;flex:0 0 auto}
+.plan-check span{line-height:1.55;color:#554651}
+.plan-progress{font-weight:700;padding:14px 0;color:#712b51}
+.plan-fineprint{font-size:.85rem;line-height:1.7;color:#605761}
+.plan-links{display:flex;gap:15px;flex-wrap:wrap}
+@media(max-width:650px){.plan-grid{grid-template-columns:1fr}.plan-card{padding:17px}.plan-output{padding:15px}}
+</style>
+<script defer src="assets/vendor/supabase-2.116.0.js"></script>
+<script type="module" src="js/site-presence.js?v=20261025-tracking-1"></script>
+</head>
+<body>
+<a class="skip-link" href="#main">Skip to content</a>
+<header class="site-header"><nav class="container directory-nav" aria-label="Main"><a class="brand" href="./">♡ sathivo.</a><div class="guide-mini-nav"><a href="./">Home</a><a href="companions.html">Explore</a><a href="booking-guide.html">Booking guide</a><a href="safety.html">Safety</a></div></nav></header>
+<main id="main" class="container guide-wrap">
+ <div class="guide-breadcrumb"><a href="./">Home</a> / <a href="./#guides">Guides & tools</a> / Meetup planner</div>
+ <header class="guide-hero">
+  <p class="guide-kicker">Free planning tool · No sign-in required</p>
+  <h1>Plan the time, cost and safety of a platonic meetup.</h1>
+  <p class="guide-lead">Before asking someone to join you for coffee, a movie or a public outing, make the practical details clear. This tool estimates the cost of your proposed hourly offer and helps you prepare a safer plan. It runs on this page and does not send your inputs to Sathivo.</p>
+  <p class="guide-updated">By Sathivo · Updated 1 November 2026 · For adults 18+ · Strictly platonic</p>
+ </header>
+ <div class="guide-body">
+  <section aria-labelledby="cost-title">
+   <h2 id="cost-title">1. Estimate what your plan could cost</h2>
+   <p>Companions choose their own listed hourly rates. You may offer a different amount in a booking request, but the other person decides whether to accept. An estimate is not an agreement, invoice or reservation. Use the fields below to plan what <em>you</em> might spend.</p>
+   <div class="plan-card">
+    <div class="plan-grid">
+     <div class="plan-field"><label for="rate">Your proposed hourly offer (₹)</label><input id="rate" inputmode="decimal" type="number" min="1" max="100000" step="1" value="300"><small>Example only; this is not a real companion's price.</small></div>
+     <div class="plan-field"><label for="duration">How long is your plan?</label><select id="duration"><option value="30">30 minutes</option><option value="60" selected>1 hour</option><option value="90">1 hour 30 minutes</option><option value="120">2 hours</option><option value="180">3 hours</option></select><small>Only an accepted booking establishes a plan.</small></div>
+     <div class="plan-field"><label for="extras">Your food, tickets or activity budget (₹)</label><input id="extras" inputmode="decimal" type="number" min="0" max="1000000" step="1" value="200"><small>Include only expenses you expect to pay yourself.</small></div>
+     <div class="plan-field"><label for="travel">Your transport or other costs (₹)</label><input id="travel" inputmode="decimal" type="number" min="0" max="1000000" step="1" value="100"><small>Agree separately before paying another person's expenses.</small></div>
+    </div>
+    <div class="plan-output" aria-live="polite" aria-atomic="true">
+     <span>Illustrative total for your budget</span>
+     <strong id="grand-total">₹600</strong>
+     <div class="plan-breakdown">
+      <div><span>Hourly offer × duration</span><b id="companion-total">₹300</b></div>
+      <div><span>Your planned extra costs</span><b id="extra-total">₹300</b></div>
+      <div><span>Sathivo platform fee (current model)</span><b>₹0</b></div>
+     </div>
+     <p id="calc-message" class="plan-fineprint">This is an estimate, not a payment request. Any companion payment is arranged directly between users outside Sathivo.</p>
+    </div>
+    <p class="plan-fineprint">Illustrative example: an offer of ₹300 per hour for 60 minutes, ₹200 for your food or ticket and ₹100 for travel gives an estimated budget of ₹600. If a request is declined, no booking has been agreed. Prices, travel, food and tickets must be discussed before meeting.</p>
+   </div>
+  </section>
+  <section aria-labelledby="safety-title">
+   <h2 id="safety-title">2. Check your meetup plan before you leave</h2>
+   <p>Tick these items for your own preparation. Nothing is sent to Sathivo and the selections reset when you reload the page. A checklist reduces uncertainty but cannot guarantee anybody's safety.</p>
+   <div class="plan-card">
+    <label class="plan-check"><input type="checkbox" class="safety-step"><span><strong>Public venue:</strong> We chose an open, familiar place rather than a private address or isolated area.</span></label>
+    <label class="plan-check"><input type="checkbox" class="safety-step"><span><strong>Clear boundaries:</strong> We agreed on a strictly platonic activity, approximate duration and ways to end the meeting.</span></label>
+    <label class="plan-check"><input type="checkbox" class="safety-step"><span><strong>Price and extras:</strong> We clarified the agreed hourly rate, travel, tickets and who pays for what.</span></label>
+    <label class="plan-check"><input type="checkbox" class="safety-step"><span><strong>Independent return:</strong> I have enough battery, money and an independent way to get home.</span></label>
+    <label class="plan-check"><input type="checkbox" class="safety-step"><span><strong>Trusted contact:</strong> Someone I trust knows the public meeting location and approximate return time.</span></label>
+    <p id="safety-progress" role="status" class="plan-progress">0 of 5 steps checked</p>
+    <p class="plan-fineprint">Never share OTPs, passwords, UPI PINs, government IDs, your exact home address or sensitive account details. If someone pressures you to break boundaries, decline and report it.</p>
+   </div>
+  </section>
+  <section>
+   <h2>3. Put the estimate into a real request</h2>
+   <p>Browse the <a href="companions.html">published Sathivo listings</a>. Check which experiences, meeting preferences, city or town and hourly rate each person has chosen to display. Choose a realistic date and time, then send a request. If the companion accepts, use the private booking chat to discuss the exact public venue and agreed price. If no suitable profile is available in your area, you can try another location or check again later; Sathivo does not guarantee availability.</p>
+   <p>Do not send money merely because someone claims to represent Sathivo. Sathivo currently charges nothing for joining, creating a profile or sending a booking request, and it does not run an in-platform checkout or autopay system.</p>
+  </section>
+  <section>
+   <h2>4. Important limitations</h2>
+   <p>This calculator assumes the agreed hourly offer scales proportionally with duration, but people may negotiate a different arrangement. It does not predict taxes, cancellation arrangements, transport fares, availability, or whether a companion will accept. Do not use it as financial or legal advice.</p>
+   <p>Sathivo does not verify every person's government identity or age documents. Published profiles are self-described. You must be 18 or older, treat every interaction as strictly platonic, and decide independently whether an arrangement feels right to you.</p>
+  </section>
+  <section>
+   <h2>5. More information</h2>
+   <p>For the exact booking sequence and hourly offer examples, read the <a href="booking-guide.html">booking guide</a>. For public-place planning, consent, privacy and meeting precautions, read the <a href="first-meeting-checklist.html">first-meeting checklist</a>. For the platform rules, open <a href="safety.html">Safety & Guidelines</a>. For a concern about a user or payment claim, use <a href="support.html">Sathivo Support</a>.</p>
+   <div class="plan-links"><a class="button button-primary" href="companions.html">Browse published profiles ↗</a><a class="button button-outline" href="booking-guide.html">Read the full booking guide</a></div>
+  </section>
+ </div>
+</main>
+<footer class="container directory-footer">Sathivo · Adults 18+ · Strictly platonic <div class="footer-legal-inline"><a href="./">Home</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="safety.html">Safety</a><a href="support.html">Support</a></div></footer>
+<script>
+(function(){
+ const ids=['rate','duration','extras','travel'], money=n=>'₹'+Math.round(n).toLocaleString('en-IN');
+ const get=id=>{const v=Number(document.getElementById(id).value);return Number.isFinite(v)&&v>=0?v:NaN};
+ const recalc=()=>{
+  const rate=get('rate'), duration=get('duration'), extras=get('extras'),travel=get('travel');
+  const valid=Number.isInteger(rate)&&rate>=1&&rate<=100000&&[30,60,90,120,180].includes(duration)&&Number.isInteger(extras)&&extras<=1000000&&Number.isInteger(travel)&&travel<=1000000;
+  const fee=rate*duration/60;
+  document.getElementById('companion-total').textContent=valid?money(fee):'—';
+  document.getElementById('extra-total').textContent=valid?money(extras+travel):'—';
+  document.getElementById('grand-total').textContent=valid?money(fee+extras+travel):'Check amounts';
+  document.getElementById('calc-message').textContent=valid?'Estimate only. The companion must accept your offer; all payments are arranged directly between users, not through Sathivo.':'Enter a valid hourly offer (₹1–₹1,00,000) and nonnegative whole-rupee costs.';
+ };
+ ids.forEach(id=>document.getElementById(id).addEventListener('input',recalc));
+ const checks=[...document.querySelectorAll('.safety-step')];
+ checks.forEach(check=>check.addEventListener('change',()=>{
+  const count=checks.filter(x=>x.checked).length;
+  document.getElementById('safety-progress').textContent=count+' of '+checks.length+' steps checked'+(count===checks.length?' — ready to review the plan together':'');
+ }));
+ recalc();
+})();
+</script>
+</body></html>

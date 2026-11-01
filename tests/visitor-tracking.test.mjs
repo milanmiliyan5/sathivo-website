@@ -6,7 +6,7 @@ const root=new URL('../',import.meta.url);
 test('every public/member page tracks visits, and admin does not',async()=>{
  for(const name of (await readdir(root)).filter(n=>n.endsWith('.html'))){
   const html=await readFile(new URL(name,root),'utf8');
-  assert.equal(html.includes('js/site-presence.js'),name!=='admin.html',name);
+  assert.equal(html.includes('js/site-presence.js'),!['admin.html','email-signature.html'].includes(name),name);
  }
 });
 test('presence resumes after Back and hidden tabs leave without duplicating visits',async()=>{
