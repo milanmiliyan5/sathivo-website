@@ -23,6 +23,8 @@ test('original public guides are substantive and linked from homepage',async()=>
 });
 
 test('public discovery is indexable, private UI is noindex, and ad previews stay disabled during review',async()=>{
+  const home=await read('index.html');
+  const sitemap=await read('sitemap.xml');
   const directory=await read('companions.html');
   const chats=await read('chats.html');
   const config=await read('js/ads-config.js');
