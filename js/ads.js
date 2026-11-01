@@ -1,12 +1,7 @@
-import {adsConfig} from './ads-config.js?v=20261006-1';
+import {isAllowedAdPlacement} from './ad-policy.js?v=20261101-quality-1';
+import {adsConfig} from './ads-config.js?v=20261101-quality-1';
 
-const labels={
-  'home-mid':'Home feed',
-  'directory-top':'Companion directory',
-  'directory-inline':'Companion feed',
-  'bookings-top':'Bookings',
-  'booking-confirm':'Booking confirmation'
-};
+const labels={'home-mid':'Home feed'};
 
 function ensureAdStyles(){
   if(document.getElementById('sathivo-ad-styles'))return;
@@ -39,7 +34,6 @@ function renderTestAd(slot){
   const where=labels[slot.dataset.adSlot]||'Sathivo';
   slot.hidden=false;
   slot.classList.add('ad-slot-test');
-  if(slot.dataset.adSlot==='booking-confirm')slot.classList.add('ad-slot-large');
   slot.setAttribute('aria-label','Test advertisement placement');
   slot.replaceChildren();
 
@@ -51,7 +45,7 @@ function renderTestAd(slot){
   body.className='ad-test-body';
 
   const title=document.createElement('strong');
-  title.textContent=slot.dataset.adSlot==='booking-confirm'?'Large advertisement space':'Advertisement space';
+  title.textContent='Advertisement space';
 
   const copy=document.createElement('small');
   copy.textContent=where+' · Preview only — no real ad is being served.';
@@ -68,7 +62,6 @@ function renderLiveAd(slot){
 
   slot.hidden=false;
   slot.classList.remove('ad-slot-test');
-  if(key==='booking-confirm')slot.classList.add('ad-slot-large');
   slot.replaceChildren();
 
   const ins=document.createElement('ins');
@@ -90,6 +83,9 @@ function renderLiveAd(slot){
 
 export function mountAdSlot(slot){
   if(!(slot instanceof HTMLElement)||slot.dataset.adMounted)return;
+  if(!isAllowedAdPlacement(location.pathname,slot.dataset.adSlot)){
+    slot.hidden=true;slot.dataset.adMounted='excluded';return;
+  }
   ensureAdStyles();
   if(!adsConfig.enabled){slot.hidden=true;slot.dataset.adMounted='disabled';return}
   if(adsConfig.testMode){renderTestAd(slot);return}

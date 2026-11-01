@@ -148,9 +148,7 @@ function card(row){
  return n;
 }
 function feedNodes(rows){
- const nodes=[];
- rows.forEach((row,index)=>{nodes.push(card(row));if((index===5||index===13)&&index<rows.length-1){const ad=el('div',undefined,'ad-slot ad-slot-inline');ad.dataset.adSlot='directory-inline';ad.hidden=true;nodes.push(ad);}});
- return nodes;
+ return rows.map(card);
 }
 function sortLabel(){return {newest:'Newest',price_asc:'Price: low to high',price_desc:'Price: high to low',rating:'Top rated'}[$('sort')?.value]||'Newest';}
 async function list(){
