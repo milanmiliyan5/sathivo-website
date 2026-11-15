@@ -8,9 +8,9 @@
   <title>Sathivo Admin Dashboard</title>
   <link rel="icon" href="assets/favicon.svg">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="admin-dashboard.css?v=20261005-6">
+  <link rel="stylesheet" href="admin-dashboard.css?v=20261115-accounts-1">
   <script defer src="assets/vendor/supabase-2.116.0.js"></script>
-  <script type="module" src="js/admin-page.js?v=20261025-tracking-1"></script>
+  <script type="module" src="js/admin-page.js?v=20261115-accounts-1"></script>
 </head>
 <body class="admin-body">
   <div class="admin-app">
@@ -72,6 +72,7 @@
 
             <div class="metric-grid">
               <article class="metric-card"><div class="metric-card-top"><span>Total Accounts</span><span class="metric-icon">U</span></div><strong id="metric-accounts">—</strong><small>All registered accounts</small></article>
+              <button class="metric-card metric-account-today" id="today-accounts-card" type="button" aria-controls="users-section"><span class="metric-card-top"><span>Today’s New Accounts</span><span class="metric-icon" aria-hidden="true">N+</span></span><strong id="metric-accounts-today">—</strong><small>Today · India time · View users</small></button>
               <article class="metric-card"><div class="metric-card-top"><span>Bookings Today</span><span class="metric-icon">T</span></div><strong id="metric-today-bookings">—</strong><small>Today · India time</small></article>
               <article class="metric-card"><div class="metric-card-top"><span>Total Bookings</span><span class="metric-icon">B</span></div><strong id="metric-total-bookings">—</strong><small>All booking requests</small></article>
               <article class="metric-card"><div class="metric-card-top"><span>Today Visitors</span><span class="metric-icon">TD</span></div><strong id="metric-visitors-today">0</strong><small>Unique browsers · India date</small></article>
@@ -104,6 +105,7 @@
               <div><p class="panel-kicker">MEMBERS</p><h2>Users</h2><p id="user-count" class="panel-note"></p></div>
               <div class="filter-row">
                 <label class="search-box"><span>⌕</span><input id="user-search" type="search" placeholder="Search user, Safety ID or internal ID" aria-label="Search users"></label>
+                <select id="user-date-filter" class="filter-select" aria-label="Filter users by registration date"><option value="all">All dates</option><option value="today">Today · India time</option></select>
                 <select id="user-gender-filter" class="filter-select" aria-label="Filter users by gender">
                   <option value="all">All genders</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option><option value="prefer_not_to_say">Prefer not to say</option><option value="unset">Not set</option>
                 </select>

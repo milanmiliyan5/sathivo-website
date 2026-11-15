@@ -1,8 +1,10 @@
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
+import {todayAccounts} from './admin-account-date.js?v=20261115-1';
 const $=id=>document.getElementById(id);
 let client,user,profiles=[],bookings=[],supports=[],reports=[],listings=[],metricsTimer,presenceChannel;
+let registeredUsersAvailable=false,accountRequest=null,accountPoll=null;
 const nf=new Intl.NumberFormat('en-IN');
-const fmt=d=>d?new Intl.DateTimeFormat('en-IN',{dateStyle:'medium'}).format(new Date(d)):'—';
+const fmt=d=>d?new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeZone:'Asia/Kolkata'}).format(new Date(d)):'—';
 const fmtDateTime=d=>d?new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d)):'—';
 
 function node(tag,text,className){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;return n}
@@ -79,15 +81,25 @@ function userRow(p){
   return tr;
 }
 function renderUsers(){
+  const dateFilter=value('user-date-filter');
+  const todays=registeredUsersAvailable?todayAccounts(profiles):null;
+  if(todays===null)$('metric-accounts-today').textContent='—';
+  else metric('metric-accounts-today',todays.length);
+  if(dateFilter==='today'&&todays===null){
+    $('users').replaceChildren(emptyRow(7,'Today’s registered accounts are temporarily unavailable. Refresh to try again.'));
+    $('user-count').textContent='Daily signup count unavailable.';
+    return;
+  }
+  const source=dateFilter==='today'?todays:profiles;
   const q=$('user-search').value.trim().toLowerCase(),gender=value('user-gender-filter'),type=value('user-type-filter');
-  const rows=profiles.filter(p=>{
+  const rows=source.filter(p=>{
     const qOk=!q||includesAny([p.display_name,p.safety_id,p.user_id,p.gender,p.profile_kind],q);
     const g=String(p.gender||'unset'),gOk=gender==='all'||g===gender;
     const tOk=type==='all'||p.profile_kind===type;
     return qOk&&gOk&&tOk;
   });
   $('users').replaceChildren(...(rows.length?rows.map(userRow):[emptyRow(7,'No matching users found.')]));
-  $('user-count').textContent=rows.length+' of '+profiles.length+' registered account'+(profiles.length===1?'':'s')+' shown. '+profiles.filter(p=>!p.has_profile).length+' incomplete profile(s).';
+  $('user-count').textContent=rows.length+' of '+source.length+' registered account'+(source.length===1?'':'s')+(dateFilter==='today'?' today (IST)':'')+' shown. '+source.filter(p=>!p.has_profile).length+' incomplete profile(s).';
 }
 
 function bookingRow(b){
@@ -207,16 +219,37 @@ function renderRecentActivity(){
 
 function renderAll(){renderUsers();renderBookings();renderSupport();renderFeedback();renderReports();renderListings();renderRecentActivity()}
 
+// Both manual refresh and polling share the already-authorized full signup API.
+function fetchRegisteredUsers(){
+  if(!accountRequest)accountRequest=Promise.resolve().then(()=>client.functions.invoke('admin-users-list')).catch(error=>({data:null,error})).finally(()=>{accountRequest=null});
+  return accountRequest;
+}
+async function refreshRegisteredUsers(){
+  if(accountPoll)return accountPoll;
+  accountPoll=(async()=>{
+    const reply=await fetchRegisteredUsers();
+    const users=!reply.error&&Array.isArray(reply.data?.users)?reply.data.users:null;
+    registeredUsersAvailable=users!==null;
+    if(users!==null)profiles=users;
+    renderUsers();renderRecentActivity();
+  })().finally(()=>{accountPoll=null});
+  return accountPoll;
+}
+function refreshLiveMetrics(){
+  if(document.visibilityState!=='visible')return;
+  void loadStats();void refreshRegisteredUsers();
+}
 async function load(){
   const [rr,ll,pp,ss,bb]=await Promise.all([
     client.from('user_reports').select('id,reporter_id,reported_user_id,booking_id,reason,details,status,created_at').order('created_at',{ascending:false}).limit(250),
     client.from('companion_listings').select('user_id,display_name,bio,published,moderation_status,moderation_note').order('display_name').limit(500),
-    client.functions.invoke('admin-users-list'),
+    fetchRegisteredUsers(),
     client.from('support_requests').select('id,email,category,subject,message,status,rating,feedback_type,created_at').order('created_at',{ascending:false}).limit(500),
     client.from('booking_requests').select('id,customer_id,companion_id,category,meeting_mode,requested_for,duration_minutes,status,created_at,customer_display_name,companion_display_name,listed_hourly_rate,offered_hourly_rate,agreed_hourly_rate,cancel_reason,cancel_note,cancelled_by,cancelled_at').order('created_at',{ascending:false}).limit(500)
   ]);
   const failure=[rr,ll,ss,bb].find(x=>x.error);if(failure)throw failure.error;
-  let users=Array.isArray(pp.data?.users)?pp.data.users:null;
+  let users=!pp.error&&Array.isArray(pp.data?.users)?pp.data.users:null;
+  registeredUsersAvailable=users!==null;
   if(!users){
     const fallback=await client.from('member_profiles')
       .select('user_id,display_name,profile_kind,gender,safety_id,joined_at,email_verified_at')
@@ -253,8 +286,19 @@ function initUi(){
   $('sidebar-toggle').addEventListener('click',()=>{const open=!$('admin-sidebar').classList.contains('is-open');$('admin-sidebar').classList.toggle('is-open',open);$('sidebar-backdrop').hidden=!open;$('sidebar-toggle').setAttribute('aria-expanded',String(open))});
   $('sidebar-backdrop').addEventListener('click',closeSidebar);
   document.querySelectorAll('.sidebar-link').forEach(a=>a.addEventListener('click',()=>{document.querySelectorAll('.sidebar-link').forEach(x=>x.classList.remove('is-active'));a.classList.add('is-active');closeSidebar()}));
+  $('today-accounts-card').addEventListener('click',()=>{
+    $('user-search').value='';
+    $('user-gender-filter').value='all';
+    $('user-type-filter').value='all';
+    $('user-date-filter').value='today';
+    renderUsers();
+    const usersLink=document.querySelector('.sidebar-link[data-section="users-section"]');
+    if(usersLink)usersLink.click();
+    else location.hash='users-section';
+    void refreshRegisteredUsers();
+  });
   const renderBindings=[
-    ['user-search','input',renderUsers],['user-gender-filter','change',renderUsers],['user-type-filter','change',renderUsers],
+    ['user-date-filter','change',renderUsers],['user-search','input',renderUsers],['user-gender-filter','change',renderUsers],['user-type-filter','change',renderUsers],
     ['booking-search','input',renderBookings],['booking-status-filter','change',renderBookings],['booking-mode-filter','change',renderBookings],
     ['support-search','input',renderSupport],['support-status-filter','change',renderSupport],
     ['feedback-search','input',renderFeedback],['feedback-rating-filter','change',renderFeedback],['feedback-status-filter','change',renderFeedback],
@@ -282,7 +326,7 @@ async function init(){
     $('admin-email').textContent=user.email||a.data.role||'Authorized admin';
     $('refresh-dashboard').addEventListener('click',()=>void refreshAll(true));
     await refreshAll(true);startPresence();
-    metricsTimer=setInterval(()=>{if(document.visibilityState==='visible')void loadStats()},10000);
+    metricsTimer=setInterval(refreshLiveMetrics,10000);
   }catch(e){setStatus(e.message||'Could not load admin.')}
 }
 window.addEventListener('pagehide',event=>{
@@ -293,6 +337,6 @@ window.addEventListener('pageshow',event=>{
   if(!event.persisted||!presenceChannel)return;
   void refreshAll(true);updateOnline();
   if(metricsTimer)clearInterval(metricsTimer);
-  metricsTimer=setInterval(()=>{if(document.visibilityState==='visible')void loadStats()},10000);
+  metricsTimer=setInterval(refreshLiveMetrics,10000);
 });
 void init();
