@@ -47,6 +47,10 @@ export async function setupPublishing({client,user,isDirty}) {
   }
   const saved=await client.from('companion_listings').upsert(row,{onConflict:'user_id'}).select('public_id').single();
   if(saved.error)throw Error('Listing remains hidden. Could not publish; try again.');
+  // Remember an explicit publication choice so the one-time question is not repeated.
+  if(['male','female','other'].includes(p.gender)){
+   try{await client.from('companion_gender_prompt_responses').insert({user_id:user.id,show_gender:!!showGender});}catch{}
+  }
   $('publish-consent').checked=false;await refresh();
   // Matching and in-app notices are created atomically by the database.
   // Nearby emails are opt-in, at most one per recipient per day, and never
