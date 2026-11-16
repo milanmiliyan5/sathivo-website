@@ -37,7 +37,7 @@ test('public directory can initialize filters and profiles without a valid login
  assert.match(source,/getSathivoPublicClient/);
  assert.match(source,/opts\('state',statesAndUTs/);
  assert.match(source,/const \{data,error\}=await publicClient\.from\('profile_locations'\)/);
- assert.match(source,/publicClient\.rpc\('browse_public_companions_v2'/);
+ assert.match(source,/publicClient\.rpc\('browse_public_companions_v3'/);
  assert.match(source,/publicClient\.rpc\('browse_public_city_suggestions'/);
  assert.match(source,/publicClient\.storage\.from\('listing-photos'\)/);
  assert.match(source,/publicClient\.from\('companion_listings'\)/);
