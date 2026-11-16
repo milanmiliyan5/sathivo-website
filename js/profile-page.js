@@ -1,4 +1,4 @@
-import { setupPublishing } from './listing-publish.js?v=20261027-nearby-1';
+import { setupPublishing } from './listing-publish.js?v=20261116-gender-1';
 import {districtsByState,statesAndUTs} from './india-districts.js?v=20261015-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { getSathivoClient } from './supabase-client.js?v=20261025-polish-1';
@@ -155,6 +155,7 @@ function openPublishPrompt(){
   $('publish-prompt-confirm').textContent=alreadyPublic?'Yes, Update My Public Profile ↗':'Yes, Publish My Profile ↗';
   $('publish-prompt-later').textContent=alreadyPublic?'Not Now, Keep Current Listing':'Not Now, Keep It Private';
   $('publish-prompt-consent').checked=false;
+  $('prompt-gender-consent').checked=$('public-gender-consent').checked;
   $('publish-prompt-error').hidden=true;
   $('publish-prompt-error').textContent='';
   if(!dialog.open)dialog.showModal();
@@ -176,7 +177,7 @@ function initPublishPrompt(){
     confirm.disabled=true;$('publish-prompt-later').disabled=true;$('publish-prompt-close').disabled=true;
     error.hidden=true;error.textContent='';
     try{
-      const ok=await publishing.publishSavedProfile({confirmedInPrompt:true});
+      const ok=await publishing.publishSavedProfile({confirmedInPrompt:true,showGender:$('prompt-gender-consent').checked});
       if(ok){dialog.close();message('Your companion profile is now public on Sathivo.');}
       else{error.textContent=$('listing-status').textContent||'Could not publish. Please try again.';error.hidden=false;}
     }catch(e){error.textContent=e.message||'Could not publish. Please try again.';error.hidden=false;}
