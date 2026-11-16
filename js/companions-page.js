@@ -6,7 +6,7 @@ import {openSafetyReport,confirmSafetyBlock} from './safety-actions.js?v=2026101
 import {districtsByState,statesAndUTs,popularIndianCities} from './india-districts.js?v=20261015-1';
 
 const $=id=>document.getElementById(id),directory=!!$('filters');
-const fields='public_id,display_name,bio,location_id,city_name,languages,interests,categories,meeting_mode,availability,hourly_rate,photo_path,safety_id,joined_at,email_verified_at,adult_confirmed,boundaries_accepted';
+const fields='public_id,display_name,bio,location_id,city_name,languages,interests,categories,meeting_mode,availability,hourly_rate,photo_path,safety_id,joined_at,email_verified_at,adult_confirmed,boundaries_accepted,public_gender';
 let client,publicClient,locations=[],locationsLoaded=false,page=0,request=0,currentUser=null,favoriteIds=new Set(),citySuggestionRequest=0,authStarted=false,filtersReady=false;
 
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
@@ -130,8 +130,9 @@ async function shareProfile(row,button){
   prompt('Copy this Sathivo profile link:',url);
  }catch(error){if(error?.name!=='AbortError')prompt('Copy this Sathivo profile link:',url);}
 }
+function namedHeading(tag,row){const heading=el(tag,row.display_name),label={male:'Male',female:'Female',other:'Other'}[row.public_gender];if(label){heading.append(document.createTextNode(' '),el('span',label,'public-gender-chip'));}return heading;}
 function card(row){
- const n=el('article',undefined,'companion-card'),copy=el('div',undefined,'card-copy'),head=el('div',undefined,'card-heading-row'),name=el('h2',row.display_name);
+ const n=el('article',undefined,'companion-card'),copy=el('div',undefined,'card-copy'),head=el('div',undefined,'card-heading-row'),name=namedHeading('h2',row);
  head.append(name,favoriteButton(row));
  copy.append(head,el('p',locationName(row.location_id,row.city_name)),el('strong',rateText(row.hourly_rate),'rate-chip'),el('span',ratingText(row),'rating-line'),trustChips(row,true),tags(row),el('p',row.bio.length>150?row.bio.slice(0,147)+'…':row.bio));
  const actions=el('div',undefined,'card-actions'),link=el('a','Get to know '+row.display_name+' ↗','text-link companion-profile-link'),share=el('button','Share ↗','text-link share-link');
@@ -164,9 +165,10 @@ async function list(){
  const locationIds=selectedLocationIds();
  if(locationIds!==null&&!locationIds.length){$('results').replaceChildren();$('empty').hidden=false;$('status').textContent='No companions in '+scopeName()+' yet.';$('previous').disabled=$('next').disabled=true;$('page-label').textContent='';return;}
  try{
-  const {data,error}=await publicClient.rpc('browse_public_companions_v2',{
+  const {data,error}=await publicClient.rpc('browse_public_companions_v3',{
    p_location_ids:locationIds?.length?locationIds:null,
    p_city:selectedCity()||null,
+   p_gender:$('gender-filter').value||null,
    p_category:$('category').value||null,
    p_mode:$('mode').value||null,
    p_sort:$('sort').value||'newest',
@@ -268,7 +270,7 @@ async function detail(){
   if(error)throw error;if(!r){$('status').textContent='This profile is unavailable or has been hidden by its owner.';return;}
   r.review_count=rating?.review_count||0;r.average_rating=rating?.average_rating||null;
   const copy=el('div',undefined,'detail-copy');copy.append(el('p','GOOD COMPANY, ON YOUR TERMS','eyebrow'));
-  const titleRow=el('div',undefined,'detail-title-row');titleRow.append(el('h1',r.display_name),favoriteButton(r,true));copy.append(titleRow);
+  const titleRow=el('div',undefined,'detail-title-row');titleRow.append(namedHeading('h1',r),favoriteButton(r,true));copy.append(titleRow);
   // Keep the lightweight share action below the name; safety controls live
   // together under Trust & account details so the profile header stays clean.
   const shareRow=el('div',undefined,'profile-actions sathivo-profile-share-row'),share=el('button','Share Profile ↗','sathivo-profile-share-button');
@@ -335,10 +337,10 @@ function setupDirectory(){
   if(e.target.id==='state')districts();
   else if(e.target.id==='district'){$('city').value='';$('city-custom').value='';$('city-custom').hidden=true;void refreshCitySuggestions();}
   else if(e.target.id==='city')syncCitySearch();
-  if(['state','district','city'].includes(e.target.id)){page=0;void list();}
+  if(['state','district','city','gender-filter'].includes(e.target.id)){page=0;void list();}
  };
  $('city-custom').addEventListener('change',()=>{page=0;void list();});
- $('filters').onreset=e=>{e.preventDefault();$('state').value='';districts();$('city-custom').value='';$('category').value=$('mode').value='';$('sort').value='newest';$('saved-only').checked=false;page=0;void list();};
+ $('filters').onreset=e=>{e.preventDefault();$('state').value='';districts();$('city-custom').value='';$('category').value=$('mode').value=$('gender-filter').value='';$('sort').value='newest';$('saved-only').checked=false;page=0;void list();};
  $('saved-only').addEventListener('change',()=>{if($('saved-only').checked&&!currentUser){$('saved-only').checked=false;location.href='account.html#login';return}page=0;void list();});
  $('sort').addEventListener('change',()=>{page=0;void list();});
  $('previous').onclick=()=>{if(page>0){page--;void list();}};

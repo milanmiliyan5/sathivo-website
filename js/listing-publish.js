@@ -4,9 +4,10 @@ export async function setupPublishing({client,user,isDirty}) {
  const panel=$('publication'), status=$('listing-status'), publish=$('publish-listing'), hide=$('hide-listing'), view=$('view-listing');
  panel.hidden=false;let busy=false,listingPublished=false;
  async function refresh(){
-  const {data,error}=await client.from('companion_listings').select('public_id,published').eq('user_id',user.id).maybeSingle();
+  const {data,error}=await client.from('companion_listings').select('public_id,published,public_gender').eq('user_id',user.id).maybeSingle();
   if(error)throw Error('Could not load listing status. Refresh to retry.');
   listingPublished=!!data?.published;
+  $('public-gender-consent').checked=!!data?.public_gender;
   hide.hidden=!listingPublished;view.hidden=!listingPublished;
   status.textContent=data?.published?'Your listing is public.':'Your listing is hidden.';
   if(data?.published)view.href='companion.html?id='+encodeURIComponent(data.public_id);
@@ -16,7 +17,7 @@ export async function setupPublishing({client,user,isDirty}) {
   try{await task();return true;}catch(error){status.textContent=error.message||'Could not update your listing. Try again.';return false;}
   finally{busy=false;publish.disabled=hide.disabled=false;$('fields').disabled=false;if(!$('publish-prompt')?.open)status.focus();}
  }
- async function publishSavedProfile({confirmedInPrompt=false}={}){return run(async()=>{
+ async function publishSavedProfile({confirmedInPrompt=false,showGender=$('public-gender-consent').checked}={}){return run(async()=>{
   if(isDirty())throw Error('Save your profile changes first, then publish.');
   if(!confirmedInPrompt&&!$('publish-consent').checked)throw Error('Confirm that your saved profile details and photo/avatar can be public.');
   status.textContent='Publishing your saved profile…';
@@ -26,7 +27,7 @@ export async function setupPublishing({client,user,isDirty}) {
   if(p.bio.trim().length<20||!p.categories.length)throw Error('Save a bio of at least 20 characters and select at least one category.');
   if(!Number.isInteger(p.hourly_rate)||p.hourly_rate<1||p.hourly_rate>100000)throw Error('Set and save your hourly companionship rate before publishing.');
   if(!p.avatar_path)throw Error('Add a profile photo or choose a Sathivo avatar before publishing.');
-  const row={user_id:user.id,published:true,photo_path:null};
+  const row={user_id:user.id,published:true,photo_path:null,public_gender:showGender&&['male','female','other'].includes(p.gender)?p.gender:null};
   for(const k of ['display_name','bio','location_id','city_name','languages','interests','categories','meeting_mode','availability','hourly_rate'])row[k]=p[k];
   // Hide before replacing the public photo so a failed update cannot expose a new photo on an old listing.
   const hidden=await client.from('companion_listings').update({published:false}).eq('user_id',user.id);

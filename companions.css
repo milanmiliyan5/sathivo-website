@@ -21,3 +21,5 @@
   outline:2px solid #a33b79;
   outline-offset:2px;
 }
+
+.public-gender-chip{display:inline-block;vertical-align:middle;white-space:nowrap;font-size:.72rem;line-height:1.25;font-weight:700;letter-spacing:0;color:#793d5c;background:#f8e6ee;border:1px solid #e3bdcf;border-radius:999px;padding:.22rem .55rem;margin-inline-start:.25rem}
