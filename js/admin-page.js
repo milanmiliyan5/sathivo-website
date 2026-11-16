@@ -1,3 +1,4 @@
+import {runRecovery} from './booking-recovery.js?v=20261116-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {todayAccounts} from './admin-account-date.js?v=20261115-1';
 const $=id=>document.getElementById(id);
@@ -115,10 +116,19 @@ function bookingRow(b){
     td('Price',(()=>{const x=node('div',undefined,'primary-cell');if(b.listed_hourly_rate)x.append(node('strong','Listed ₹'+Number(b.listed_hourly_rate).toLocaleString('en-IN')+'/hr'));if(b.offered_hourly_rate)x.append(node('small','Offer ₹'+Number(b.offered_hourly_rate).toLocaleString('en-IN')+'/hr'));if(b.agreed_hourly_rate)x.append(node('small','Agreed ₹'+Number(b.agreed_hourly_rate).toLocaleString('en-IN')+'/hr'));if(!x.childNodes.length)x.append(node('span','Legacy booking'));return x})()),
     td('Mode',b.meeting_mode==='in-person'?'In person':'Online'),
     td('Requested For',fmtDateTime(b.requested_for)),
-    td('Status',(()=>{const x=node('div',undefined,'primary-cell');x.append(pill(b.status));if(b.status==='cancelled'&&b.cancel_reason)x.append(node('small','Reason: '+String(b.cancel_reason).replaceAll('_',' ')+(b.cancel_note?' · '+b.cancel_note:'')));return x})()),
+    td('Status',(()=>{const x=node('div',undefined,'primary-cell');x.append(pill(b.status));if(b.status==='completed'){const reopen=node('button','Reopen booking','admin-btn');reopen.type='button';reopen.onclick=()=>void adminReopen(b,reopen);x.append(reopen);}if(b.status==='cancelled'&&b.cancel_reason)x.append(node('small','Reason: '+String(b.cancel_reason).replaceAll('_',' ')+(b.cancel_note?' · '+b.cancel_note:'')));return x})()),
     td('Created',fmtDateTime(b.created_at))
   );
   return tr;
+}
+async function adminReopen(b,button){
+ const reason=window.prompt('Reason for correcting this completed booking (5–500 characters):');
+ if(!reason||reason.trim().length<5||reason.trim().length>500)return;
+ if(!window.confirm('Reopen this booking? Both participants will be notified, and your action will be logged.'))return;
+ button.disabled=true;
+ try{await runRecovery(client,b.id,'admin_reopen',reason.trim());await refreshAll(false);setStatus('Booking reopened. Admin action recorded.');}
+ catch(e){setStatus(e.message||'Could not reopen booking.');}
+ finally{button.disabled=false;}
 }
 function renderBookings(){
   const q=$('booking-search').value.trim().toLowerCase(),status=value('booking-status-filter'),mode=value('booking-mode-filter');
