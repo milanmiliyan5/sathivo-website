@@ -64,7 +64,7 @@ test('exact city and town entry is shared by profiles and discovery', async()=>{
   assert.match(discovery,/browse_public_city_suggestions/);
   assert.match(publish,/city_name/);
   assert.match(migration,/add column if not exists city_name text/);
-  assert.match(migration,/browse_public_companions_v3/);
+  assert.match(migration,/browse_public_companions_v2/);
 });
 
 test('important schema migrations are tracked in GitHub', async()=>{

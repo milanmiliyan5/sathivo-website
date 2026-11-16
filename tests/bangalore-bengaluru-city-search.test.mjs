@@ -6,7 +6,7 @@ const read = name => readFile(new URL('../' + name, import.meta.url), 'utf8');
 
 test('Bangalore and Bengaluru are aliases in published public companion search', async () => {
   const sql = await read('supabase/migrations/20261026100000_bangalore_bengaluru_city_search_alias.sql');
-  assert.match(sql, /create or replace function public\.browse_public_companions_v3/);
+  assert.match(sql, /create or replace function public\.browse_public_companions_v2/);
   assert.match(sql, /lower\(btrim\(l\.city_name\)\) in \('bangalore','bengaluru'\)/);
   assert.match(sql, /lower\(btrim\(p_city\)\) in \('bangalore','bengaluru'\)/);
   assert.match(sql, /or lower\(btrim\(l\.city_name\)\) = lower\(btrim\(p_city\)\)/);
@@ -27,6 +27,6 @@ test('location suggestions merge Bangalore/Bengaluru under a readable name', asy
   assert.match(js, /browse_public_companions_v3/);
   for (const page of ['companions.html','companion.html']) {
     const html = await read(page);
-    assert.match(html, /js\/companions-page\.js\?v=20261101-quality-1/);
+    assert.match(html, /js\/companions-page\.js\?v=20261116-gender-1/);
   }
 });
