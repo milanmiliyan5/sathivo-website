@@ -18,7 +18,12 @@ function value(id){return $(id)?.value??'all'}
 function includesAny(values,q){return values.some(v=>String(v??'').toLowerCase().includes(q))}
 function setRefreshing(on){const b=$('refresh-dashboard');if(!b)return;b.classList.toggle('is-loading',on);b.textContent=on?'↻ Refreshing…':'↻ Refresh'}
 
-async function loadStats(){
+let statsRequest=null;
+function loadStats(){
+ if(!statsRequest)statsRequest=fetchStats().finally(()=>{statsRequest=null});
+ return statsRequest;
+}
+async function fetchStats(){
   const {data,error}=await client.functions.invoke('admin-dashboard-stats');
   if(error){$('metrics-updated').textContent='Dashboard refresh failed';return}
   const row=Array.isArray(data)?data[0]:data;
@@ -37,7 +42,7 @@ async function loadStats(){
   metric('metric-published-companions',row.published_companions);
   metric('metric-open-reports',row.open_reports);
   $('gender-note').textContent=nf.format(Number(row.gender_other_or_unset||0))+' account'+(Number(row.gender_other_or_unset||0)===1?'':'s')+' have Other / Prefer not to say / no gender selected. Open support: '+nf.format(Number(row.open_support||0))+'. Declined bookings: '+nf.format(Number(row.declined_bookings||0))+'.';
-  $('metrics-updated').textContent='Updated '+new Intl.DateTimeFormat('en-IN',{hour:'numeric',minute:'2-digit',second:'2-digit'}).format(new Date())+' · auto refresh 10 sec';
+  $('metrics-updated').textContent='Updated '+new Intl.DateTimeFormat('en-IN',{hour:'numeric',minute:'2-digit',second:'2-digit'}).format(new Date())+' · auto refresh 30 sec';
 }
 
 function updateOnline(){if(!presenceChannel)return;metric('metric-online',Object.keys(presenceChannel.presenceState()||{}).length)}
@@ -245,9 +250,14 @@ async function refreshRegisteredUsers(){
   })().finally(()=>{accountPoll=null});
   return accountPoll;
 }
+let lastAccountRefresh=0;
 function refreshLiveMetrics(){
   if(document.visibilityState!=='visible')return;
-  void loadStats();void refreshRegisteredUsers();
+  void loadStats().catch(()=>{});
+  if(Date.now()-lastAccountRefresh>=60000){
+   lastAccountRefresh=Date.now();
+   void refreshRegisteredUsers().catch(()=>{});
+  }
 }
 async function load(){
   const [rr,ll,pp,ss,bb]=await Promise.all([
@@ -335,8 +345,9 @@ async function init(){
     if(!a.data)throw Error('This account is not authorized for Sathivo admin. Log out and sign in with the owner account.');
     $('admin-email').textContent=user.email||a.data.role||'Authorized admin';
     $('refresh-dashboard').addEventListener('click',()=>void refreshAll(true));
-    await refreshAll(true);startPresence();
-    metricsTimer=setInterval(refreshLiveMetrics,10000);
+    await refreshAll(true);lastAccountRefresh=Date.now();startPresence();
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshLiveMetrics()});
+    metricsTimer=setInterval(refreshLiveMetrics,30000);
   }catch(e){setStatus(e.message||'Could not load admin.')}
 }
 window.addEventListener('pagehide',event=>{
@@ -347,6 +358,6 @@ window.addEventListener('pageshow',event=>{
   if(!event.persisted||!presenceChannel)return;
   void refreshAll(true);updateOnline();
   if(metricsTimer)clearInterval(metricsTimer);
-  metricsTimer=setInterval(refreshLiveMetrics,10000);
+  metricsTimer=setInterval(refreshLiveMetrics,30000);
 });
 void init();
