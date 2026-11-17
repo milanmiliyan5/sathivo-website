@@ -2,8 +2,8 @@ import {runRecovery} from './booking-recovery.js?v=20261116-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {todayAccounts} from './admin-account-date.js?v=20261115-1';
 const $=id=>document.getElementById(id);
-let client,user,profiles=[],bookings=[],supports=[],reports=[],listings=[],metricsTimer,presenceChannel;
-let registeredUsersAvailable=false,accountRequest=null,accountPoll=null;
+let client,user,profiles=[],bookings=[],supports=[],reports=[],listings=[],presenceChannel;
+let registeredUsersAvailable=false,accountRequest=null;
 const nf=new Intl.NumberFormat('en-IN');
 const fmt=d=>d?new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeZone:'Asia/Kolkata'}).format(new Date(d)):'—';
 const fmtDateTime=d=>d?new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d)):'—';
@@ -16,9 +16,14 @@ function metric(id,value){const n=$(id);if(n)n.textContent=nf.format(Number(valu
 function setStatus(message){$('status').textContent=message||''}
 function value(id){return $(id)?.value??'all'}
 function includesAny(values,q){return values.some(v=>String(v??'').toLowerCase().includes(q))}
-function setRefreshing(on){const b=$('refresh-dashboard');if(!b)return;b.classList.toggle('is-loading',on);b.textContent=on?'↻ Refreshing…':'↻ Refresh'}
+function setRefreshing(on){const b=$('refresh-dashboard');if(!b)return;b.classList.toggle('is-loading',on);b.disabled=on;b.textContent=on?'↻ Refreshing…':'↻ Refresh'}
 
-async function loadStats(){
+let statsRequest=null;
+function loadStats(){
+ if(!statsRequest)statsRequest=fetchStats().finally(()=>{statsRequest=null});
+ return statsRequest;
+}
+async function fetchStats(){
   const {data,error}=await client.functions.invoke('admin-dashboard-stats');
   if(error){$('metrics-updated').textContent='Dashboard refresh failed';return}
   const row=Array.isArray(data)?data[0]:data;
@@ -37,7 +42,7 @@ async function loadStats(){
   metric('metric-published-companions',row.published_companions);
   metric('metric-open-reports',row.open_reports);
   $('gender-note').textContent=nf.format(Number(row.gender_other_or_unset||0))+' account'+(Number(row.gender_other_or_unset||0)===1?'':'s')+' have Other / Prefer not to say / no gender selected. Open support: '+nf.format(Number(row.open_support||0))+'. Declined bookings: '+nf.format(Number(row.declined_bookings||0))+'.';
-  $('metrics-updated').textContent='Updated '+new Intl.DateTimeFormat('en-IN',{hour:'numeric',minute:'2-digit',second:'2-digit'}).format(new Date())+' · auto refresh 10 sec';
+  $('metrics-updated').textContent='Updated '+new Intl.DateTimeFormat('en-IN',{hour:'numeric',minute:'2-digit',second:'2-digit'}).format(new Date())+' · Manual refresh';
 }
 
 function updateOnline(){if(!presenceChannel)return;metric('metric-online',Object.keys(presenceChannel.presenceState()||{}).length)}
@@ -229,25 +234,10 @@ function renderRecentActivity(){
 
 function renderAll(){renderUsers();renderBookings();renderSupport();renderFeedback();renderReports();renderListings();renderRecentActivity()}
 
-// Both manual refresh and polling share the already-authorized full signup API.
+// Initial load and explicit refresh share the authorized full signup API.
 function fetchRegisteredUsers(){
   if(!accountRequest)accountRequest=Promise.resolve().then(()=>client.functions.invoke('admin-users-list')).catch(error=>({data:null,error})).finally(()=>{accountRequest=null});
   return accountRequest;
-}
-async function refreshRegisteredUsers(){
-  if(accountPoll)return accountPoll;
-  accountPoll=(async()=>{
-    const reply=await fetchRegisteredUsers();
-    const users=!reply.error&&Array.isArray(reply.data?.users)?reply.data.users:null;
-    registeredUsersAvailable=users!==null;
-    if(users!==null)profiles=users;
-    renderUsers();renderRecentActivity();
-  })().finally(()=>{accountPoll=null});
-  return accountPoll;
-}
-function refreshLiveMetrics(){
-  if(document.visibilityState!=='visible')return;
-  void loadStats();void refreshRegisteredUsers();
 }
 async function load(){
   const [rr,ll,pp,ss,bb]=await Promise.all([
@@ -305,7 +295,7 @@ function initUi(){
     const usersLink=document.querySelector('.sidebar-link[data-section="users-section"]');
     if(usersLink)usersLink.click();
     else location.hash='users-section';
-    void refreshRegisteredUsers();
+
   });
   const renderBindings=[
     ['user-date-filter','change',renderUsers],['user-search','input',renderUsers],['user-gender-filter','change',renderUsers],['user-type-filter','change',renderUsers],
@@ -318,9 +308,13 @@ function initUi(){
   for(const [id,event,fn] of renderBindings)$(id).addEventListener(event,fn);
 }
 
+let dashboardRequest=null;
 async function refreshAll(showLoading=true){
   if(showLoading)setRefreshing(true);
-  try{await Promise.all([load(),loadStats()])}catch(e){setStatus(e.message||'Could not refresh admin data.')}finally{if(showLoading)setRefreshing(false)}
+  try{
+    if(!dashboardRequest)dashboardRequest=Promise.all([load(),loadStats()]).finally(()=>{dashboardRequest=null});
+    await dashboardRequest;
+  }catch(e){setStatus(e.message||'Could not refresh admin data.')}finally{if(showLoading)setRefreshing(false)}
 }
 
 async function init(){
@@ -336,17 +330,16 @@ async function init(){
     $('admin-email').textContent=user.email||a.data.role||'Authorized admin';
     $('refresh-dashboard').addEventListener('click',()=>void refreshAll(true));
     await refreshAll(true);startPresence();
-    metricsTimer=setInterval(refreshLiveMetrics,10000);
+
   }catch(e){setStatus(e.message||'Could not load admin.')}
 }
 window.addEventListener('pagehide',event=>{
-  if(metricsTimer)clearInterval(metricsTimer);
+
   if(!event.persisted&&presenceChannel&&client)void client.removeChannel(presenceChannel);
 });
 window.addEventListener('pageshow',event=>{
   if(!event.persisted||!presenceChannel)return;
-  void refreshAll(true);updateOnline();
-  if(metricsTimer)clearInterval(metricsTimer);
-  metricsTimer=setInterval(refreshLiveMetrics,10000);
+  updateOnline();
+
 });
 void init();
