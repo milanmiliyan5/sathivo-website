@@ -178,8 +178,8 @@ async function list(){
   });
   if(seq!==request)return;if(error)throw error;
   const all=data||[],rows=all.slice(0,24);$('results').replaceChildren(...feedNodes(rows));$('empty').hidden=rows.length>0;
-  $('status').textContent=rows.length?'Showing '+rows.length+' published companion'+(rows.length===1?'':'s')+' · '+scopeName()+' · '+sortLabel()+'.':'No published companions match these filters yet.';
-  $('previous').disabled=page===0;$('next').disabled=all.length<=24;$('page-label').textContent=rows.length?'Page '+(page+1):'';
+  $('status').textContent=rows.length?'Explore companions · '+scopeName()+' · '+sortLabel()+'.':'No published companions match these filters yet.';
+  $('previous').disabled=page===0;$('next').disabled=all.length<=24;$('page-label').textContent='';
  }catch(error){if(seq!==request)return;$('results').replaceChildren();$('status').textContent='Could not load companions. Please try again.';$('retry').hidden=false;}
 }
 function bookingForm(r){
