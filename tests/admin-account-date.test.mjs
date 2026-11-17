@@ -22,7 +22,7 @@ test('daily card opens date-filtered admin users and refreshes the complete sign
   assert.match(html,/id="metric-accounts-today"/);
   assert.match(html,/id="user-date-filter"/);
   assert.match(js,/client\.functions\.invoke\('admin-users-list'\)/);
-  assert.match(js,/setInterval\(refreshLiveMetrics,10000\)/);
+  assert.match(js,/setInterval\(refreshLiveMetrics,30000\)/);
   assert.match(js,/\$\('user-date-filter'\)\.value='today'/);
   assert.match(js,/registeredUsersAvailable=users!==null/);
   assert.match(js,/if\(todays===null\)/);
