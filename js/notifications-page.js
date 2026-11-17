@@ -7,7 +7,7 @@ const el=(tag,text,className)=>{
  if(className)node.className=className;
  return node;
 };
-const fmt=d=>new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d));
+import {notificationDate,notificationAge} from './notification-time.js?v=20261117-1';
 const uuid='[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
 const linkPattern=new RegExp('^(?:requests\\.html\\?id=|bookings\\.html\\?id=|chat\\.html\\?booking=|companion\\.html\\?id=)'+uuid+'$','i');
 const simpleRoutes=new Set(['requests.html','bookings.html','chats.html']);
@@ -34,9 +34,13 @@ function actionText(r){
  if(link.startsWith('requests.html'))return 'Review Request ↗';
  return 'View Booking ↗';
 }
-function friendlyTime(value){
- try{return fmt(value)}catch{return ''}
+function updateRelativeTimes(){
+ document.querySelectorAll('.notify-card-date[data-created-at]').forEach(t=>{
+  const value=t.dataset.createdAt;
+  t.textContent=[notificationDate(value),notificationAge(value)].filter(Boolean).join(' · ');
+ });
 }
+let timeTicker;
 function updateSummary(){
  const count=$('notify-count');
  count.textContent=unreadTotal>99?'99+':String(unreadTotal);
@@ -85,9 +89,13 @@ function renderCard(r){
   top.append(dot);
  }
  main.append(top,el('p',r.body||'You have a new update.','notify-card-description'));
- const t=el('time',friendlyTime(r.created_at),'notify-card-date');
- t.dateTime=r.created_at;
- main.append(t);
+ const fullDate=notificationDate(r.created_at);
+ if(fullDate){
+  const t=el('time',[fullDate,notificationAge(r.created_at)].join(' · '),'notify-card-date');
+  t.dateTime=r.created_at;
+  t.dataset.createdAt=r.created_at;
+  main.append(t);
+ }
  const actions=el('div',undefined,'notify-card-actions');
  const link=safeLink(r.link);
  if(link){
@@ -163,6 +171,7 @@ async function init(){
   });
   $('mark-all-read').addEventListener('click',()=>void markAllRead());
   await load();
+  timeTicker=setInterval(updateRelativeTimes,60000);
   channel=client.channel('notifications:'+user.id)
    .on('postgres_changes',{event:'*',schema:'public',table:'notifications',filter:'user_id=eq.'+user.id},()=>void load().catch(()=>{}))
    .subscribe();
@@ -171,5 +180,5 @@ async function init(){
   $('status').textContent=error.message||'Could not load notifications.';
  }
 }
-window.addEventListener('pagehide',()=>{if(channel&&client)void client.removeChannel(channel)});
+window.addEventListener('pagehide',()=>{clearInterval(timeTicker);if(channel&&client)void client.removeChannel(channel)});
 void init();
