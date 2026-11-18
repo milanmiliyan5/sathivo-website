@@ -140,3 +140,51 @@
 .account-loading-spinner{display:inline-block;flex:none;width:27px;height:27px;border-radius:50%;border:3px solid #ecd7e0;border-top-color:#a73c75;animation:sathivo-account-spin .8s linear infinite}
 @keyframes sathivo-account-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.account-loading-spinner{animation:none}}
+
+/* My activity — same vertical card layout regardless of unread badges. */
+.account-activity .account-activity-grid {
+  grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;grid-auto-rows:1fr;
+}
+.account-activity-grid > a.activity-card {
+  position:relative;display:flex!important;flex-direction:column;align-items:flex-start;
+  justify-content:flex-start;gap:7px;min-width:0;min-height:144px;padding:14px!important;
+  border:1px solid #d8bac9;border-radius:16px;background:#fff9fb;
+  box-shadow:2px 3px 0 #edd9e2;transition:transform .15s ease,box-shadow .15s ease,background .15s ease;
+}
+.account-activity-grid > a.activity-card[hidden]{display:none!important}
+.account-activity-grid > a.activity-card > .activity-icon {
+  display:grid;place-items:center;flex:0 0 auto;width:42px;height:42px;
+  border:1px solid #eed3e0;border-radius:12px;background:#f5e0ea;color:#873654;
+}
+.activity-icon svg,.activity-arrow {width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+.account-activity-grid > a.activity-card > .activity-arrow {position:absolute;top:15px;right:12px;width:16px;height:16px;color:#a77690}
+.account-activity-grid > a.activity-card > strong {display:block;font-size:.88rem;line-height:1.25;overflow-wrap:normal;margin:2px 0 0;color:var(--ink)}
+.account-activity-grid > a.activity-card > small {display:block;font-size:.72rem;line-height:1.4;color:var(--muted);margin:0;overflow-wrap:normal}
+.account-activity-grid > a.activity-card > .activity-count {
+  position:absolute;top:13px;right:12px;display:grid;place-items:center;
+  min-width:22px;width:auto;height:22px;padding:0 5px;border-radius:999px;
+  border:0;background:#a72f58;color:#fff;font-size:.65rem;line-height:1;font-weight:750;
+}
+.account-activity-grid > a.activity-card > .activity-count[hidden]{display:none!important}
+.activity-card:has(.activity-count:not([hidden])) > .activity-arrow{visibility:hidden}
+.account-activity-grid > a.activity-card:hover {background:#fff2f7;border-color:#bd8fa1;box-shadow:3px 4px 0 #e6c9d7;transform:translateY(-1px)}
+.account-activity-grid > a.activity-card:active {transform:translate(2px,2px)!important;box-shadow:0 1px 0 #e6c9d7!important}
+.account-activity-grid > a.activity-card:focus-visible {outline:2px solid #96385f;outline-offset:3px}
+@media(max-width:600px){
+ .account-activity .account-activity-grid{gap:9px}
+ .account-activity-grid > a.activity-card{padding:11px!important;min-height:142px;border-radius:14px}
+ .account-activity-grid > a.activity-card > strong{font-size:clamp(.72rem,3.5vw,.86rem)}
+ .account-activity-grid > a.activity-card > small{font-size:.69rem}
+ .account-activity-grid > a.activity-card > .activity-icon{width:38px;height:38px}
+ .activity-icon svg{width:23px;height:23px}
+}
+@media(max-width:340px){
+ .account-activity .account-activity-grid{gap:7px}
+ .account-activity-grid > a.activity-card{padding:8px!important}
+ .account-activity-grid > a.activity-card > strong{overflow-wrap:anywhere}
+ .account-activity-grid > a.activity-card > small{overflow-wrap:anywhere}
+ .account-activity-grid > a.activity-card > .activity-count{top:8px;right:7px}
+ .account-activity-grid > a.activity-card > .activity-arrow{top:10px;right:8px}
+}
+@media(max-width:290px){.account-activity .account-activity-grid{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.account-activity-grid > a.activity-card{transition:none}.account-activity-grid > a.activity-card:hover,.account-activity-grid > a.activity-card:active{transform:none!important}}

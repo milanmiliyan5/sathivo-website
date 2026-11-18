@@ -19,9 +19,10 @@ async function init(){
  try{
   const client=await getSathivoClient();
   const u=await client.auth.getUser(),user=u.data.user;if(!user)return;
-  const indicator=placeIndicator();if(!indicator)return;const badge=indicator.querySelector('.request-badge');
+  const indicator=placeIndicator();const activity=document.querySelector('#account-incoming-requests');
+  const indicators=[indicator,activity].filter(Boolean);if(!indicators.length)return;
   let active=true,channel=null;
-  const refresh=async()=>{const {count,error}=await client.from('booking_requests').select('id',{count:'exact',head:true}).eq('companion_id',user.id).eq('status','pending');if(!active||error)return;const n=count||0;badge.textContent=n>99?'99+':String(n);badge.hidden=n===0;indicator.setAttribute('aria-label',n?(String(n)+' incoming request'+(n===1?'':'s')):'Requests, no pending incoming requests')};
+  const refresh=async()=>{const {count,error}=await client.from('booking_requests').select('id',{count:'exact',head:true}).eq('companion_id',user.id).eq('status','pending');if(!active||error)return;const n=count||0;indicators.forEach(link=>{const badge=link.querySelector('.request-badge');if(!badge)return;badge.textContent=n>99?'99+':String(n);badge.hidden=n===0;link.setAttribute('aria-label',n?(String(n)+' incoming request'+(n===1?'':'s')):'Requests, no pending incoming requests')})};
   const queued=createRefreshQueue(refresh);
   function start(){
    active=true;
