@@ -12,7 +12,7 @@ test('internal pages share a compact mobile header with exactly one notification
   assert.equal((header.match(/class="notification-shortcut"/g)||[]).length,1,page);
   assert.equal((header.match(/class="mobile-header-menu"/g)||[]).length,1,page);
   assert.match(header,/mobile-header-panel[\s\S]*?href="bookings.html"/,page);
-  assert.match(html,/mobile-header\.css\?v=20261118-1/,page);
+  assert.match(html,/mobile-header\.css\?v=20261118-hamburger-1/,page);
  }
  assert.doesNotMatch(await read('index.html'),/mobile-header\.css|compact-header/);
 });
@@ -25,4 +25,17 @@ test('requests use a text indicator and mobile layout hides desktop navigation',
  assert.doesNotMatch(js,/createBell|request-bell/);
  assert.match(js,/request-badge/);
  assert.match(js,/booking_requests/);
+});
+
+test('home and internal headers have three hamburger lines and close-state animation',async()=>{
+ const home=await read('index.html');
+ const button=home.match(/<button class="menu-toggle"[^>]*>([\s\S]*?)<\/button>/)[1];
+ assert.equal((button.match(/<span><\/span>/g)||[]).length,3);
+ for(const page of pages){
+  const html=await read(page);
+  const summary=html.match(/<details class="mobile-header-menu"><summary[^>]*>([\s\S]*?)<\/summary>/)[1];
+  assert.equal((summary.match(/class="menu-line menu-line-/g)||[]).length,3,page);
+ }
+ assert.match(await read('home-2d.css'),/menu-toggle\[aria-expanded=true\] > span:nth-child\(2\)\{opacity:0/);
+ assert.match(await read('mobile-header.css'),/mobile-header-menu\[open\] > summary \.menu-line-middle\{opacity:0/);
 });

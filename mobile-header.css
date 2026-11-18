@@ -47,3 +47,13 @@
 
 /* Account has no original desktop Notifications text link; retain access there. */
 @media(min-width:641px){.site-header .account-nav.compact-header > .notification-shortcut{display:inline-flex!important;padding:0!important}}
+
+/* Match the homepage's three-line hamburger and animated close icon. */
+.mobile-header-menu > summary .menu-line{stroke-width:2;transition:transform .2s ease,opacity .16s ease;transform-box:view-box}
+.mobile-header-menu > summary .menu-line-top{transform-origin:12px 6px}
+.mobile-header-menu > summary .menu-line-middle{transform-origin:12px 12px}
+.mobile-header-menu > summary .menu-line-bottom{transform-origin:12px 18px}
+.mobile-header-menu[open] > summary .menu-line-top{transform:translateY(6px) rotate(45deg)}
+.mobile-header-menu[open] > summary .menu-line-middle{opacity:0;transform:scaleX(.2)}
+.mobile-header-menu[open] > summary .menu-line-bottom{transform:translateY(-6px) rotate(-45deg)}
+@media(prefers-reduced-motion:reduce){.mobile-header-menu > summary .menu-line{transition:none}}

@@ -547,3 +547,13 @@ body.home-2d{
 @media(min-width:1021px){
   .home-2d .site-header .nav-wrap > .notification-shortcut {display:none!important}
 }
+
+/* Familiar three-line hamburger with a smooth close transition. */
+@media(max-width:1020px){
+  .home-2d .site-header .menu-toggle{gap:5px;align-items:center}
+  .home-2d .site-header .menu-toggle > span{width:23px;height:2px;border-radius:2px;transition:transform .2s ease,opacity .16s ease}
+  .home-2d .site-header .menu-toggle[aria-expanded=true] > span:first-child{transform:translateY(7px) rotate(45deg)}
+  .home-2d .site-header .menu-toggle[aria-expanded=true] > span:nth-child(2){opacity:0;transform:scaleX(.2)}
+  .home-2d .site-header .menu-toggle[aria-expanded=true] > span:last-child{transform:translateY(-7px) rotate(-45deg)}
+}
+@media(prefers-reduced-motion:reduce){.home-2d .site-header .menu-toggle > span{transition:none}}
