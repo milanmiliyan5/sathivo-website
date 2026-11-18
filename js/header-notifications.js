@@ -5,7 +5,7 @@ function addBadge(link,kind){
  const cls=kind==='chat'?'chat-header-badge':'notification-badge';
  const existing=link.querySelector('.'+cls);
  if(existing)return existing;
- link.classList.add('notification-link');
+ if(!link.classList.contains('notification-shortcut'))link.classList.add('notification-link');
  const badge=document.createElement('span');
  badge.className=cls;
  badge.hidden=true;
@@ -13,24 +13,31 @@ function addBadge(link,kind){
  link.append(badge);
  return badge;
 }
-function mobileNotificationShortcut(){
+function placeNotificationBell(){
  const host=document.querySelector('.site-header .container');
  if(!host)return;
  const previous=host.querySelector('.notification-shortcut');
  if(previous)return previous;
+ const originals=[...host.querySelectorAll('a[href="notifications.html"]')];
  const link=document.createElement('a');
  link.href='notifications.html';
  link.className='notification-shortcut';
  link.setAttribute('aria-label','Notifications');
  link.setAttribute('title','Notifications');
  link.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg>';
- const requestBell=host.querySelector('.request-bell');
- const toggle=host.querySelector('.menu-toggle');
- const nav=host.querySelector('nav');
- if(requestBell)requestBell.after(link);
- else if(toggle)toggle.before(link);
- else if(nav)nav.before(link);
- else host.append(link);
+ if(originals.some(a=>a.getAttribute('aria-current')==='page'))link.setAttribute('aria-current','page');
+ const toggle=host.querySelector(':scope > .menu-toggle');
+ if(toggle)toggle.before(link);else host.append(link);
+ host.classList.add('has-notification-bell');
+ // Existing links remain a no-JS/guest fallback. For signed-in users the
+ // canonical bell is visible at every width. Hide duplicate header links only.
+ for(const a of originals){
+  a.classList.add('notification-header-replaced');
+  a.hidden=true;
+  if(a.parentElement?.tagName==='SPAN'&&a.nextSibling?.nodeType===3){
+   a.nextSibling.textContent=a.nextSibling.textContent.replace(/^\s*·\s*/,' ');
+  }
+ }
  return link;
 }
 async function init(){
@@ -39,9 +46,9 @@ async function init(){
   const u=await client.auth.getUser();
   const user=u.data.user;
   if(!user)return;
-  mobileNotificationShortcut();
+  placeNotificationBell();
   const notificationLinks=[...document.querySelectorAll('a[href="notifications.html"]')]
-   .filter(a=>!a.closest('.mobile-bottom-nav'));
+   .filter(a=>!a.closest('.mobile-bottom-nav')&&!a.classList.contains('notification-header-replaced'));
   const chatLinks=[...document.querySelectorAll('a[href="chats.html"]')]
    .filter(a=>!a.closest('.mobile-bottom-nav'));
   const notificationBadges=notificationLinks.map(a=>addBadge(a,'notification'));

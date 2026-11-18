@@ -356,3 +356,30 @@ input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px soli
 @media(max-width:640px){
  input:not([type=checkbox]):not([type=radio]),select,textarea{font-size:16px!important}
 }
+
+/* Signed-in header: a single notification bell, independent request badges. */
+.site-header .container.has-notification-bell a.notification-header-replaced[hidden]{display:none!important}
+.site-header .container.has-notification-bell>.notification-shortcut{
+ display:inline-flex!important;box-sizing:border-box;align-items:center;justify-content:center;
+ flex:0 0 40px;width:40px;min-width:40px;height:40px;position:relative;
+ padding:0!important;margin:0;border:1px solid #ebcedc;border-radius:12px;
+ background:#fff8fc;color:#713556;order:2;justify-self:end;align-self:center;
+}
+.site-header .container.has-notification-bell>.notification-shortcut:focus-visible{outline:2px solid #a3326b;outline-offset:3px}
+.site-header .container.has-notification-bell>.notification-shortcut[aria-current=page]{background:#fce8f1;color:#a82d64}
+.site-header .container.has-notification-bell>.notification-shortcut .notification-badge{position:absolute;top:-5px;right:-5px;border:2px solid #fff8fc;min-width:20px;height:20px;padding:0 4px;box-sizing:border-box;display:grid;place-items:center}
+.site-header .container.has-notification-bell>.notification-shortcut .notification-badge[hidden]{display:none!important}
+.site-header .header-requests-link{display:inline-flex!important;align-items:center;gap:5px}
+.site-header .header-requests-link .request-badge{position:static;flex:0 0 auto;border:0;min-width:19px;height:19px}
+.site-header .header-requests-link .request-badge[hidden]{display:none!important}
+.site-header .nav-wrap.has-notification-bell>.menu-toggle{order:3}
+@media(max-width:1020px){.home-2d .nav-wrap.has-notification-bell>.notification-shortcut{margin-left:auto}}
+@media(max-width:640px){
+ .site-header .container.has-notification-bell:is(.marketplace-nav,.directory-nav,.profile-nav){display:grid!important;grid-template-columns:minmax(0,1fr) 40px;align-items:center;gap:8px 12px}
+ .site-header .container.has-notification-bell:is(.marketplace-nav,.directory-nav,.profile-nav)>.brand{grid-row:1;grid-column:1;justify-self:start}
+ .site-header .container.has-notification-bell:is(.marketplace-nav,.directory-nav,.profile-nav)>.notification-shortcut{grid-row:1;grid-column:2}
+ .site-header .container.has-notification-bell:is(.marketplace-nav,.directory-nav,.profile-nav)>:is(nav,div,span):not(.notification-shortcut){grid-column:1/-1;grid-row:2;max-width:none;width:100%;justify-content:flex-start}
+ .site-header .container.account-nav.has-notification-bell{gap:6px}
+ .site-header .container.account-nav.has-notification-bell>.account-back{min-width:0}
+ .site-header .container.account-nav.has-notification-bell>.request-bell{width:32px;height:32px;min-width:32px}
+}
