@@ -23,7 +23,7 @@ test('shared browser Supabase client is the only persistent auth client', async(
   assert.match(recovery,/storageKey:\s*['"]sathivo\.recovery\.v1['"]/);
 });
 
-test('all live Edge Function sources are tracked and use the pinned Supabase JS version', async()=>{
+test('all audited website Edge Function sources are tracked and use the pinned Supabase JS version', async()=>{
   const expected=[
     'push-subscription',
     'send-booking-push',
@@ -33,6 +33,10 @@ test('all live Edge Function sources are tracked and use the pinned Supabase JS 
     'submit-support',
     'delete-my-account',
     'track-site-visit',
+    'send-nearby-email',
+    'send-booking-email',
+    'admin-users-list',
+    'admin-maintenance',
   ];
   for(const slug of expected){
     const file=path.join(root,'supabase','functions',slug,'index.ts');
@@ -175,11 +179,15 @@ test('sensitive Edge Functions never restore wildcard CORS', async()=>{
     'submit-support',
     'delete-my-account',
     'track-site-visit',
+    'send-nearby-email',
+    'send-booking-email',
+    'admin-users-list',
+    'admin-maintenance',
   ];
   for(const slug of slugs){
     const source=await read('supabase/functions/'+slug+'/index.ts');
     assert.doesNotMatch(source,/Access-Control-Allow-Origin["']?\s*:\s*["']\*["']/,slug+' must not allow every browser origin');
-    assert.match(source,/originAllowed/,slug+' must keep an explicit trusted-origin check');
+    assert.match(source,/(?:(?:originAllowed|isAllowed|allowed)\(|ORIGINS\.has\(origin\))/,slug+' must keep an explicit trusted-origin check');
   }
 });
 
