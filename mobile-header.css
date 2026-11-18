@@ -1,0 +1,49 @@
+/* Compact internal-page header. The Home header is intentionally unchanged. */
+.site-header .compact-header > .mobile-header-menu,
+.site-header .compact-header > .notification-shortcut {display:none!important}
+.site-header .compact-header .desktop-request-indicator {display:inline-flex;align-items:center;gap:6px}
+.site-header .compact-header .desktop-request-indicator .request-badge {position:static}
+@media(max-width:640px){
+  .site-header .container.compact-header {
+    display:flex!important;align-items:center!important;justify-content:flex-start!important;
+    gap:9px!important;min-height:64px!important;height:auto!important;padding-block:10px!important;
+    width:calc(100% - 32px);position:relative;flex-wrap:nowrap!important;
+  }
+  .site-header .compact-header > .brand {margin-right:auto;flex:0 0 auto;font-size:1.8rem;white-space:nowrap}
+  .site-header .compact-header > .brand .brand-mark {font-size:2.1rem;margin-right:5px}
+  .site-header .compact-header > .desktop-header-links,
+  .site-header .compact-header > .desktop-request-indicator,
+  .site-header .compact-header .request-bell {display:none!important}
+  .site-header .compact-header > .notification-shortcut {
+    display:inline-flex!important;align-items:center;justify-content:center;
+    flex:0 0 40px;width:40px;height:40px;padding:0!important;border-radius:12px!important;
+  }
+  .site-header .compact-header > .mobile-header-menu {display:block!important;flex:0 0 40px;margin:0}
+  .mobile-header-menu > summary {
+    width:40px;height:40px;display:grid;place-items:center;cursor:pointer;
+    list-style:none;border:1px solid #ebcedc;border-radius:12px;background:#fff8fc;color:#713556;
+  }
+  .mobile-header-menu > summary::-webkit-details-marker {display:none}
+  .mobile-header-menu > summary::marker {content:""}
+  .mobile-header-menu > summary svg {width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round}
+  .mobile-header-menu:not([open]) > .mobile-header-panel {display:none!important}
+  .mobile-header-menu[open] > .mobile-header-panel {
+    display:grid!important;gap:2px;position:absolute;right:0;top:calc(100% + 6px);
+    width:min(270px,calc(100vw - 32px));max-height:calc(100dvh - 160px);overflow-y:auto;
+    z-index:50;background:#fff9fb;border:1px solid #e8cbd7;border-radius:14px;
+    padding:8px;box-shadow:0 12px 30px #4f233a29;
+  }
+  .mobile-header-panel > a {display:block;padding:10px 12px;border-radius:8px;font-size:.9rem;line-height:1.4;font-weight:600}
+  .mobile-header-panel > a:hover,.mobile-header-panel > a:focus-visible {background:#fce8f1;color:#8d2e57}
+  body:has(.compact-header) .mobile-bottom-nav {gap:2px;padding-inline:5px}
+  body:has(.compact-header) .mobile-bottom-nav a {padding-inline:0}
+  body:has(.compact-header) .mobile-bottom-nav small {font-size:clamp(8px,2.45vw,10px);letter-spacing:0;overflow:visible;text-overflow:clip}
+}
+@media(max-width:340px){
+  .site-header .container.compact-header{width:calc(100% - 24px);gap:6px!important}
+  .site-header .compact-header > .brand{font-size:1.55rem}
+  .site-header .compact-header > .brand .brand-mark{font-size:1.85rem}
+}
+
+/* Account has no original desktop Notifications text link; retain access there. */
+@media(min-width:641px){.site-header .account-nav.compact-header > .notification-shortcut{display:inline-flex!important;padding:0!important}}
