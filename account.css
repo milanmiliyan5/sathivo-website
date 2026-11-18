@@ -188,3 +188,40 @@
 }
 @media(max-width:290px){.account-activity .account-activity-grid{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.account-activity-grid > a.activity-card{transition:none}.account-activity-grid > a.activity-card:hover,.account-activity-grid > a.activity-card:active{transform:none!important}}
+
+/* Mobile account story: cancel the desktop sticky offset when the shared
+   2D theme changes the story to position:relative. Keep it in normal flow. */
+@media(max-width:850px){
+  body.account-page.sathivo-2d:not(.home-2d) .account-story{
+    position:static;
+    top:auto;
+    inset-block-start:auto;
+    margin:0;
+    padding-block:0;
+    min-width:0;
+  }
+}
+@media(max-width:640px){
+  body.account-page .account-layout{
+    padding-block-start:24px;
+    row-gap:20px;
+    align-items:start;
+  }
+  body.account-page .account-story h1{
+    font-size:clamp(1.8rem,8vw,2.05rem)!important;
+    line-height:1.12;
+    overflow-wrap:normal;
+  }
+  body.account-page .account-story h1 br{display:initial}
+  body.account-page .account-story>p:not(.eyebrow){
+    margin:11px auto 0;
+    line-height:1.55;
+  }
+  body.account-page .account-story .account-photo{
+    margin:16px auto 0;
+    aspect-ratio:16/9;
+    max-height:215px;
+    border-radius:22px;
+  }
+  body.account-page .account-layout>.account-card{margin-block-start:0}
+}
