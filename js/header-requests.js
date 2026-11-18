@@ -2,21 +2,21 @@ import {createRefreshQueue} from './refresh-queue.js?v=20261118-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 function createBell(){
  const a=document.createElement('a');a.className='request-bell';a.href='requests.html';a.setAttribute('aria-label','Incoming requests');
- a.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><span class="request-badge" hidden>0</span>';
+ a.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.8h8.1L20 8.7v10.6a1.7 1.7 0 0 1-1.7 1.7H7a1.7 1.7 0 0 1-1.7-1.7V5.5A1.7 1.7 0 0 1 7 3.8ZM14.7 3.9v5h5M8.6 13h6.8M8.6 16.4h4.6"/></svg><span class="request-badge" hidden>0</span>';
  return a;
 }
 function placeBell(bell){
  const host=document.querySelector('.site-header .container');if(!host||host.querySelector('.request-bell'))return null;
- // On the homepage, Requests has a dedicated main-nav link with an unread badge;
- // do not add a duplicate bell next to the Notifications shortcut.
- if(document.body.classList.contains('home-2d')){
-  const requestsLink=host.querySelector('#navigation a[href="requests.html"]');
-  if(requestsLink){
-   requestsLink.classList.add('homepage-requests-link');
-   requestsLink.append(bell.querySelector('.request-badge'));
-   return requestsLink;
-  }
+ // Requests and notifications are distinct destinations. Reuse the
+ // existing Requests navigation link rather than adding another bell.
+ const requestsLink=host.querySelector('a[href="requests.html"]');
+ if(requestsLink){
+  requestsLink.classList.add('header-requests-link');
+  if(document.body.classList.contains('home-2d'))requestsLink.classList.add('homepage-requests-link');
+  if(!requestsLink.querySelector('.request-badge'))requestsLink.append(bell.querySelector('.request-badge'));
+  return requestsLink;
  }
+ // On headers without a Requests link, the fallback uses a document icon.
  if(host.classList.contains('nav-wrap')){const toggle=host.querySelector('.menu-toggle');if(toggle)toggle.before(bell);else host.append(bell)}
  else if(host.classList.contains('directory-nav'))(host.querySelector(':scope > div')||host).append(bell);
  else if(host.classList.contains('profile-nav'))(host.querySelector(':scope > span')||host).append(bell);
