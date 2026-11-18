@@ -526,3 +526,24 @@ body.home-2d{
 .home-2d .hero-actions .button:focus-visible{outline:3px solid #94365e;outline-offset:5px}
 @media(max-width:600px){.home-2d .hero-actions{display:grid;grid-template-columns:minmax(0,1fr);gap:13px;padding-right:5px}.home-2d .hero-actions .button{width:100%;min-height:50px}}
 @media(prefers-reduced-motion:reduce){.home-2d .hero-actions .button{transition:none}.home-2d .hero-actions .button:hover,.home-2d .hero-actions .button:active{transform:none}}
+
+/* Keep the mobile notification shortcut directly beside the hamburger. */
+@media(max-width:1020px){
+  .home-2d .site-header .nav-wrap {justify-content:flex-start;align-items:center;gap:10px}
+  .home-2d .site-header .nav-wrap > .brand {margin-inline-end:auto;flex:0 0 auto}
+  .home-2d .site-header .nav-wrap > .notification-shortcut {
+    display:inline-flex!important;flex:0 0 40px;width:40px;height:40px;
+    margin:0;padding:0!important;align-items:center;justify-content:center
+  }
+  .home-2d .site-header .nav-wrap > .menu-toggle {
+    flex:0 0 44px;width:44px;height:44px;margin:0;align-items:center
+  }
+}
+@media(max-width:340px){
+  .home-2d .site-header .nav-wrap {gap:6px}
+  .home-2d .site-header .nav-wrap > .brand {font-size:1.55rem}
+  .home-2d .site-header .nav-wrap > .brand .brand-mark {font-size:1.85rem;margin-right:5px}
+}
+@media(min-width:1021px){
+  .home-2d .site-header .nav-wrap > .notification-shortcut {display:none!important}
+}
