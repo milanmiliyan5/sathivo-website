@@ -1,3 +1,4 @@
+import {createRefreshQueue} from './refresh-queue.js?v=20261118-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 
 function addBadge(link,kind){
@@ -45,35 +46,37 @@ async function init(){
    .filter(a=>!a.closest('.mobile-bottom-nav'));
   const notificationBadges=notificationLinks.map(a=>addBadge(a,'notification'));
   const chatBadges=chatLinks.map(a=>addBadge(a,'chat'));
-  let sequence=0;
-  const refresh=async()=>{
-   const current=++sequence;
-   const [notices,chats]=await Promise.all([
-    client.from('notifications').select('id',{count:'exact',head:true}).eq('user_id',user.id).is('read_at',null),
-    client.rpc('get_unread_chat_count')
-   ]);
-   if(current!==sequence)return;
-   if(!notices.error){
-    const n=notices.count||0;
-    notificationBadges.forEach(b=>{b.textContent=n>99?'99+':String(n);b.hidden=n===0});
-    notificationLinks.forEach(a=>a.setAttribute('aria-label',n?'Notifications, '+n+' unread':'Notifications, all caught up'));
-   }
-   if(!chats.error){
-    const count=Math.max(0,Number(chats.data)||0);
-    chatBadges.forEach(b=>{b.textContent=count>99?'99+':String(count);b.hidden=count===0});
-    chatLinks.forEach(a=>a.setAttribute('aria-label',count?'Chats, '+count+' unread messages':'Chats'));
-   }
-  };
-  await refresh();
-  const c1=client.channel('header-notifications:'+user.id)
-   .on('postgres_changes',{event:'*',schema:'public',table:'notifications',filter:'user_id=eq.'+user.id},()=>void refresh())
-   .subscribe();
-  const c2=client.channel('header-chat-count:'+user.id)
-   .on('postgres_changes',{event:'*',schema:'public',table:'booking_messages'},()=>void refresh())
-   .subscribe();
-  document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh()});
-  window.addEventListener('pageshow',()=>void refresh());
-  window.addEventListener('pagehide',()=>{void client.removeChannel(c1);void client.removeChannel(c2)},{once:true});
+  let active=true,channel=null;
+  const noticesRefresh=createRefreshQueue(async()=>{
+   const notices=await client.from('notifications').select('id',{count:'exact',head:true}).eq('user_id',user.id).is('read_at',null);
+   if(!active||notices.error)return;
+   const n=notices.count||0;
+   notificationBadges.forEach(b=>{b.textContent=n>99?'99+':String(n);b.hidden=n===0});
+   notificationLinks.forEach(a=>a.setAttribute('aria-label',n?'Notifications, '+n+' unread':'Notifications, all caught up'));
+  });
+  const chatsRefresh=createRefreshQueue(async()=>{
+   const chats=await client.rpc('get_unread_chat_count');
+   if(!active||chats.error)return;
+   const n=Math.max(0,Number(chats.data)||0);
+   chatBadges.forEach(b=>{b.textContent=n>99?'99+':String(n);b.hidden=n===0});
+   chatLinks.forEach(a=>a.setAttribute('aria-label',n?'Chats, '+n+' unread messages':'Chats'));
+  });
+  function start(){
+   active=true;
+   if(!channel)channel=client.channel('header-counts:'+user.id)
+    .on('postgres_changes',{event:'*',schema:'public',table:'notifications',filter:'user_id=eq.'+user.id},noticesRefresh.request)
+    .on('postgres_changes',{event:'*',schema:'public',table:'booking_messages'},chatsRefresh.request)
+    .subscribe(status=>{if(status==='SUBSCRIBED'){noticesRefresh.request();chatsRefresh.request()}});
+   noticesRefresh.start();chatsRefresh.start();
+  }
+  function stop(){
+   active=false;noticesRefresh.stop();chatsRefresh.stop();
+   if(channel){void client.removeChannel(channel);channel=null}
+  }
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden){noticesRefresh.request();chatsRefresh.request()}});
+  window.addEventListener('pageshow',start);
+  window.addEventListener('pagehide',stop);
+  start();
  }catch{}
 }
 void init();

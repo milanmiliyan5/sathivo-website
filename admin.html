@@ -8,9 +8,9 @@
   <title>Sathivo Admin Dashboard</title>
   <link rel="icon" href="assets/favicon.svg">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="admin-dashboard.css?v=20261115-accounts-1">
+  <link rel="stylesheet" href="admin-dashboard.css?v=20261118-cleanup-1">
   <script defer src="assets/vendor/supabase-2.116.0.js"></script>
-  <script type="module" src="js/admin-page.js?v=20261118-manual-1"></script>
+  <script type="module" src="js/admin-page.js?v=20261118-cleanup-1"></script>
 </head>
 <body class="admin-body">
   <div class="admin-app">
@@ -31,6 +31,7 @@
         <a class="sidebar-link" href="#feedback-section" data-section="feedback-section"><span class="sidebar-icon">★</span><span>Feedback</span></a>
         <a class="sidebar-link" href="#reports-section" data-section="reports-section"><span class="sidebar-icon">!</span><span>Reports</span></a>
         <a class="sidebar-link" href="#listings-section" data-section="listings-section"><span class="sidebar-icon">◇</span><span>Companions</span></a>
+        <a class="sidebar-link" href="#maintenance-section" data-section="maintenance-section"><span class="sidebar-icon" aria-hidden="true">✦</span><span>Cleanup &amp; Optimization</span></a>
       </nav>
 
       <div class="sidebar-footer">
@@ -93,6 +94,21 @@
             <p id="gender-note" class="metric-note"></p>
           </section>
 
+          <section class="data-panel dashboard-section" id="maintenance-section" aria-labelledby="maintenance-title">
+            <div class="panel-head"><div><p class="panel-kicker">SYSTEM HEALTH</p><h2 id="maintenance-title">Cleanup &amp; Optimization</h2><p class="panel-note">Manual scan only. No automatic resource polling or user-data deletion.</p></div></div>
+            <div class="maintenance-body">
+              <div class="maintenance-actions"><button id="maintenance-scan" class="refresh-btn" type="button">Scan System</button><button id="maintenance-clean" class="refresh-btn maintenance-clean" type="button" disabled>Safe Cleanup</button><a href="https://supabase.com/dashboard/project/ujutlzjsgbqtlisecpnh" target="_blank" rel="noopener noreferrer">Supabase usage &amp; RAM ↗</a></div>
+              <p id="maintenance-status" role="status" aria-live="polite">Select Scan System to check live database metrics and expired temporary counters.</p>
+              <div class="maintenance-metrics">
+                <article><small>Database size · project only</small><strong id="maintenance-db">—</strong></article>
+                <article><small>Database connections</small><strong id="maintenance-connections">—</strong></article>
+                <article><small>Expired temporary counters</small><strong id="maintenance-expired">—</strong><small id="maintenance-counter-detail">Older than 30 days</small></article>
+              </div>
+              <p class="maintenance-note">Safe Cleanup removes only expired rate-limit buckets (maximum 5,000 per action, older than 30 days). Current security limits, accounts, profiles, photos, chats, notifications, bookings and visitor history are protected. No RAM or billing-quota reset; database disk size may not shrink immediately.</p>
+              <h3>Optimization checklist</h3><div id="maintenance-checklist" class="maintenance-checklist"></div>
+              <h3>Cleanup history <small>(this admin browser)</small></h3><div id="maintenance-history" class="maintenance-history">No cleanup recorded in this browser.</div>
+            </div>
+          </section>
           <section class="data-panel dashboard-section activity-panel" id="activity-section">
             <div class="panel-head">
               <div><p class="panel-kicker">LIVE FEED</p><h2>Recent Activity</h2><p class="panel-note">Latest signups, bookings, feedback, support and reports.</p></div>

@@ -1,3 +1,4 @@
+import {initMaintenance} from './admin-maintenance.js?v=20261118-1';
 import {runRecovery} from './booking-recovery.js?v=20261116-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {todayAccounts} from './admin-account-date.js?v=20261115-1';
@@ -329,6 +330,7 @@ async function init(){
     if(!a.data)throw Error('This account is not authorized for Sathivo admin. Log out and sign in with the owner account.');
     $('admin-email').textContent=user.email||a.data.role||'Authorized admin';
     $('refresh-dashboard').addEventListener('click',()=>void refreshAll(true));
+    initMaintenance(client,user.id);
     await refreshAll(true);startPresence();
 
   }catch(e){setStatus(e.message||'Could not load admin.')}
