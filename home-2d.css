@@ -557,3 +557,16 @@ body.home-2d{
   .home-2d .site-header .menu-toggle[aria-expanded=true] > span:last-child{transform:translateY(-7px) rotate(-45deg)}
 }
 @media(prefers-reduced-motion:reduce){.home-2d .site-header .menu-toggle > span{transition:none}}
+
+.home-2d .hero .android-launch-note {
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  margin:18px 0 0;
+  color:var(--d2-plum);
+  font-size:.875rem;
+  line-height:1.45;
+  text-align:center;
+}
+.android-launch-note svg {flex-shrink:0}
