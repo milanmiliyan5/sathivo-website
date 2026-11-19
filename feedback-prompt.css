@@ -1,0 +1,26 @@
+/* Account-only shortcut and opt-in website feedback dialog. */
+.site-header .account-nav > .feedback-shortcut[hidden]{display:none!important}
+.site-header .account-nav > .feedback-shortcut{display:inline-flex!important;flex:none;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:52px;height:40px;padding:2px!important;border:1px solid #ebcedc;border-radius:12px;background:#fff8fc;color:#713556;text-decoration:none;box-sizing:border-box}
+.feedback-shortcut svg,.feedback-prompt-action svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.feedback-shortcut span{font-size:9px;font-weight:700;line-height:1;letter-spacing:0;white-space:nowrap}
+.feedback-shortcut:focus-visible,.feedback-prompt button:focus-visible,.feedback-prompt a:focus-visible{outline:2px solid #a3446b;outline-offset:3px}
+@media(max-width:370px){.site-header .account-nav.compact-header{gap:6px!important}.site-header .account-nav > .brand{font-size:1.55rem!important}.site-header .account-nav > .brand .brand-mark{font-size:1.85rem!important}.site-header .account-nav > .feedback-shortcut{width:46px}}
+dialog.feedback-prompt{position:fixed;inset:0;margin:auto;width:min(400px,calc(100% - 28px));max-width:none;max-height:calc(100dvh - 32px);padding:0;overflow:auto;overscroll-behavior:contain;border:1px solid #dfc3d1;border-radius:24px;background:#fffcfa;color:#492637;box-shadow:0 20px 70px #48213640;text-align:center}
+dialog.feedback-prompt[open]{animation:feedback-in .26s ease-out both}
+dialog.feedback-prompt::backdrop{background:#49263760;backdrop-filter:blur(3px)}
+.feedback-prompt-art{position:relative;padding:10px 16px 4px;background:linear-gradient(145deg,#f7e3eb,#f9edf4);border-radius:23px 23px 0 0}
+.feedback-prompt-close{position:absolute;top:8px;right:9px;z-index:1;width:40px;height:40px;border:0;border-radius:50%;background:transparent;color:#765065;font:28px/1 system-ui;cursor:pointer;padding:0}
+.feedback-prompt-illustration{display:block;width:min(100%,280px);height:128px;margin:auto}
+.feedback-float{animation:feedback-float 3.2s ease-in-out infinite}
+.feedback-prompt-content{padding:20px 24px 17px;display:grid;gap:12px;justify-items:center}
+.feedback-prompt .feedback-prompt-kicker{margin:0;color:#963b60;font-size:10px;font-weight:750;letter-spacing:.08em}
+.feedback-prompt h2{font-size:clamp(23px,5.7vw,29px);line-height:1.16;letter-spacing:-.025em;color:#492637;margin:0}
+.feedback-prompt p{margin:0;font-size:14px;line-height:1.55;color:#705864}
+.feedback-prompt .feedback-prompt-voice{color:#963b60;font-weight:650}
+.feedback-prompt-action{width:100%;min-height:46px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;gap:9px;padding:12px 14px;border-radius:12px;background:#963b60;color:white!important;font-weight:700;text-decoration:none}
+.feedback-prompt-action:hover{background:#79304d}
+.feedback-prompt-later{min-height:40px;padding:7px 16px;color:#705864;background:transparent;border:0;font:inherit;font-size:13px;cursor:pointer}
+@keyframes feedback-in{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}
+@keyframes feedback-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@media(prefers-reduced-motion:reduce){dialog.feedback-prompt[open],.feedback-float{animation:none}}
+@media(max-height:530px){.feedback-prompt-illustration{height:86px}.feedback-prompt-content{padding:14px 18px;gap:8px}}

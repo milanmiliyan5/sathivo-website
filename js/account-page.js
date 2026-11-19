@@ -1,3 +1,4 @@
+import {startFeedbackPrompt,stopFeedbackPrompt} from './feedback-prompt.js?v=20261119-feedback-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { createAuthFlow } from './auth-flow.js?v=20261027-nearbyconsent-1';
 import { createAuthFetch } from './auth-transport.js?v=20260926-1';
@@ -46,6 +47,7 @@ function clearSecrets() {
 function showPanel(name, { focus = true } = {}) {
   if (!panels.some(panel => panel.dataset.panel === name)) name = 'login';
   activePanel = name;
+  if (name !== 'account') stopFeedbackPrompt();
   panels.forEach(panel => { panel.hidden = panel.dataset.panel !== name; });
   tabs.hidden = ['otp', 'new-password', 'account'].includes(name);
   tabs.querySelectorAll('a').forEach(link => {
@@ -122,6 +124,7 @@ function renderAccount(user) {
   // Do not auto-focus the account heading on session restore. On phones that
   // scrolls past the story/photo and also leaves a focus outline around Welcome.
   showPanel('account', { focus: false });
+  startFeedbackPrompt(user);
   clearSecrets();
   void refreshAccountActions(user);
 }

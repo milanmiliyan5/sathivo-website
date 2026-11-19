@@ -1,6 +1,7 @@
+import {recordFeedbackSubmitted} from './feedback-prompt.js?v=20261119-feedback-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 const $=id=>document.getElementById(id);
-let client;
+let client,feedbackUser;
 async function errorMessage(error,fallback){
   try{
     const response=error?.context;
@@ -16,6 +17,7 @@ async function init(){
   
   client=await getSathivoClient();
   const u=await client.auth.getUser();
+  feedbackUser=u.data.user;
   if(u.data.user?.email)$('feedback-email').value=u.data.user.email;
   $('feedback-form').addEventListener('submit',submit);
 }
@@ -41,6 +43,7 @@ async function submit(event){
     };
     const {data:result,error}=await client.functions.invoke('submit-support',{body});
     if(error)throw error;
+    if(feedbackUser?.id)recordFeedbackSubmitted(feedbackUser.id);
     const ref=String(result?.case_id||'').split('-')[0].toUpperCase();
     status('Thank you — feedback sent'+(ref?' · Reference '+ref:'')+'.','success');
     const email=$('feedback-email').value;

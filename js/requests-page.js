@@ -1,3 +1,4 @@
+import {offerCompletionFeedback} from './feedback-prompt.js?v=20261119-feedback-1';
 import {confirmCompletion,appendRecoveryControls,runRecovery} from './booking-recovery.js?v=20261116-1';
 import {withCurrentBookingNames} from './booking-name-sync.js?v=20261030-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
@@ -55,7 +56,9 @@ async function load(){
  $('requests').replaceChildren(...Array.from({length:3},()=>{const n=el('article',undefined,'booking-card request-skeleton');n.innerHTML='<div class="request-identity"><span class="skeleton-dot"></span><div class="skeleton-lines"><i></i><i></i></div></div>';return n}));
  const {data,error}=await client.from('booking_requests').select('*').eq('companion_id',user.id).order('created_at',{ascending:false});
  if(error)throw error;
+ const newlyCompleted=(data||[]).some(r=>r.status==='completed'&&rows.some(old=>old.id===r.id&&old.status==='accepted'));
  rows=await withCurrentBookingNames(client,data||[]);
+ if(newlyCompleted)offerCompletionFeedback(user);
  if(linkedRequestId&&!linkedRequestChecked){
   linkedRequestChecked=true;
   const requested=rows.find(r=>r.id===linkedRequestId);
@@ -84,7 +87,7 @@ async function update(id,status,extra={}){
    await Promise.all([sendBookingPush(client,id,status),sendBookingEmail(client,id,'accepted')]);
    location.href='chat.html?booking='+encodeURIComponent(id);return;
   }
-  if(status==='completed'){selectFilter('all');await load();void sendBookingPush(client,id,status).catch(()=>{});}else{await sendBookingPush(client,id,status);await load();}
+  if(status==='completed'){offerCompletionFeedback(user);selectFilter('all');await load();void sendBookingPush(client,id,status).catch(()=>{});}else{await sendBookingPush(client,id,status);await load();}
  }catch{
   $('status').textContent='Could not update this request. Please try again.';
  }finally{
