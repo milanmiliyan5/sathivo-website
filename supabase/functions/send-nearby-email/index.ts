@@ -1,3 +1,4 @@
+const EMAIL_SIGNATURE = "<table role=\"presentation\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" style=\"border-collapse:collapse;margin-top:18px;border-top:1px solid #eadce5;font-family:Arial,Helvetica,sans-serif;color:#33242d\"><tr><td style=\"padding:12px 10px 0 0;vertical-align:middle\"><a href=\"https://sathivo.co/\" style=\"text-decoration:none\"><img src=\"https://sathivo.co/assets/sathivo-email-logo.png\" alt=\"Sathivo\" width=\"44\" height=\"44\" style=\"display:block;width:44px;height:44px;border:0;border-radius:8px\"></a></td><td style=\"padding:12px 0 0;vertical-align:middle\"><div style=\"font-size:14px;font-weight:bold;line-height:19px;color:#8e3655\">Team Sathivo</div><div style=\"font-size:11px;line-height:16px;color:#685765\">Real Company. Real Moments.</div><a href=\"https://sathivo.co/\" style=\"font-size:11px;line-height:16px;color:#8e3655;text-decoration:underline\">sathivo.co</a></td></tr></table>";
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 
 // Triggered only by an authenticated companion after a successful public publish.
@@ -33,7 +34,7 @@ function html(name:string,city:string,href:string){
  '<p style="line-height:1.7">Interested in a coffee outing, a conversation or a shared social plan? You can explore their public profile and decide whether to send a request.</p>'+
  '<p><a href="'+url+'" style="display:inline-block;padding:13px 21px;border-radius:12px;color:white;text-decoration:none;background:#9c3e6a;font-weight:700">Explore companion profile →</a></p>'+
  '<p style="font-size:13px;color:#775a6b;line-height:1.7">This is a nearby discovery update, not a confirmed booking or a promise of availability. Companions set their own rates. 18+ and strictly platonic.</p>'+
- '<hr style="border:0;border-top:1px solid #f1dfea"><p style="font-size:12px;color:#805f72;line-height:1.6">You receive this because you enabled Sathivo nearby email alerts. Maximum one nearby email per day. <a href="https://sathivo.co/notifications.html#nearby-alerts">Manage or turn off alerts</a>.<br>Sathivo · https://sathivo.co</p></div></body></html>';
+ '<hr style="border:0;border-top:1px solid #f1dfea"><p style="font-size:12px;color:#805f72;line-height:1.6">You receive this because you enabled Sathivo nearby email alerts. Maximum one nearby email per day. <a href="https://sathivo.co/notifications.html#nearby-alerts">Manage or turn off alerts</a>.<br>Sathivo · https://sathivo.co</p>'+EMAIL_SIGNATURE+'</div></body></html>';
 }
 function response(req:Request,data:unknown,status=200){return Response.json(data,{status,headers:cors(req)})}
 Deno.serve(async(req:Request)=>{
