@@ -45,11 +45,13 @@ function attempt(){
  <g><circle cx="107" cy="54" r="17" fill="#bd896d"/><path d="M90 53q-2-23 17-23 19 0 18 21l-5-7q-17 4-24-1z" fill="#344e6d"/><circle cx="213" cy="54" r="17" fill="#e0b495"/><path d="M196 51q-2-22 17-22 19 0 18 24l-7-11q-15 4-23 0z" fill="#334964"/><circle cx="160" cy="45" r="19" fill="#d3a181"/><path d="M141 44q-1-24 19-24 21 0 19 24l-6-12q-16 6-25 0z" fill="#233e63"/></g>
  <path d="M47 120h226" stroke="#aec5e7" stroke-width="2" stroke-linecap="round"/>
  </svg></div>
- <div class="mens-day-content"><p class="mens-day-date">19 NOVEMBER 2026 · INTERNATIONAL MEN'S DAY</p>
- <h2 id="mens-day-title">Happy International Men's Day! <span aria-hidden="true">💙</span></h2>
- <p id="mens-day-copy">You deserve to be heard, appreciated, supported and valued.</p>
- <p class="mens-day-message">Your feelings matter. Your happiness matters. You matter.</p>
- <p class="mens-day-team">With appreciation, Team Sathivo</p>
+ <div class="mens-day-content"><p class="mens-day-date">19 NOVEMBER 2026</p>
+ <h2 id="mens-day-title">You Are Great! <span aria-hidden="true">💙</span></h2>
+ <p class="mens-day-greeting">Happy International Men's Day!</p>
+ <p id="mens-day-copy">Never forget how valuable you are. You deserve to be heard, appreciated, supported and loved.</p>
+ <p class="mens-day-message">Your efforts matter.<br>Your feelings matter.<br>You matter.</p>
+ <p class="mens-day-world">The world is better with you in it. ✨</p>
+ <p class="mens-day-team">With love &amp; appreciation, Team Sathivo ♡</p>
  <button type="button" class="mens-day-thanks">Thank You 💙</button></div>`;
  const previous=document.activeElement;
  const close=()=>{if(d.open)d.close();};

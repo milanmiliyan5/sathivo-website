@@ -5,10 +5,12 @@ dialog.mens-day-popup::backdrop{background:#192b4866;backdrop-filter:blur(3px)}
 .mens-day-art{position:relative;padding:12px 22px 0;background:linear-gradient(145deg,#e7efff,#f5f8ff);border-radius:23px 23px 0 0}
 .mens-day-art svg{width:min(100%,320px);height:132px;display:block;margin:auto}
 .mens-day-close{position:absolute;top:7px;right:8px;z-index:1;width:42px;height:42px;border:0;border-radius:50%;background:transparent;color:#52729e;font:28px/1 system-ui;cursor:pointer;padding:0}
-.mens-day-content{display:grid;justify-items:center;gap:12px;padding:20px 24px 24px}
+.mens-day-content{display:grid;justify-items:center;gap:10px;padding:18px 24px 22px}
 .mens-day-popup .mens-day-date{font-size:10px;font-weight:750;letter-spacing:.08em;color:#5278ac;margin:0;line-height:1.5}
 .mens-day-popup h2{font-size:clamp(23px,5.8vw,29px);line-height:1.19;letter-spacing:-.025em;color:#254d83;margin:0;overflow-wrap:break-word}
 .mens-day-popup p{font-size:14px;line-height:1.6;color:#454b59;margin:0}
+.mens-day-popup .mens-day-greeting{font-size:17px;line-height:1.3;font-weight:750;color:#28558e}
+.mens-day-popup .mens-day-world{color:#254d83;font-weight:600}
 .mens-day-popup .mens-day-message{font-weight:650;color:#28558e}
 .mens-day-popup .mens-day-team{font-size:13px;color:#52729e}
 .mens-day-thanks{width:100%;min-height:46px;border:0;border-radius:12px;background:#28558e;color:white;font:inherit;font-weight:700;padding:12px 16px;cursor:pointer}

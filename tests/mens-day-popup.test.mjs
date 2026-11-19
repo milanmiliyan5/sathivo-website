@@ -22,3 +22,8 @@ test('homepage wiring, once-per-browser storage, expiry and dialog exclusion',as
  assert.match(src,/END-Date\.now\(\)/);
  assert.match(await read('mens-day-popup.css'),/prefers-reduced-motion/);
 });
+
+test('appreciation message retains original men illustration and blue heart animation',async()=>{
+ const src=await readFile(new URL('../js/mens-day-popup.js',import.meta.url),'utf8');
+ for(const copy of ['You Are Great!','Your efforts matter.<br>Your feelings matter.<br>You matter.','The world is better with you in it.','Three friends standing together under a blue heart','class="mens-day-heart"'])assert.ok(src.includes(copy));
+});
