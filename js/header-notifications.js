@@ -48,9 +48,9 @@ async function init(){
   const chatBadges=chatLinks.map(a=>addBadge(a,'chat'));
   let active=true,channel=null;
   const noticesRefresh=createRefreshQueue(async()=>{
-   const notices=await client.from('notifications').select('id',{count:'exact',head:true}).eq('user_id',user.id).is('read_at',null);
+   const [notices,website]=await Promise.all(['notifications','website_notifications'].map(table=>client.from(table).select('id',{count:'exact',head:true}).eq('user_id',user.id).is('read_at',null)));
    if(!active||notices.error)return;
-   const n=notices.count||0;
+   const n=(notices.count||0)+(website.error?0:website.count||0);
    notificationBadges.forEach(b=>{b.textContent=n>99?'99+':String(n);b.hidden=n===0});
    notificationLinks.forEach(a=>a.setAttribute('aria-label',n?'Notifications, '+n+' unread':'Notifications, all caught up'));
   });
@@ -65,6 +65,7 @@ async function init(){
    active=true;
    if(!channel)channel=client.channel('header-counts:'+user.id)
     .on('postgres_changes',{event:'*',schema:'public',table:'notifications',filter:'user_id=eq.'+user.id},noticesRefresh.request)
+    .on('postgres_changes',{event:'*',schema:'public',table:'website_notifications',filter:'user_id=eq.'+user.id},noticesRefresh.request)
     .on('postgres_changes',{event:'*',schema:'public',table:'booking_messages'},chatsRefresh.request)
     .subscribe(status=>{if(status==='SUBSCRIBED'){noticesRefresh.request();chatsRefresh.request()}});
    noticesRefresh.start();chatsRefresh.start();

@@ -16,11 +16,13 @@ let client,user,channel,rows=[],unreadTotal=0,filter='all',seq=0,busy=false;
 function safeLink(raw){
  if(typeof raw!=='string')return '';
  const link=raw.trim();
+ if(link==='index.html')return './';
  if(simpleRoutes.has(link)||linkPattern.test(link))return link;
  return '';
 }
 function notificationType(r){
  const title=String(r.title||'').toLowerCase();
+ if(r.source==='website_notifications')return 'system';
  if(r.kind==='nearby')return 'nearby';
  if(r.kind==='message')return 'message';
  if(title.includes('accepted'))return 'accepted';
@@ -29,6 +31,7 @@ function notificationType(r){
 }
 function actionText(r){
  const link=safeLink(r.link);
+ if(link==='./')return 'Open Sathivo Home ↗';
  if(link.startsWith('companion.html?'))return 'View Public Profile ↗';
  if(link.startsWith('chat.html?'))return 'Open Private Chat ↗';
  if(link.startsWith('requests.html'))return 'Review Request ↗';
@@ -52,9 +55,10 @@ function updateSummary(){
 function showError(message){
  $('notify-error').textContent=message||'';
 }
-async function markOne(id){
- const {error}=await client.from('notifications').update({read_at:new Date().toISOString()})
-  .eq('id',id).eq('user_id',user.id).is('read_at',null);
+async function markOne(r){
+ const table=r.source==='website_notifications'?'website_notifications':'notifications';
+ const {error}=await client.from(table).update({read_at:new Date().toISOString()})
+  .eq('id',r.id).eq('user_id',user.id).is('read_at',null);
  if(error)throw error;
 }
 async function openNotification(r,link,button){
@@ -62,7 +66,7 @@ async function openNotification(r,link,button){
  showError('');
  button.setAttribute('aria-busy','true');
  try{
-  if(!r.read_at)await markOne(r.id);
+  if(!r.read_at)await markOne(r);
   window.location.assign(new URL(link,location.href).href);
  }catch(error){
   showError('Could not mark this notification as read. You can still open it, or try again.');
@@ -77,7 +81,7 @@ async function openNotification(r,link,button){
 function renderCard(r){
  const kind=notificationType(r);
  const card=el('article',undefined,'notify-card is-'+kind+(r.read_at?'':' is-unread'));
- const icon=el('span',kind==='nearby'?'📍':kind==='message'?'💬':kind==='accepted'?'✓':kind==='closed'?'↪':'💌','notify-card-icon');
+ const icon=el('span',kind==='system'?'💙':kind==='nearby'?'📍':kind==='message'?'💬':kind==='accepted'?'✓':kind==='closed'?'↪':'💌','notify-card-icon');
  icon.setAttribute('aria-hidden','true');
  const main=el('div',undefined,'notify-card-body');
  const top=el('div',undefined,'notify-card-top');
@@ -107,6 +111,10 @@ function renderCard(r){
    void openNotification(r,link,button);
   });
   actions.append(button);
+  if(r.source==='website_notifications'&&link==='./'){
+   card.style.cursor='pointer';
+   card.addEventListener('click',e=>{if(!e.target.closest('a,button')&&!busy)void openNotification(r,link,button);});
+  }
  }
  if(!r.read_at){
   const mark=el('button','Mark as read','notify-mark-single');
@@ -114,7 +122,7 @@ function renderCard(r){
   mark.addEventListener('click',async()=>{
    if(busy)return;
    busy=true;mark.disabled=true;showError('');
-   try{await markOne(r.id);await load()}catch(error){showError(error.message||'Could not mark as read. Please try again.')}
+   try{await markOne(r);await load()}catch(error){showError(error.message||'Could not mark as read. Please try again.')}
    finally{busy=false;updateSummary()}
   });
   actions.append(mark);
@@ -137,25 +145,27 @@ function render(){
 }
 async function load(){
  const thisRequest=++seq;
- const [list,count]=await Promise.all([
-  client.from('notifications').select('id,kind,title,body,link,created_at,read_at').eq('user_id',user.id).order('created_at',{ascending:false}).limit(100),
-  client.from('notifications').select('id',{count:'exact',head:true}).eq('user_id',user.id).is('read_at',null)
+ const [list,count,webList,webCount]=await Promise.all([
+  ...['notifications','website_notifications'].flatMap(table=>[
+   client.from(table).select('id,kind,title,body,link,created_at,read_at').eq('user_id',user.id).order('created_at',{ascending:false}).limit(100),
+   client.from(table).select('id',{count:'exact',head:true}).eq('user_id',user.id).is('read_at',null)
+  ])
  ]);
  if(thisRequest!==seq)return;
  if(list.error)throw list.error;
  if(count.error)throw count.error;
- rows=list.data||[];
- unreadTotal=count.count||0;
+ rows=[...(list.data||[]),...(webList.error?[]:(webList.data||[]).map(r=>({...r,source:'website_notifications'})))].sort((a,b)=>Date.parse(b.created_at)-Date.parse(a.created_at)).slice(0,100);
+ unreadTotal=(count.count||0)+(webCount.error?0:webCount.count||0);
  render();
 }
 async function markAllRead(){
  if(busy||unreadTotal===0)return;
  busy=true;updateSummary();showError('');
  try{
-  const {error}=await client.from('notifications')
+  const results=await Promise.all(['notifications','website_notifications'].map(table=>client.from(table)
    .update({read_at:new Date().toISOString()})
-   .eq('user_id',user.id).is('read_at',null);
-  if(error)throw error;
+   .eq('user_id',user.id).is('read_at',null)));
+  if(results[0].error||results[1].error)throw results[0].error||results[1].error;
   await load();
  }catch(error){showError(error.message||'Could not update notifications. Please try again.')}
  finally{busy=false;updateSummary()}
@@ -174,6 +184,7 @@ async function init(){
   timeTicker=setInterval(updateRelativeTimes,60000);
   channel=client.channel('notifications:'+user.id)
    .on('postgres_changes',{event:'*',schema:'public',table:'notifications',filter:'user_id=eq.'+user.id},()=>void load().catch(()=>{}))
+   .on('postgres_changes',{event:'*',schema:'public',table:'website_notifications',filter:'user_id=eq.'+user.id},()=>void load().catch(()=>{}))
    .subscribe();
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void load().catch(()=>{})});
  }catch(error){
