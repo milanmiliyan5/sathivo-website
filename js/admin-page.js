@@ -1,3 +1,4 @@
+import {initContributions,refreshContributions} from './admin-contributions.js?v=20261119-1';
 import {initMaintenance} from './admin-maintenance.js?v=20261118-1';
 import {runRecovery} from './booking-recovery.js?v=20261116-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
@@ -313,7 +314,7 @@ let dashboardRequest=null;
 async function refreshAll(showLoading=true){
   if(showLoading)setRefreshing(true);
   try{
-    if(!dashboardRequest)dashboardRequest=Promise.all([load(),loadStats()]).finally(()=>{dashboardRequest=null});
+    if(!dashboardRequest)dashboardRequest=Promise.all([load(),loadStats(),refreshContributions(client)]).finally(()=>{dashboardRequest=null});
     await dashboardRequest;
   }catch(e){setStatus(e.message||'Could not refresh admin data.')}finally{if(showLoading)setRefreshing(false)}
 }
@@ -331,6 +332,7 @@ async function init(){
     $('admin-email').textContent=user.email||a.data.role||'Authorized admin';
     $('refresh-dashboard').addEventListener('click',()=>void refreshAll(true));
     initMaintenance(client,user.id);
+    initContributions(client);
     await refreshAll(true);startPresence();
 
   }catch(e){setStatus(e.message||'Could not load admin.')}

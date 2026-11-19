@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="admin-dashboard.css?v=20261118-cleanup-1">
   <script defer src="assets/vendor/supabase-2.116.0.js"></script>
-  <script type="module" src="js/admin-page.js?v=20261118-cleanup-1"></script>
+  <script type="module" src="js/admin-page.js?v=20261119-contribution-1"></script>
 </head>
 <body class="admin-body">
   <div class="admin-app">
@@ -29,6 +29,7 @@
         <a class="sidebar-link" href="#bookings-section" data-section="bookings-section"><span class="sidebar-icon">▣</span><span>Bookings</span></a>
         <a class="sidebar-link" href="#support-section" data-section="support-section"><span class="sidebar-icon">?</span><span>Support</span></a>
         <a class="sidebar-link" href="#feedback-section" data-section="feedback-section"><span class="sidebar-icon">★</span><span>Feedback</span></a>
+        <a class="sidebar-link" href="#contributions-section" data-section="contributions-section"><span class="sidebar-icon">♡</span><span>Contributions</span></a>
         <a class="sidebar-link" href="#reports-section" data-section="reports-section"><span class="sidebar-icon">!</span><span>Reports</span></a>
         <a class="sidebar-link" href="#listings-section" data-section="listings-section"><span class="sidebar-icon">◇</span><span>Companions</span></a>
         <a class="sidebar-link" href="#maintenance-section" data-section="maintenance-section"><span class="sidebar-icon" aria-hidden="true">✦</span><span>Cleanup &amp; Optimization</span></a>
@@ -198,6 +199,7 @@
             </div>
           </section>
 
+          <section class="data-panel dashboard-section" id="contributions-section"><div class="panel-head"><div><p class="panel-kicker">VOLUNTARY PLATFORM SUPPORT</p><h2>Contributions</h2><p id="contribution-admin-status" class="panel-note">Not loaded.</p></div><button class="refresh-btn" id="contribution-admin-refresh" type="button">Refresh contributions</button></div><div class="metrics-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px"><article class="metric-card"><span>All time (net of refunds)</span><strong id="contribution-total">—</strong></article><article class="metric-card"><span>Today (IST)</span><strong id="contribution-today">—</strong></article><article class="metric-card"><span>This month (IST)</span><strong id="contribution-month">—</strong></article><article class="metric-card"><span>Captured contributions</span><strong id="contribution-captured">—</strong></article><article class="metric-card"><span>Failed orders</span><strong id="contribution-failed">—</strong></article></div><p class="panel-note">Verified payments only; excludes gateway charges and bank settlement adjustments. Latest 100 orders below.</p><div class="table-wrap" style="overflow:auto"><table><thead><tr><th>Date (IST)</th><th>Contributor ID</th><th>Amount</th><th>Refunded</th><th>Status</th><th>Payment reference</th></tr></thead><tbody id="contribution-history"></tbody></table></div></section>
           <section class="data-panel dashboard-section" id="reports-section">
             <div class="panel-head">
               <div><p class="panel-kicker">TRUST & SAFETY</p><h2>Reports</h2><p id="report-count" class="panel-note"></p></div>
