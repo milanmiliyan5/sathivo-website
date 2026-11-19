@@ -1,0 +1,11 @@
+/* Home hero: current platform pricing, not a promise of permanently free services. */
+.home-2d .hero .hero-fee-banner{display:flex;align-items:flex-start;gap:11px;box-sizing:border-box;width:100%;max-width:510px;margin:16px 0 10px;padding:12px 14px;border:1px solid #e1b5c9;border-radius:14px;background:linear-gradient(135deg,#fff5f9,#f8e5ee);color:#592b43;box-shadow:2px 3px 0 #ead0dc;text-align:left}
+.home-2d .hero .hero-fee-icon{flex:0 0 35px;width:35px;height:35px;display:grid;place-items:center;border-radius:11px;background:#fff9fc;border:1px solid #e6bcd0;color:#963b60}
+.hero-fee-icon svg{display:block;width:22px;height:22px;animation:hero-fee-heart 3.5s ease-in-out infinite}
+.hero-fee-copy{min-width:0;flex:1}
+.home-2d .hero .hero-fee-copy strong{display:block;font-size:clamp(.86rem,1.25vw,1rem);font-weight:750;line-height:1.35;color:#843254;letter-spacing:0}
+.home-2d .hero .hero-fee-copy p{margin:4px 0 0;font-size:.78rem;line-height:1.45;color:#654557}
+.home-2d .hero .hero-fee-copy small{display:block;margin-top:4px;font-size:.72rem;line-height:1.35;color:#705364}
+@keyframes hero-fee-heart{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+@media(max-width:600px){.home-2d .hero .hero-fee-banner{margin:13px 0 9px;padding:11px;gap:9px}.home-2d .hero .hero-fee-icon{flex-basis:30px;width:30px;height:30px}.hero-fee-icon svg{width:19px;height:19px}}
+@media(prefers-reduced-motion:reduce){.hero-fee-icon svg{animation:none}}
