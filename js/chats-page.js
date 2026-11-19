@@ -9,8 +9,13 @@ function card(r){
  const a=el('a',undefined,'chat-list-card');a.href='chat.html?booking='+encodeURIComponent(r.booking_id);
  const avatar=el('span',initials(r.other_display_name),'chat-list-avatar');
  const main=el('div',undefined,'chat-list-main'),top=el('div',undefined,'chat-list-top');
- top.append(el('strong',r.other_display_name||'Sathivo member'),el('time',fmt(r.last_message_at||r.requested_for)));
- const preview=el('p',r.last_message||'Chat is ready. Say hello 👋','chat-list-preview');
+ top.append(el('strong',r.other_display_name||'Sathivo member'));
+ if(r.last_message_at){
+  const time=el('time',fmt(r.last_message_at));
+  time.dateTime=r.last_message_at;
+  top.append(time);
+ }
+ const preview=el('p',r.last_message||(r.last_message_type==='image'?'Photo':'No messages yet'),'chat-list-preview');
  if(r.last_message_type==='image')preview.classList.add('photo-preview');
  main.append(top,preview,el('small',r.category+' · '+r.booking_status,'chat-list-meta'));
  a.append(avatar,main);

@@ -4,7 +4,7 @@ function placeIndicator(){
  const host=document.querySelector('.site-header .container');if(!host)return null;
  let link=host.querySelector('.desktop-header-links a[href="requests.html"],#navigation a[href="requests.html"]');
  if(!link&&host.classList.contains('compact-header')){
-  link=document.createElement('a');link.href='requests.html';link.textContent='Requests';
+  link=document.createElement('a');link.href='requests.html';link.textContent='Incoming Requests';
   link.className='desktop-request-indicator';host.append(link);
  }
  if(!link)return null;
