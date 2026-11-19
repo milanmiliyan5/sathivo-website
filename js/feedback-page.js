@@ -1,3 +1,4 @@
+import {bindFeedbackRating} from './feedback-rating.js?v=20261119-stars-1';
 import {recordFeedbackSubmitted} from './feedback-prompt.js?v=20261119-feedback-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 const $=id=>document.getElementById(id);
@@ -52,4 +53,5 @@ async function submit(event){
     status(await errorMessage(error,'Could not send feedback. Please try again.'),'error');
   }finally{button.disabled=false}
 }
+bindFeedbackRating($('feedback-form'));
 void init();

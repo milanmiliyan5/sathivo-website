@@ -1,0 +1,5 @@
+/* Keep existing 2D borders, shadows, focus and tap effects. */
+body.sathivo-2d .feedback-rating .rating-options label.rating-filled>span{
+  background:#fff1f6;
+  color:#a63c68;
+}
