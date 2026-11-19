@@ -152,7 +152,13 @@ function feedNodes(rows){
  return rows.map(card);
 }
 function sortLabel(){return {newest:'Newest',price_asc:'Price: low to high',price_desc:'Price: high to low',rating:'Top rated'}[$('sort')?.value]||'Newest';}
-async function list(){
+// Pagination lands at the start of the new results, not the previous scroll offset.
+function scrollToDirectoryResults(hasProfiles){
+ const target=hasProfiles?$('results'):$('status');
+ target.focus({preventScroll:true});
+ target.scrollIntoView({block:'start',inline:'nearest',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+}
+async function list({fromPagination=false}={}){
  const seq=++request;$('empty').hidden=true;$('retry').hidden=true;$('previous').disabled=$('next').disabled=true;$('status').textContent='Finding good company…';
  $('results').replaceChildren(...Array.from({length:6},()=>{const n=el('article',undefined,'companion-card companion-skeleton');n.innerHTML='<div class="portrait skeleton-block"></div><div class="card-copy"><i></i><i></i><i></i><i></i></div>';return n}));
  const savedOnly=$('saved-only').checked;
@@ -180,7 +186,8 @@ async function list(){
   const all=data||[],rows=all.slice(0,24);$('results').replaceChildren(...feedNodes(rows));$('empty').hidden=rows.length>0;
   $('status').textContent=rows.length?'Explore companions · '+scopeName()+' · '+sortLabel()+'.':'No published companions match these filters yet.';
   $('previous').disabled=page===0;$('next').disabled=all.length<=24;$('page-label').textContent='';
- }catch(error){if(seq!==request)return;$('results').replaceChildren();$('status').textContent='Could not load companions. Please try again.';$('retry').hidden=false;}
+  if(fromPagination)scrollToDirectoryResults(rows.length>0);
+ }catch(error){if(seq!==request)return;$('results').replaceChildren();$('status').textContent='Could not load companions. Please try again.';$('retry').hidden=false;if(fromPagination)scrollToDirectoryResults(false);}
 }
 function bookingForm(r){
  const wrap=el('section',undefined,'booking-form');
@@ -343,8 +350,8 @@ function setupDirectory(){
  $('filters').onreset=e=>{e.preventDefault();$('state').value='';districts();$('city-custom').value='';$('category').value=$('mode').value=$('gender-filter').value='';$('sort').value='newest';$('saved-only').checked=false;page=0;void list();};
  $('saved-only').addEventListener('change',()=>{if($('saved-only').checked&&!currentUser){$('saved-only').checked=false;location.href='account.html#login';return}page=0;void list();});
  $('sort').addEventListener('change',()=>{page=0;void list();});
- $('previous').onclick=()=>{if(page>0){page--;void list();}};
- $('next').onclick=()=>{page++;void list();};
+ $('previous').onclick=()=>{if(page>0&&!$('previous').disabled){page--;void list({fromPagination:true});}};
+ $('next').onclick=()=>{if(!$('next').disabled){page++;void list({fromPagination:true});}};
 }
 function refreshAccountInBackground(){
  if(authStarted)return;
