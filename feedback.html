@@ -10,7 +10,7 @@
   <link rel="icon" href="assets/favicon.svg">
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="legal.css?v=20261005-2">
-<script type="module" src="js/site-presence.js?v=20261025-tracking-1"></script><link rel="stylesheet" href="site-2d.css?v=20261018-alerts-1"><script src="js/site-motion.js?v=20261006-1" defer></script><link rel="canonical" href="https://sathivo.co/feedback.html"><link rel="stylesheet" href="feedback-rating.css?v=20261119-stars-1"></head>
+<script type="module" src="js/site-presence.js?v=20261025-tracking-1"></script><link rel="stylesheet" href="site-2d.css?v=20261018-alerts-1"><script src="js/site-motion.js?v=20261006-1" defer></script><link rel="canonical" href="https://sathivo.co/feedback.html"><link rel="stylesheet" href="feedback-rating.css?v=20261119-stars-1"><link rel="stylesheet" href="feedback-thanks.css?v=20261119-1"></head>
 <body class="sathivo-2d">
 <a class="skip-link" href="#main">Skip to feedback</a>
 <header class="site-header"><div class="container legal-header">
@@ -81,7 +81,29 @@
 </main>
 
 <script defer src="assets/vendor/supabase-2.116.0.js"></script>
-<script type="module" src="js/feedback-page.js?v=20261119-stars-1"></script>
+<script type="module" src="js/feedback-page.js?v=20261119-thanks-1"></script>
 <footer class="legal-footer"><div class="container legal-footer-inner"><div><strong>Sathivo</strong><span>18+ only · Strictly platonic</span></div><div class="legal-footer-links"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="safety.html">Safety & Guidelines</a><a href="support.html">Support</a><a href="feedback.html">Feedback</a><a href="delete-account.html">Delete account</a></div></div></footer>
+<dialog id="feedback-thanks" class="feedback-thanks" aria-labelledby="feedback-thanks-title" aria-describedby="feedback-thanks-copy">
+ <div class="feedback-thanks-inner">
+  <button class="feedback-thanks-close" type="button" aria-label="Close thank you message">×</button>
+  <svg class="feedback-thanks-art" viewBox="0 0 200 135" aria-hidden="true">
+   <ellipse cx="100" cy="121" rx="43" ry="6" fill="#edd4dd"/>
+   <g class="thanks-character">
+    <path class="thanks-wave-left" d="M49 66 Q24 56 23 42" stroke="#b95580" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path class="thanks-wave-right" d="M151 66 Q176 56 177 42" stroke="#b95580" stroke-width="4" fill="none" stroke-linecap="round"/>
+    <path d="M100 112 C80 96 38 67 49 38 C57 15 86 21 100 42 C114 21 143 15 151 38 C162 67 120 96 100 112Z" fill="#ef91b4" stroke="#b95580" stroke-width="2"/>
+    <g class="thanks-eyes" fill="#613146"><ellipse cx="80" cy="59" rx="4" ry="6"/><ellipse cx="120" cy="59" rx="4" ry="6"/></g>
+    <path d="M90 70 Q100 85 110 70" stroke="#613146" fill="#fff" stroke-width="2.5" stroke-linecap="round"/>
+    <g fill="#e46f9f"><ellipse cx="67" cy="73" rx="9" ry="5"/><ellipse cx="133" cy="73" rx="9" ry="5"/></g>
+   </g>
+   <g class="thanks-sparkles" fill="#dcaa52"><path d="M20 9 L23 17 L31 20 L23 23 L20 31 L17 23 L9 20 L17 17Z"/><path d="M175 8 L179 17 L188 21 L179 25 L175 34 L171 25 L162 21 L171 17Z"/></g>
+   <g class="thanks-float" fill="#d66c9c"><path d="M36 100C20 90 31 82 36 89C42 82 52 90 36 100Z"/><path d="M163 98C151 90 159 83 163 89C168 83 176 90 163 98Z"/></g>
+  </svg>
+  <h2 id="feedback-thanks-title">You made our day!</h2>
+  <p id="feedback-thanks-copy">Thank you for sharing your thoughts with us.</p>
+  <p class="thanks-love">Sending a little love back! ♡</p>
+  <button class="feedback-thanks-done" type="button" autofocus>You're Welcome!</button>
+ </div>
+</dialog>
 </body>
 </html>

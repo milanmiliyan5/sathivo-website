@@ -1,8 +1,10 @@
+import {bindFeedbackThanks} from './feedback-thanks.js?v=20261119-1';
 import {bindFeedbackRating} from './feedback-rating.js?v=20261119-stars-1';
 import {recordFeedbackSubmitted} from './feedback-prompt.js?v=20261119-feedback-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 const $=id=>document.getElementById(id);
 let client,feedbackUser;
+const showThanks=bindFeedbackThanks($('feedback-thanks'));
 async function errorMessage(error,fallback){
   try{
     const response=error?.context;
@@ -27,6 +29,7 @@ async function submit(event){
   const form=event.currentTarget;
   if(!form.reportValidity())return;
   const button=form.querySelector('button[type=submit]');
+  if(button.disabled)return;
   button.disabled=true;status('Sending your feedback…');
   try{
     const data=new FormData(form);
@@ -43,12 +46,14 @@ async function submit(event){
       website:String(data.get('website')||'')
     };
     const {data:result,error}=await client.functions.invoke('submit-support',{body});
+    if(!error&&!result?.case_id)throw Error('Feedback could not be confirmed. Please try again.');
     if(error)throw error;
     if(feedbackUser?.id)recordFeedbackSubmitted(feedbackUser.id);
     const ref=String(result?.case_id||'').split('-')[0].toUpperCase();
     status('Thank you — feedback sent'+(ref?' · Reference '+ref:'')+'.','success');
     const email=$('feedback-email').value;
     form.reset();$('feedback-email').value=email;
+    showThanks(button);
   }catch(error){
     status(await errorMessage(error,'Could not send feedback. Please try again.'),'error');
   }finally{button.disabled=false}
