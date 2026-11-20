@@ -1,5 +1,5 @@
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
-import {bindCustomAmountLimit} from './contribution-amount.js?v=20261120-amount-limit-1';
+import {bindCustomAmountLimit,contributionPrefill} from './contribution-amount.js?v=20261120-app-prefill-1';
 const $=id=>document.getElementById(id);
 let client,allowed=false,busy=false,pendingId=null;
 const status=(s,success=false)=>{$('contribution-status').textContent=s;$('contribution-status').dataset.success=String(success)};
@@ -18,6 +18,19 @@ function syncCustomAmount(){
  $('custom-amount').disabled=!custom;
 }
 $('contribution-form').addEventListener('change',syncCustomAmount);
+// Amount-only hint from the Android app; never authorizes checkout or consent.
+const prefill=contributionPrefill(new URLSearchParams(location.search).get('amount'));
+if(prefill!==null){
+ const preset=[10,25,50,100,200].includes(prefill)?String(prefill):'custom';
+ const radio=document.querySelector('input[name=amount][value="'+preset+'"]');
+ if(radio){
+  radio.checked=true;
+  if(preset==='custom'){
+   $('custom-amount').value=String(prefill);
+   $('custom-amount').dispatchEvent(new Event('input'));
+  }
+ }
+}
 syncCustomAmount();
 $('contribution-form').addEventListener('submit',async e=>{
  e.preventDefault();if(!allowed||busy||pendingId)return;

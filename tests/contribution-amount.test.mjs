@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
-import {normalizeCustomAmount,bindCustomAmountLimit} from '../js/contribution-amount.js';
+import {normalizeCustomAmount,bindCustomAmountLimit,contributionPrefill} from '../js/contribution-amount.js';
 
 test('custom contribution caps typing and pasted amounts at 10000',()=>{
  for(const value of ['10001','99999','1000000000000','9'.repeat(200)])
@@ -30,4 +30,9 @@ test('contribution page uses numeric keyboard, immediate constraint and server-s
  assert.ok(js.includes("bindCustomAmountLimit($('custom-amount'))"));
  assert.ok(js.includes('n<10||n>10000'));
  assert.ok(js.includes("$('custom-amount').disabled=!custom"));
+});
+
+test('app amount hint cannot bypass checkout limits',()=>{
+ for(const value of ['10','25','50','123','10000'])assert.equal(contributionPrefill(value),Number(value));
+ for(const value of [null,'','9','10001','1e4','10.5','-50','1000000','<script>'])assert.equal(contributionPrefill(value),null);
 });

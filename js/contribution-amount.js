@@ -15,3 +15,10 @@ export function bindCustomAmountLimit(input){
  input.addEventListener('change',limit);
  limit();
 }
+
+// Accept only whole-rupee amounts already inside the payment range.
+export function contributionPrefill(value){
+ if(typeof value!=='string'||!/^\d{2,5}$/.test(value))return null;
+ const n=Number(value);
+ return Number.isInteger(n)&&n>=10&&n<=10000?n:null;
+}
