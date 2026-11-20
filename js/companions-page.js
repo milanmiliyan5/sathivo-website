@@ -1,7 +1,7 @@
 import {getSathivoClient,getSathivoPublicClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
 import {sendBookingEmail} from './booking-email-events.js?v=20261017-1';
-import {avatarAsset} from './avatar-utils.js?v=20261007-1';
+import {avatarAsset} from './avatar-utils.js?v=20261121-avatars-1';
 import {openSafetyReport,confirmSafetyBlock} from './safety-actions.js?v=20261018-1';
 import {districtsByState,statesAndUTs,popularIndianCities} from './india-districts.js?v=20261015-1';
 

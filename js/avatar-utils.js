@@ -4,7 +4,10 @@ export const avatarOptions = [
   {id:'male-3', label:'Male avatar 3', src:'assets/avatar-male-3.webp?v=20261007-1'},
   {id:'female-1', label:'Female avatar 1', src:'assets/avatar-female-1.webp?v=20261007-1'},
   {id:'female-2', label:'Female avatar 2', src:'assets/avatar-female-2.webp?v=20261007-1'},
-  {id:'female-3', label:'Female avatar 3', src:'assets/avatar-female-3.webp?v=20261007-1'}
+  {id:'female-3', label:'Female avatar 3', src:'assets/avatar-female-3.webp?v=20261007-1'},
+  {id:'female-niqab', label:'Niqab', src:'assets/avatar-female-niqab.webp?v=20261121-avatars-1'},
+  {id:'female-modern', label:'Modern', src:'assets/avatar-female-modern.webp?v=20261121-avatars-1'},
+  {id:'female-fashionable', label:'Fashionable', src:'assets/avatar-female-fashionable.webp?v=20261121-avatars-1'}
 ];
 export const avatarMarker = id => 'builtin:'+id;
 export const isBuiltinAvatar = value => typeof value === 'string' && value.startsWith('builtin:');

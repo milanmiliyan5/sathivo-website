@@ -1,8 +1,8 @@
-import { setupPublishing } from './listing-publish.js?v=20261116-prompt-1';
+import { setupPublishing } from './listing-publish.js?v=20261121-avatars-1';
 import {districtsByState,statesAndUTs} from './india-districts.js?v=20261015-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { getSathivoClient } from './supabase-client.js?v=20261025-polish-1';
-import { avatarOptions, avatarMarker, avatarAsset, isBuiltinAvatar } from './avatar-utils.js?v=20261007-1';
+import { avatarOptions, avatarMarker, avatarAsset, isBuiltinAvatar } from './avatar-utils.js?v=20261121-avatars-1';
 import { compressImageFile,formatBytes } from './image-compress.js?v=20261006-1';
 const $ = id => document.getElementById(id);
 const form = $('profile-form');
@@ -45,7 +45,7 @@ for(const group of [{title:'Male avatars',prefix:'male-'},{title:'Female avatars
   section.className='avatar-group';title.className='avatar-group-title';title.textContent=group.title;grid.className='avatar-group-grid';
   avatarOptions.filter(item=>item.id.startsWith(group.prefix)).forEach(item=>{
     const button=document.createElement('button'), image=document.createElement('img');
-    button.type='button';button.className='avatar-choice';button.dataset.avatar=item.id;button.setAttribute('aria-label','Use '+item.label);button.setAttribute('aria-pressed','false');
+    button.type='button';button.className='avatar-choice';button.dataset.avatar=item.id;button.setAttribute('aria-label','Use '+item.label);button.title=item.label;button.setAttribute('aria-pressed','false');
     image.src=item.src;image.alt='';image.loading='lazy';button.append(image);grid.append(button);
   });
   section.append(title,grid);avatarChoices.append(section);

@@ -1,0 +1,4 @@
+-- Expand the existing exact allowlist, retaining all legacy avatar paths.
+set local lock_timeout = '5s';
+alter table public.member_profiles drop constraint member_profiles_check, add constraint member_profiles_check check (avatar_path is null or avatar_path = (user_id::text || '/avatar.webp') or avatar_path in ('builtin:male-1','builtin:male-2','builtin:male-3','builtin:female-1','builtin:female-2','builtin:female-3','builtin:female-niqab','builtin:female-modern','builtin:female-fashionable'));
+alter table public.companion_listings drop constraint companion_listings_check, add constraint companion_listings_check check (photo_path is null or photo_path = (user_id::text || '/avatar.webp') or photo_path in ('builtin:male-1','builtin:male-2','builtin:male-3','builtin:female-1','builtin:female-2','builtin:female-3','builtin:female-niqab','builtin:female-modern','builtin:female-fashionable'));
