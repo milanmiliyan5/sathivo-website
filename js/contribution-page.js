@@ -1,4 +1,5 @@
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
+import {bindCustomAmountLimit} from './contribution-amount.js?v=20261120-amount-limit-1';
 const $=id=>document.getElementById(id);
 let client,allowed=false,busy=false,pendingId=null;
 const status=(s,success=false)=>{$('contribution-status').textContent=s;$('contribution-status').dataset.success=String(success)};
@@ -10,7 +11,14 @@ function remember(id){pendingId=id;try{if(id)sessionStorage.setItem('sathivo.con
 function displayReceipt(r){if(r.status==='captured'){status('Thank you! Your ₹'+(r.amount_paise/100)+' contribution is verified. ♡',true);remember(null)}else if(r.status==='refunded'||r.status==='partially_refunded'){status('Your contribution has a recorded refund. Contact Support for details.');remember(null)}else if(r.status==='failed'){status('Payment attempt failed. Check your bank before trying again.');remember(null)}else{status('Awaiting verified payment status. Do not pay again until you have checked the result.');state()}}
 async function check(){if(!pendingId)return;busy=true;state();try{displayReceipt(await api({action:'receipt',id:pendingId}))}catch(e){status(e.message)}finally{busy=false;state()}}
 $('contribution-refresh').addEventListener('click',()=>void check());
-$('contribution-form').addEventListener('change',()=>{$('custom-label').hidden=document.querySelector('input[name=amount]:checked')?.value!=='custom'});
+bindCustomAmountLimit($('custom-amount'));
+function syncCustomAmount(){
+ const custom=document.querySelector('input[name=amount]:checked')?.value==='custom';
+ $('custom-label').hidden=!custom;
+ $('custom-amount').disabled=!custom;
+}
+$('contribution-form').addEventListener('change',syncCustomAmount);
+syncCustomAmount();
 $('contribution-form').addEventListener('submit',async e=>{
  e.preventDefault();if(!allowed||busy||pendingId)return;
  const n=amount();if(!Number.isInteger(n)||n<10||n>10000){status('Enter a whole rupee amount from ₹10–₹10,000.');return}
