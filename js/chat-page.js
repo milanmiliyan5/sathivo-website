@@ -16,6 +16,7 @@ const messageBlobUrls=new Set();
 const heartSeenMessageIds=new Set();
 let heartHistoryReady=false;
 let desktopInboxLoaded=false,desktopInboxLoading=false;
+let selectedDeleteMessage=null,deleteRequestRunning=false;
 
 const el=(t,x,c)=>{const n=document.createElement(t);if(x!==undefined)n.textContent=x;if(c)n.className=c;return n};
 const fmt=d=>new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d));
@@ -168,9 +169,52 @@ async function normalImageFrame(r){
  }catch{frame.append(el('span','Photo unavailable.','chat-photo-loading'));frame.disabled=true}
  return frame;
 }
+
+function openMessageDeleteOptions(r){
+ const dialog=$('message-delete-dialog');
+ if(!dialog||!user||!r?.id||deleteRequestRunning)return;
+ selectedDeleteMessage={id:r.id,isMine:r.sender_id===user.id,isRedacted:Boolean(r.deleted_for_everyone_at)};
+ $('message-delete-everyone').hidden=!selectedDeleteMessage.isMine||selectedDeleteMessage.isRedacted;
+ $('message-delete-description').textContent=selectedDeleteMessage.isMine&&!selectedDeleteMessage.isRedacted
+  ?'Delete for me hides this message only from you. Delete for everyone removes your text or photo from both chats. Someone may already have seen or saved it.'
+  :'Delete for me hides this message only from your chat. The other person may still see it.';
+ dialog.showModal();
+}
+async function deleteSelectedMessage(scope){
+ const selected=selectedDeleteMessage,dialog=$('message-delete-dialog');
+ if(!selected||deleteRequestRunning||!user||!booking||!['me','everyone'].includes(scope))return;
+ if(scope==='everyone'){
+  if(!selected.isMine||selected.isRedacted)return;
+  if(!window.confirm('Delete this message for everyone? The text or photo will be removed from this chat for both people. This cannot be undone.'))return;
+ }
+ deleteRequestRunning=true;
+ const buttons=['message-delete-me','message-delete-everyone','message-delete-cancel'].map($);
+ for(const button of buttons)if(button)button.disabled=true;
+ try{
+  const {data,error}=await client.functions.invoke('delete-chat-message',{
+   body:{message_id:selected.id,scope},
+  });
+  if(error||!data?.ok)throw error||new Error(data?.error||'Delete failed');
+  dialog.close();selectedDeleteMessage=null;
+  if(mediaViewer&&!mediaViewer.hidden)closeViewer();
+  await loadMessages(false);
+  // Only reload the sidebar following this explicit user action, never poll.
+  desktopInboxLoaded=false;
+  if(window.matchMedia('(min-width: 961px)').matches)void loadDesktopInbox();
+  $('status').textContent=scope==='me'?'Message deleted for you.':'Message deleted for everyone.';
+ }catch(error){
+  console.warn('Could not delete chat message:',error?.message||'Unexpected error');
+  $('status').textContent='Could not delete this message. Please try again.';
+ }finally{
+  deleteRequestRunning=false;
+  for(const button of buttons)if(button)button.disabled=false;
+ }
+}
+
 function deliveryLabel(r){if(r.seen_at)return 'Seen';if(r.delivered_at)return 'Delivered';return 'Sent'}
 async function messageNode(r){
  const mine=r.sender_id===user.id,n=el('article',undefined,'message'+(mine?' mine':''));
+ if(r.deleted_for_everyone_at)n.classList.add('message-deleted');
  n.dataset.messageId=r.id;
  if(r.message_type==='image'&&r.photo_path){
   if(r.view_once){
@@ -190,7 +234,11 @@ async function messageNode(r){
    const state=deliveryLabel(r),tick=el('span',state==='Sent'?'✓':'✓✓','delivery-state'+(r.seen_at?' seen':''));
    tick.title=state;tick.setAttribute('aria-label',state);meta.append(tick);
   }
- n.append(meta);return n;
+ n.append(meta);
+ const options=el('button','⋮','message-options-trigger');options.type='button';
+ options.setAttribute('aria-label',mine?'Options for your message':'Message options');
+ options.title='Message options';options.onclick=()=>openMessageDeleteOptions(r);
+ n.append(options);return n;
 }
 async function renderMessages(rows,initial=false){
  const wasNear=nearBottom()||initial||!$('messages').dataset.ready;
@@ -331,6 +379,11 @@ async function init(){try{
  protectPrivateMedia();setupPresence();await loadMessages(true);
  messageChannel=client.channel('booking-messages:'+booking.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_messages',filter:'booking_id=eq.'+booking.id},()=>void loadMessages(false)).subscribe();
  bookingChannel=client.channel('booking-status:'+booking.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'booking_requests',filter:'id=eq.'+booking.id},()=>void loadBooking()).subscribe();
+ const deleteDialog=$('message-delete-dialog');
+ $('message-delete-me').onclick=()=>void deleteSelectedMessage('me');
+ $('message-delete-everyone').onclick=()=>void deleteSelectedMessage('everyone');
+ $('message-delete-cancel').onclick=()=>{deleteDialog.close();selectedDeleteMessage=null};
+ deleteDialog.addEventListener('close',()=>{if(!deleteRequestRunning)selectedDeleteMessage=null});
  $('message').addEventListener('input',()=>{sendTyping();fitComposer()});
  $('message').addEventListener('keydown',event=>{
   if(event.key!=='Enter'||event.shiftKey||event.isComposing||event.altKey||event.ctrlKey||event.metaKey)return;
