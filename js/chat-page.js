@@ -1,3 +1,4 @@
+import {showChatAvatars} from './chat-avatars.js?v=20261121-dp';
 import {withCurrentBookingNames} from './booking-name-sync.js?v=20261030-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendMessagePush} from './push-events.js?v=20261004-2';
@@ -198,6 +199,7 @@ async function loadBooking(){
  $('chat-title').textContent=other||'Sathivo chat';
  const initial=String(other||'S').trim().charAt(0).toLocaleUpperCase('en-IN')||'S';
  $('chat-avatar').textContent=initial;
+ void showChatAvatars(client,[{userId:otherId,element:$('chat-avatar')}]);
  $('chat-booking-pill').textContent=booking.status;
  $('chat-booking-pill').dataset.status=booking.status;
  $('booking-summary').textContent=booking.category+' · '+fmt(booking.requested_for)+' · '+booking.duration_minutes+' min';
