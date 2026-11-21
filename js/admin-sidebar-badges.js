@@ -30,3 +30,16 @@ export function updateSidebarBadges(root,counts){
     else anchor.removeAttribute('aria-label');
   }
 }
+
+/** Only the small sidebar badges poll; the dashboard metrics retain manual refresh. */
+export function startSidebarBadgePolling(refresh,{win=window,doc=document}={}){
+ const whenVisible=()=>{if(doc.visibilityState==='visible')refresh()};
+ const timer=win.setInterval(whenVisible,30000);
+ doc.addEventListener('visibilitychange',whenVisible);
+ win.addEventListener('focus',whenVisible);
+ return ()=>{
+   win.clearInterval(timer);
+   doc.removeEventListener('visibilitychange',whenVisible);
+   win.removeEventListener('focus',whenVisible);
+ };
+}

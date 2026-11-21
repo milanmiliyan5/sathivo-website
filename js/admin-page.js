@@ -1,4 +1,4 @@
-import {updateSidebarBadges,sidebarBadgeSections,sidebarReadAcknowledgements,safeBadgeCount} from './admin-sidebar-badges.js?v=20261121-sidebar-badges-1';
+import {updateSidebarBadges,sidebarBadgeSections,sidebarReadAcknowledgements,safeBadgeCount,startSidebarBadgePolling} from './admin-sidebar-badges.js?v=20261121-sidebar-badges-1';
 import {initContributions,refreshContributions} from './admin-contributions.js?v=20261119-1';
 import {initMaintenance} from './admin-maintenance.js?v=20261118-1';
 import {runRecovery} from './booking-recovery.js?v=20261116-1';
@@ -21,7 +21,7 @@ function value(id){return $(id)?.value??'all'}
 function includesAny(values,q){return values.some(v=>String(v??'').toLowerCase().includes(q))}
 function setRefreshing(on){const b=$('refresh-dashboard');if(!b)return;b.classList.toggle('is-loading',on);b.disabled=on;b.textContent=on?'↻ Refreshing…':'↻ Refresh'}
 
-let badgeRequest=null,badgeSnapshot=null,badgeCounts=null,badgeTimer=null;
+let badgeRequest=null,badgeSnapshot=null,badgeCounts=null,stopBadgePolling=null;
 const acknowledgingSections=new Set();
 async function refreshSidebarBadges(){
  if(!client||!user)return null;
@@ -41,10 +41,8 @@ async function refreshSidebarBadges(){
  return badgeRequest;
 }
 function startBadgeUpdates(){
- if(badgeTimer!==null)return;
- badgeTimer=window.setInterval(()=>{if(document.visibilityState==='visible')void refreshSidebarBadges()},30000);
- document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')void refreshSidebarBadges()});
- window.addEventListener('focus',()=>void refreshSidebarBadges());
+ if(stopBadgePolling)return;
+ stopBadgePolling=startSidebarBadgePolling(()=>void refreshSidebarBadges());
 }
 async function onSidebarSectionSelected(section){
  const key=sidebarBadgeSections[section];
@@ -393,6 +391,7 @@ async function init(){
 window.addEventListener('pagehide',event=>{
 
   if(!event.persisted&&presenceChannel&&client)void client.removeChannel(presenceChannel);
+  if(!event.persisted&&stopBadgePolling){stopBadgePolling();stopBadgePolling=null;}
 });
 window.addEventListener('pageshow',event=>{
   if(!event.persisted||!presenceChannel)return;
