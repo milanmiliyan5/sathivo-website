@@ -111,7 +111,7 @@
  const ids=['rate','duration','extras','travel','budget'], money=n=>'₹'+Math.round(n).toLocaleString('en-IN');
  const get=id=>{const v=document.getElementById(id).valueAsNumber;return Number.isFinite(v)&&v>=0?v:NaN};
  const recalc=()=>{
-  const rate=get('rate'), duration=get('duration'), extras=get('extras'),travel=get('travel');
+  const rate=get('rate'), duration=Number(document.getElementById('duration').value), extras=get('extras'),travel=get('travel');
   const valid=Number.isInteger(rate)&&rate>=1&&rate<=100000&&[30,60,90,120,180].includes(duration)&&Number.isInteger(extras)&&extras<=1000000&&Number.isInteger(travel)&&travel<=1000000;
   const fee=rate*duration/60;
   document.getElementById('companion-total').textContent=valid?money(fee):'—';
