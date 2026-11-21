@@ -15,6 +15,7 @@ let typingTimer=null,typingSent=false,markTimer=null;
 const messageBlobUrls=new Set();
 const heartSeenMessageIds=new Set();
 let heartHistoryReady=false;
+let desktopInboxLoaded=false,desktopInboxLoading=false;
 
 const el=(t,x,c)=>{const n=document.createElement(t);if(x!==undefined)n.textContent=x;if(c)n.className=c;return n};
 const fmt=d=>new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d));
@@ -28,6 +29,47 @@ function dayLabel(d){
  if(key===y.toLocaleDateString('en-CA'))return 'Yesterday';
  return new Intl.DateTimeFormat('en-IN',{day:'numeric',month:'short',year:'numeric'}).format(x);
 }
+
+async function loadDesktopInbox(){
+ const list=$('chat-inbox-list');
+ if(!list||!client||!user||!booking||desktopInboxLoaded||desktopInboxLoading||!window.matchMedia('(min-width: 961px)').matches)return;
+ desktopInboxLoading=true;
+ try{
+  const {data,error}=await client.rpc('get_chat_list');
+  if(error)throw error;
+  const rows=await withCurrentBookingNames(client,data||[]);
+  const avatarContacts=[];
+  const cards=rows.filter(r=>r.booking_id).map(r=>{
+   const a=el('a',undefined,'chat-inbox-item');
+   a.href='chat.html?booking='+encodeURIComponent(r.booking_id);
+   const current=r.booking_id===booking.id;
+   if(current){a.classList.add('is-current');a.setAttribute('aria-current','page')}
+   const avatar=el('span',String(r.other_display_name||'S').trim().charAt(0).toUpperCase()||'S','chat-inbox-avatar');
+   if(r.other_user_id)avatarContacts.push({userId:r.other_user_id,element:avatar});
+   const copy=el('div',undefined,'chat-inbox-copy'),top=el('div',undefined,'chat-inbox-top');
+   top.append(el('strong',r.other_display_name||'Sathivo member'));
+   if(r.last_message_at){
+    const time=el('time',timeOnly(r.last_message_at));
+    time.dateTime=r.last_message_at;
+    top.append(time);
+   }
+   const preview=el('p',r.last_message|| (r.last_message_type==='image'?'Photo':'No messages yet'),'chat-inbox-preview');
+   const bottom=el('div',undefined,'chat-inbox-lower');
+   bottom.append(el('span',[r.category,r.booking_status].filter(Boolean).join(' · '),'chat-inbox-category'));
+   const unread=Number(r.unread_count||0);
+   if(unread>0&&!current)bottom.append(el('span',unread>99?'99+':String(unread),'chat-inbox-unread'));
+   copy.append(top,preview,bottom);
+   a.append(avatar,copy);
+   return a;
+  });
+  list.replaceChildren(...(cards.length?cards:[el('p','No other booking chats yet.','chat-inbox-placeholder')]));
+  desktopInboxLoaded=true;
+  if(avatarContacts.length)void showChatAvatars(client,avatarContacts);
+ }catch{
+  list.replaceChildren(el('p','Could not load conversation list. Use See all to open chats.','chat-inbox-placeholder'));
+ }finally{desktopInboxLoading=false}
+}
+
 function nearBottom(){const m=$('messages');return !m||m.scrollHeight-m.scrollTop-m.clientHeight<=120}
 function scrollLatest(smooth=false){const m=$('messages');if(m)m.scrollTo({top:m.scrollHeight,behavior:smooth?'smooth':'auto'});}
 function updateJump(){const b=$('jump-latest'),m=$('messages');if(b)b.hidden=!m||m.scrollHeight<=m.clientHeight+24||nearBottom();}
@@ -144,7 +186,10 @@ async function messageNode(r){
   if(r.body)n.append(el('p',r.body,'message-caption'));
  }else n.append(el('p',r.body,'message-text'));
  const meta=el('div',undefined,'message-meta');meta.append(el('time',timeOnly(r.created_at)));
- if(mine)meta.append(el('span',deliveryLabel(r),'delivery-state'+(r.seen_at?' seen':'')));
+ if(mine){
+   const state=deliveryLabel(r),tick=el('span',state==='Sent'?'✓':'✓✓','delivery-state'+(r.seen_at?' seen':''));
+   tick.title=state;tick.setAttribute('aria-label',state);meta.append(tick);
+  }
  n.append(meta);return n;
 }
 async function renderMessages(rows,initial=false){
@@ -265,7 +310,11 @@ async function init(){try{
  client=await getSathivoClient();
  const u=await client.auth.getUser();user=u.data.user;if(!user){const next='chat.html?booking='+encodeURIComponent(id);const login=new URL('account.html',location.href);login.searchParams.set('next',next);login.hash='login';location.replace(login.href);return}
  const p=await client.from('member_profiles').select('safety_id').eq('user_id',user.id).maybeSingle();if(p.data?.safety_id)mySafetyId=p.data.safety_id;
- booking={id};await loadBooking();const blockState=await client.from('user_blocks').select('blocker_id').or('and(blocker_id.eq.'+user.id+',blocked_id.eq.'+otherId+'),and(blocker_id.eq.'+otherId+',blocked_id.eq.'+user.id+')');if(!blockState.error){blockedByMe=(blockState.data||[]).some(b=>b.blocker_id===user.id);blockedByOther=(blockState.data||[]).some(b=>b.blocker_id===otherId);if(blockedByMe){$('block-user').disabled=true;$('block-user').textContent='User blocked'}if(blockedByMe||blockedByOther)syncComposer()}applySafetyWatermark();$('safety-actions').hidden=false;protectPrivateMedia();setupPresence();await loadMessages(true);
+ booking={id};await loadBooking();
+ const desktopLayout=window.matchMedia('(min-width: 961px)');
+ if(desktopLayout.matches)void loadDesktopInbox();
+ desktopLayout.addEventListener('change',event=>{if(event.matches)void loadDesktopInbox()});
+ const blockState=await client.from('user_blocks').select('blocker_id').or('and(blocker_id.eq.'+user.id+',blocked_id.eq.'+otherId+'),and(blocker_id.eq.'+otherId+',blocked_id.eq.'+user.id+')');if(!blockState.error){blockedByMe=(blockState.data||[]).some(b=>b.blocker_id===user.id);blockedByOther=(blockState.data||[]).some(b=>b.blocker_id===otherId);if(blockedByMe){$('block-user').disabled=true;$('block-user').textContent='User blocked'}if(blockedByMe||blockedByOther)syncComposer()}applySafetyWatermark();$('safety-actions').hidden=false;protectPrivateMedia();setupPresence();await loadMessages(true);
  messageChannel=client.channel('booking-messages:'+booking.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_messages',filter:'booking_id=eq.'+booking.id},()=>void loadMessages(false)).subscribe();
  bookingChannel=client.channel('booking-status:'+booking.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'booking_requests',filter:'id=eq.'+booking.id},()=>void loadBooking()).subscribe();
  $('message').addEventListener('input',()=>{sendTyping();fitComposer()});
