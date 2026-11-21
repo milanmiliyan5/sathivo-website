@@ -336,10 +336,12 @@ async function detail(){
 function setupDirectory(){
  if(!directory||filtersReady)return;
  filtersReady=true;
+ const disclosure=$('directory-filters');
+ if(disclosure&&window.matchMedia('(max-width: 640px)').matches)disclosure.open=false;
  opts('state',statesAndUTs.map(v=>[v,v]),'All India — all states / UTs');
  districts();
  ['Conversation','Coffee','Movies','Shopping','Events','Walking','Online chat','Phone conversation'].forEach(v=>$('category').add(new Option(v,v)));
- $('filters').onsubmit=e=>{e.preventDefault();page=0;void list();};
+ $('filters').onsubmit=e=>{e.preventDefault();page=0;const mobile=window.matchMedia('(max-width: 640px)').matches;if(mobile&&disclosure)disclosure.open=false;void list({fromPagination:mobile});};
  $('filters').onchange=e=>{
   if(e.target.id==='state')districts();
   else if(e.target.id==='district'){$('city').value='';$('city-custom').value='';$('city-custom').hidden=true;void refreshCitySuggestions();}
@@ -381,8 +383,8 @@ async function init(){
   // Public data uses its own isolated anonymous client, never the user's
   // potentially expired browser session.
   publicClient=await getSathivoPublicClient();
-  client=await getSathivoClient();
-  refreshAccountInBackground();
+  // Public listings must not wait for a possibly expired account session.
+  // The public client uses its own anonymous, non-persistent auth state.
   try{await loadPublicLocations();}
   catch(error){
    locationsLoaded=false;
@@ -390,6 +392,13 @@ async function init(){
   }
   if(directory)await list();
   else await detail();
+  // Restore optional logged-in features only after public content is visible.
+  try{
+   client=await getSathivoClient();
+   refreshAccountInBackground();
+  }catch(error){
+   console.warn('Optional account tools unavailable, public discovery remains available:',error?.message||'network error');
+  }
  }catch(error){
   $('status').textContent='Could not connect to Sathivo right now. Please try again.';
   $('retry').hidden=false;

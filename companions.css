@@ -23,3 +23,19 @@
 }
 
 .public-gender-chip{display:inline-block;vertical-align:middle;white-space:nowrap;font-size:.72rem;line-height:1.25;font-weight:700;letter-spacing:0;color:#793d5c;background:#f8e6ee;border:1px solid #e3bdcf;border-radius:999px;padding:.22rem .55rem;margin-inline-start:.25rem}
+
+/* Compact accessible directory controls on phones; open by default without JS. */
+.directory-filter-disclosure>summary{display:none}
+.directory-filter-disclosure>.filters{width:100%}
+.directory-nojs{padding:13px 17px;border:1px solid #e9cdda;border-radius:12px;background:#fff6f9;color:#5c3b52;line-height:1.6;margin-top:16px}
+@media(max-width:640px){
+ .directory-filter-disclosure{border:1px solid #e5cbd6;border-radius:16px;background:#fff9fc;margin:20px 0}
+ .directory-filter-disclosure>summary{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:17px 16px;font-weight:750;color:#4d2540;cursor:pointer;min-height:52px;list-style:none}
+ .directory-filter-disclosure>summary::-webkit-details-marker{display:none}
+ .directory-filter-disclosure>summary span{font-size:21px;transition:transform .2s ease}
+ .directory-filter-disclosure[open]>summary span{transform:rotate(180deg)}
+ .directory-filter-disclosure>.filters{border:0;border-top:1px solid #edd5e0;border-radius:0 0 16px 16px;padding:15px;background:#fff}
+ .directory-filter-disclosure .button{min-height:44px}
+ .directory-nojs{margin-top:12px}
+}
+@media(prefers-reduced-motion:reduce){.directory-filter-disclosure>summary span{transition:none}}
