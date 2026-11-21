@@ -42,7 +42,7 @@
   <p class="guide-kicker">Free planning tool · No sign-in required</p>
   <h1>Plan the time, cost and safety of a platonic meetup.</h1>
   <p class="guide-lead">Before asking someone to join you for coffee, a movie or a public outing, make the practical details clear. This tool estimates the cost of your proposed hourly offer and helps you prepare a safer plan. It runs on this page and does not send your inputs to Sathivo.</p>
-  <p class="guide-updated">By Sathivo · Updated 1 November 2026 · For adults 18+ · Strictly platonic</p>
+  <p class="guide-updated">By Sathivo · Updated 21 November 2026 · For adults 18+ · Strictly platonic</p>
  </header>
  <div class="guide-body">
   <section aria-labelledby="cost-title">
@@ -66,6 +66,13 @@
      <p id="calc-message" class="plan-fineprint">This is an estimate, not a payment request. Any companion payment is arranged directly between users outside Sathivo.</p>
     </div>
     <p class="plan-fineprint">Illustrative example: an offer of ₹300 per hour for 60 minutes, ₹200 for your food or ticket and ₹100 for travel gives an estimated budget of ₹600. If a request is declined, no booking has been agreed. Prices, travel, food and tickets must be discussed before meeting.</p>
+   </div>
+   <div class="plan-card" id="compare-durations">
+    <h3>Which durations fit my budget?</h3>
+    <p>Set the most you want to spend on the whole outing. Each option uses your hourly offer, food, tickets and travel amounts from above. When you compare a longer outing, adjust any expenses that would also change.</p>
+    <div class="plan-field"><label for="budget">My total budget (₹)</label><input id="budget" type="number" inputmode="numeric" min="0" step="1" value="750"></div>
+    <ul id="duration-options" aria-live="polite"></ul>
+    <p>For example, with ₹750 available and ₹300 set aside for food and travel, ₹450 is left for companion time. At ₹300 per hour, a 90-minute meetup uses that entire amount. Two hours would take the total to ₹900.</p>
    </div>
   </section>
   <section aria-labelledby="safety-title">
@@ -101,8 +108,8 @@
 <footer class="container directory-footer">Sathivo · Adults 18+ · Strictly platonic <div class="footer-legal-inline"><a href="./">Home</a><a href="about.html">About Sathivo</a><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="safety.html">Safety</a><a href="support.html">Support</a></div></footer>
 <script>
 (function(){
- const ids=['rate','duration','extras','travel'], money=n=>'₹'+Math.round(n).toLocaleString('en-IN');
- const get=id=>{const v=Number(document.getElementById(id).value);return Number.isFinite(v)&&v>=0?v:NaN};
+ const ids=['rate','duration','extras','travel','budget'], money=n=>'₹'+Math.round(n).toLocaleString('en-IN');
+ const get=id=>{const v=document.getElementById(id).valueAsNumber;return Number.isFinite(v)&&v>=0?v:NaN};
  const recalc=()=>{
   const rate=get('rate'), duration=get('duration'), extras=get('extras'),travel=get('travel');
   const valid=Number.isInteger(rate)&&rate>=1&&rate<=100000&&[30,60,90,120,180].includes(duration)&&Number.isInteger(extras)&&extras<=1000000&&Number.isInteger(travel)&&travel<=1000000;
@@ -111,6 +118,20 @@
   document.getElementById('extra-total').textContent=valid?money(extras+travel):'—';
   document.getElementById('grand-total').textContent=valid?money(fee+extras+travel):'Check amounts';
   document.getElementById('calc-message').textContent=valid?'Estimate only. The companion must accept your offer; all payments are arranged directly between users, not through Sathivo.':'Enter a valid hourly offer (₹1–₹1,00,000) and nonnegative whole-rupee costs.';
+  const budget=get('budget'), list=document.getElementById('duration-options');
+  list.replaceChildren();
+  if (!valid || !Number.isSafeInteger(budget)) {
+   list.textContent='Enter whole-rupee amounts to compare durations.';
+   return;
+  }
+  for (const option of document.getElementById('duration').options) {
+   const total=Math.round(rate*Number(option.value)/60)+extras+travel;
+   const difference=budget-total;
+   const balance=difference===0?'exactly on budget':money(Math.abs(difference))+(difference>0?' left':' over budget');
+   const item=document.createElement('li');
+   item.textContent=option.text+' · '+money(total)+' total · '+balance;
+   list.append(item);
+  }
  };
  ids.forEach(id=>document.getElementById(id).addEventListener('input',recalc));
  const checks=[...document.querySelectorAll('.safety-step')];
