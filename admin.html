@@ -8,9 +8,9 @@
   <title>Sathivo Admin Dashboard</title>
   <link rel="icon" href="assets/favicon.svg">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="admin-dashboard.css?v=20261122-manual-refresh-1">
+  <link rel="stylesheet" href="admin-dashboard.css?v=20261122-remove-extra-quality-1">
   <script defer src="assets/vendor/supabase-2.116.0.js"></script>
-  <script type="module" src="js/admin-page.js?v=20261122-manual-refresh-1"></script>
+  <script type="module" src="js/admin-page.js?v=20261122-remove-extra-quality-1"></script>
 </head>
 <body class="admin-body">
   <div class="admin-app">
@@ -223,16 +223,14 @@
               <div><p class="panel-kicker">MARKETPLACE</p><h2>Companion Listings</h2><p id="listing-count" class="panel-note"></p></div>
               <div class="filter-row">
                 <label class="search-box compact-search"><span>⌕</span><input id="listing-search" type="search" placeholder="Search companion" aria-label="Search companion listings"></label>
-                <select id="listing-quality-filter" class="filter-select" aria-label="Filter companion listings by quality review"><option value="all">All quality statuses</option><option value="review">Needs human review</option><option value="clear">No quality flags</option></select>
                 <select id="listing-status-filter" class="filter-select" aria-label="Filter companion listings by status">
                   <option value="all">All statuses</option><option value="active">Active</option><option value="suspended">Suspended</option>
                 </select>
               </div>
             </div>
-            <div class="listing-quality-panel"><strong>Public listing quality review</strong><p id="listing-quality-summary" role="status" aria-live="polite">Load listings to see review indicators.</p><p>Review short bios, missing details, repeated descriptions, possible contact information and questionable wording. Flags are advisory; no automatic suspension or deletion. Examine context before any moderation action. Published member data remains unchanged until you explicitly moderate a listing.</p><p class="quality-policy-note">AdSense approval is not guaranteed: Google Publisher Policies explicitly cite compensated companionship and escort services as examples of a restricted risk area. Do not misrepresent Sathivo’s actual paid platonic model.</p></div>
             <div class="table-wrap">
               <table class="admin-table">
-                <thead><tr><th>Companion</th><th>Bio</th><th>Quality review</th><th>Published</th><th>Status</th><th>Action</th></tr></thead>
+                <thead><tr><th>Companion</th><th>Bio</th><th>Published</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody id="listings"></tbody>
               </table>
             </div>
