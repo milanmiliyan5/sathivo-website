@@ -2,10 +2,12 @@ import {updateSidebarBadges,sidebarBadgeSections,sidebarReadAcknowledgements,saf
 import {initContributions,refreshContributions} from './admin-contributions.js?v=20261119-1';
 import {initMaintenance} from './admin-maintenance.js?v=20261118-1';
 import {runRecovery} from './booking-recovery.js?v=20261116-1';
+import {assessListingQuality,summarizeListingQuality} from './companion-quality.js?v=20261122-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {todayAccounts} from './admin-account-date.js?v=20261115-1';
 const $=id=>document.getElementById(id);
 let client,user,profiles=[],bookings=[],supports=[],reports=[],listings=[],presenceChannel;
+let qualityDuplicates=new Map();
 let registeredUsersAvailable=false,accountRequest=null;
 const nf=new Intl.NumberFormat('en-IN');
 const fmt=d=>d?new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeZone:'Asia/Kolkata'}).format(new Date(d)):'—';
@@ -251,16 +253,28 @@ function renderReports(){
 function listingRow(r){
   const tr=node('tr'),companion=node('div',undefined,'primary-cell');
   companion.append(node('strong',r.display_name||'Unnamed companion'),node('small',String(r.bio||'No bio').slice(0,90)));
+  const quality=assessListingQuality(r,qualityDuplicates);
+  const qualityMark=node('div',quality.needsReview?quality.flags.join(' · '):r.published&&r.moderation_status==='active'?'No current flags':'Not a public active listing','listing-quality-mark');
+  qualityMark.dataset.flagged=String(quality.needsReview);
   const actions=node('div',undefined,'action-group'),next=r.moderation_status==='active'?'suspended':'active';
   const b=node('button',r.moderation_status==='active'?'Suspend':'Restore','admin-btn'+(r.moderation_status==='active'?' danger':''));
   b.type='button';b.onclick=()=>void setListing(r.user_id,next);actions.append(b);
-  tr.append(td('Companion',companion),td('Bio',String(r.bio||'—').slice(0,120)),td('Published',r.published?'Yes':'No'),td('Status',pill(r.moderation_status)),td('Action',actions));
+  tr.append(td('Companion',companion),td('Bio',String(r.bio||'—').slice(0,120)),td('Quality review',qualityMark),td('Published',r.published?'Yes':'No'),td('Status',pill(r.moderation_status)),td('Action',actions));
   return tr;
 }
 function renderListings(){
-  const q=$('listing-search').value.trim().toLowerCase(),status=value('listing-status-filter');
-  const rows=listings.filter(r=>(!q||includesAny([r.display_name,r.bio,r.user_id,r.moderation_status],q))&&(status==='all'||r.moderation_status===status));
-  $('listings').replaceChildren(...(rows.length?rows.map(listingRow):[emptyRow(5,'No matching companion listings.')]));
+  const summary=summarizeListingQuality(listings);
+  qualityDuplicates=summary.duplicates;
+  $('listing-quality-summary').textContent=summary.total+' active public listings · '+summary.flagged+' flagged for human review · '+summary.shortBio+' short bios · '+summary.policy+' need possible policy/contact review · '+summary.repeatedBios+' repeated-bio listings.';
+  const q=$('listing-search').value.trim().toLowerCase(),status=value('listing-status-filter'),qualityFilter=value('listing-quality-filter');
+  const rows=listings.filter(r=>{
+    if(q&&!includesAny([r.display_name,r.bio,r.user_id,r.moderation_status],q))return false;
+    if(status!=='all'&&r.moderation_status!==status)return false;
+    if(qualityFilter==='all')return true;
+    const quality=assessListingQuality(r,qualityDuplicates);
+    return r.published&&r.moderation_status==='active'&&(qualityFilter==='review'?quality.needsReview:!quality.needsReview);
+  });
+  $('listings').replaceChildren(...(rows.length?rows.map(listingRow):[emptyRow(6,'No matching companion listings.')]));
   $('listing-count').textContent=rows.length+' of '+listings.length+' listing'+(listings.length===1?'':'s')+' shown.';
 }
 
@@ -291,7 +305,7 @@ function fetchRegisteredUsers(){
 async function load(){
   const [rr,ll,pp,ss,bb]=await Promise.all([
     client.from('user_reports').select('id,reporter_id,reported_user_id,booking_id,reason,details,status,created_at').order('created_at',{ascending:false}).limit(250),
-    client.from('companion_listings').select('user_id,display_name,bio,published,moderation_status,moderation_note').order('display_name').limit(500),
+    client.from('companion_listings').select('user_id,display_name,bio,published,moderation_status,moderation_note,languages,interests,availability,location_id,city_name,categories,hourly_rate,photo_path').order('display_name').limit(500),
     fetchRegisteredUsers(),
     client.from('support_requests').select('id,email,category,subject,message,status,rating,feedback_type,created_at').order('created_at',{ascending:false}).limit(500),
     client.from('booking_requests').select('id,customer_id,companion_id,category,meeting_mode,requested_for,duration_minutes,status,created_at,customer_display_name,companion_display_name,listed_hourly_rate,offered_hourly_rate,agreed_hourly_rate,cancel_reason,cancel_note,cancelled_by,cancelled_at').order('created_at',{ascending:false}).limit(500)
@@ -352,7 +366,7 @@ function initUi(){
     ['support-search','input',renderSupport],['support-status-filter','change',renderSupport],
     ['feedback-search','input',renderFeedback],['feedback-rating-filter','change',renderFeedback],['feedback-status-filter','change',renderFeedback],
     ['report-search','input',renderReports],['report-status-filter','change',renderReports],
-    ['listing-search','input',renderListings],['listing-status-filter','change',renderListings]
+    ['listing-search','input',renderListings],['listing-status-filter','change',renderListings],['listing-quality-filter','change',renderListings]
   ];
   for(const [id,event,fn] of renderBindings)$(id).addEventListener(event,fn);
 }
