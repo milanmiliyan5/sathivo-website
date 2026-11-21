@@ -241,7 +241,7 @@ body.sathivo-2d.chat-premium .chat-inbox-heading .eyebrow{
  font-size:.65rem;letter-spacing:.12em;margin:0 0 3px;color:#945371;
 }
 body.sathivo-2d.chat-premium .chat-inbox-heading h2{
- font:800 1.55rem/1.25 inherit;letter-spacing:-.035em;margin:0;color:#442536;
+ font-family:inherit;font-weight:800;font-size:1.55rem;line-height:1.25;letter-spacing:-.035em;margin:0;color:#442536;
 }
 body.sathivo-2d.chat-premium .chat-inbox-all{
  font-size:.77rem;font-weight:750;white-space:nowrap;
