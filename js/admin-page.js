@@ -1,6 +1,6 @@
-import {updateSidebarBadges,sidebarBadgeSections,sidebarReadAcknowledgements,safeBadgeCount} from './admin-sidebar-badges.js?v=20261121-sidebar-badges-1';
-import {refreshContributions} from './admin-contributions.js?v=20261119-1';
-import {initMaintenance} from './admin-maintenance.js?v=20261118-1';
+import {updateSidebarBadges,sidebarBadgeSections,sidebarReadAcknowledgements,safeBadgeCount} from './admin-sidebar-badges.js?v=20261122-manual-refresh-1';
+import {refreshContributions} from './admin-contributions.js?v=20261122-manual-refresh-1';
+import {initMaintenance} from './admin-maintenance.js?v=20261122-manual-refresh-1';
 import {runRecovery} from './booking-recovery.js?v=20261116-1';
 import {assessListingQuality,summarizeListingQuality} from './companion-quality.js?v=20261122-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
@@ -21,7 +21,7 @@ function metric(id,value){const n=$(id);if(n)n.textContent=nf.format(Number(valu
 function setStatus(message){$('status').textContent=message||''}
 function value(id){return $(id)?.value??'all'}
 function includesAny(values,q){return values.some(v=>String(v??'').toLowerCase().includes(q))}
-function setRefreshing(on){const b=$('refresh-dashboard');if(!b)return;b.classList.toggle('is-loading',on);b.disabled=on;b.textContent=on?'↻ Refreshing…':'↻ Refresh'}
+function setRefreshing(on){const b=$('refresh-dashboard');if(!b)return;b.classList.toggle('is-loading',on);b.disabled=on;b.textContent=on?'↻ Refreshing all…':'↻ Refresh All'}
 
 let badgeRequest=null,badgeSnapshot=null,badgeCounts=null;
 const acknowledgingSections=new Set();
