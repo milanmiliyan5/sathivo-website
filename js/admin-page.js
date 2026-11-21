@@ -1,3 +1,4 @@
+import {updateSidebarBadges,sidebarBadgeSections,sidebarReadAcknowledgements,safeBadgeCount} from './admin-sidebar-badges.js?v=20261121-sidebar-badges-1';
 import {initContributions,refreshContributions} from './admin-contributions.js?v=20261119-1';
 import {initMaintenance} from './admin-maintenance.js?v=20261118-1';
 import {runRecovery} from './booking-recovery.js?v=20261116-1';
@@ -19,6 +20,54 @@ function setStatus(message){$('status').textContent=message||''}
 function value(id){return $(id)?.value??'all'}
 function includesAny(values,q){return values.some(v=>String(v??'').toLowerCase().includes(q))}
 function setRefreshing(on){const b=$('refresh-dashboard');if(!b)return;b.classList.toggle('is-loading',on);b.disabled=on;b.textContent=on?'↻ Refreshing…':'↻ Refresh'}
+
+let badgeRequest=null,badgeSnapshot=null,badgeCounts=null,badgeTimer=null;
+const acknowledgingSections=new Set();
+async function refreshSidebarBadges(){
+ if(!client||!user)return null;
+ if(badgeRequest)return badgeRequest;
+ badgeRequest=(async()=>{
+   const {data,error}=await client.rpc('sathivo_admin_sidebar_badges');
+   if(error)throw error;
+   if(!data||typeof data!=='object'||!data.snapshot)throw Error('Invalid sidebar badge response');
+   badgeSnapshot=data.snapshot;
+   badgeCounts=data;
+   updateSidebarBadges(document,data);
+   return data;
+ })().catch(e=>{
+   console.warn('Admin activity badges unavailable:',e?.message||'Connection problem');
+   return null;
+ }).finally(()=>{badgeRequest=null;});
+ return badgeRequest;
+}
+function startBadgeUpdates(){
+ if(badgeTimer!==null)return;
+ badgeTimer=window.setInterval(()=>{if(document.visibilityState==='visible')void refreshSidebarBadges()},30000);
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')void refreshSidebarBadges()});
+ window.addEventListener('focus',()=>void refreshSidebarBadges());
+}
+async function onSidebarSectionSelected(section){
+ const key=sidebarBadgeSections[section];
+ if(!key||!sidebarReadAcknowledgements.includes(key)||!client||!user)return;
+ if(acknowledgingSections.has(key))return;
+ const count=safeBadgeCount(badgeCounts?.[key]);
+ if(!count)return;
+ acknowledgingSections.add(key);
+ try{
+   // Do not clear a badge for an activity that failed to load for review.
+   if(!await refreshAll(false))return;
+   if(key==='users'&&!registeredUsersAvailable)return;
+   if(key==='contributions'&&$('contribution-admin-status').textContent.includes('unavailable'))return;
+   const current=await refreshSidebarBadges();
+   if(!current||!safeBadgeCount(current[key]))return;
+   const {error}=await client.rpc('sathivo_admin_mark_sidebar_seen',{
+     p_section:key,p_seen_through:current.snapshot,
+   });
+   if(error)throw error;
+   await refreshSidebarBadges();
+ }catch(e){console.warn('Could not acknowledge new '+key+' items:',e?.message||'Connection problem')}
+ finally{acknowledgingSections.delete(key)}
+}
 
 let statsRequest=null;
 function loadStats(){
@@ -287,7 +336,7 @@ function initUi(){
   });
   $('sidebar-toggle').addEventListener('click',()=>{const open=!$('admin-sidebar').classList.contains('is-open');$('admin-sidebar').classList.toggle('is-open',open);$('sidebar-backdrop').hidden=!open;$('sidebar-toggle').setAttribute('aria-expanded',String(open))});
   $('sidebar-backdrop').addEventListener('click',closeSidebar);
-  document.querySelectorAll('.sidebar-link').forEach(a=>a.addEventListener('click',()=>{document.querySelectorAll('.sidebar-link').forEach(x=>x.classList.remove('is-active'));a.classList.add('is-active');closeSidebar()}));
+  document.querySelectorAll('.sidebar-link').forEach(a=>a.addEventListener('click',()=>{document.querySelectorAll('.sidebar-link').forEach(x=>x.classList.remove('is-active'));a.classList.add('is-active');closeSidebar();void onSidebarSectionSelected(a.dataset.section)}));
   $('today-accounts-card').addEventListener('click',()=>{
     $('user-search').value='';
     $('user-gender-filter').value='all';
@@ -314,9 +363,10 @@ let dashboardRequest=null;
 async function refreshAll(showLoading=true){
   if(showLoading)setRefreshing(true);
   try{
-    if(!dashboardRequest)dashboardRequest=Promise.all([load(),loadStats(),refreshContributions(client)]).finally(()=>{dashboardRequest=null});
+    if(!dashboardRequest)dashboardRequest=Promise.all([load(),loadStats(),refreshContributions(client),refreshSidebarBadges()]).finally(()=>{dashboardRequest=null});
     await dashboardRequest;
-  }catch(e){setStatus(e.message||'Could not refresh admin data.')}finally{if(showLoading)setRefreshing(false)}
+    return true;
+  }catch(e){setStatus(e.message||'Could not refresh admin data.');return false}finally{if(showLoading)setRefreshing(false)}
 }
 
 async function init(){
@@ -333,7 +383,10 @@ async function init(){
     $('refresh-dashboard').addEventListener('click',()=>void refreshAll(true));
     initMaintenance(client,user.id);
     initContributions(client);
-    await refreshAll(true);startPresence();
+    await refreshAll(true);startPresence();startBadgeUpdates();
+    const initialSection=location.hash.slice(1);
+    if(initialSection&&sidebarBadgeSections[initialSection])void onSidebarSectionSelected(initialSection);
+    window.addEventListener('hashchange',()=>{const section=location.hash.slice(1);if(sidebarBadgeSections[section])void onSidebarSectionSelected(section)});
 
   }catch(e){setStatus(e.message||'Could not load admin.')}
 }

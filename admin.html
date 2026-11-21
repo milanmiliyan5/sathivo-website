@@ -8,9 +8,9 @@
   <title>Sathivo Admin Dashboard</title>
   <link rel="icon" href="assets/favicon.svg">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="admin-dashboard.css?v=20261118-cleanup-1">
+  <link rel="stylesheet" href="admin-dashboard.css?v=20261121-sidebar-badges-1">
   <script defer src="assets/vendor/supabase-2.116.0.js"></script>
-  <script type="module" src="js/admin-page.js?v=20261119-contribution-1"></script>
+  <script type="module" src="js/admin-page.js?v=20261121-sidebar-badges-1"></script>
 </head>
 <body class="admin-body">
   <div class="admin-app">
@@ -25,12 +25,12 @@
 
       <nav class="sidebar-nav" aria-label="Admin navigation">
         <a class="sidebar-link is-active" href="#overview" data-section="overview"><span class="sidebar-icon">⌂</span><span>Dashboard</span></a>
-        <a class="sidebar-link" href="#users-section" data-section="users-section"><span class="sidebar-icon">♙</span><span>Users</span></a>
-        <a class="sidebar-link" href="#bookings-section" data-section="bookings-section"><span class="sidebar-icon">▣</span><span>Bookings</span></a>
-        <a class="sidebar-link" href="#support-section" data-section="support-section"><span class="sidebar-icon">?</span><span>Support</span></a>
-        <a class="sidebar-link" href="#feedback-section" data-section="feedback-section"><span class="sidebar-icon">★</span><span>Feedback</span></a>
-        <a class="sidebar-link" href="#contributions-section" data-section="contributions-section"><span class="sidebar-icon">♡</span><span>Contributions</span></a>
-        <a class="sidebar-link" href="#reports-section" data-section="reports-section"><span class="sidebar-icon">!</span><span>Reports</span></a>
+        <a class="sidebar-link" href="#users-section" data-section="users-section"><span class="sidebar-icon">♙</span><span class="sidebar-text">Users</span><span class="sidebar-count" hidden aria-hidden="true"></span></a>
+        <a class="sidebar-link" href="#bookings-section" data-section="bookings-section"><span class="sidebar-icon">▣</span><span class="sidebar-text">Bookings</span><span class="sidebar-count" hidden aria-hidden="true"></span></a>
+        <a class="sidebar-link" href="#support-section" data-section="support-section"><span class="sidebar-icon">?</span><span class="sidebar-text">Support</span><span class="sidebar-count" hidden aria-hidden="true"></span></a>
+        <a class="sidebar-link" href="#feedback-section" data-section="feedback-section"><span class="sidebar-icon">★</span><span class="sidebar-text">Feedback</span><span class="sidebar-count" hidden aria-hidden="true"></span></a>
+        <a class="sidebar-link" href="#contributions-section" data-section="contributions-section"><span class="sidebar-icon">♡</span><span class="sidebar-text">Contributions</span><span class="sidebar-count" hidden aria-hidden="true"></span></a>
+        <a class="sidebar-link" href="#reports-section" data-section="reports-section"><span class="sidebar-icon">!</span><span class="sidebar-text">Reports</span><span class="sidebar-count" hidden aria-hidden="true"></span></a>
         <a class="sidebar-link" href="#listings-section" data-section="listings-section"><span class="sidebar-icon">◇</span><span>Companions</span></a>
         <a class="sidebar-link" href="#maintenance-section" data-section="maintenance-section"><span class="sidebar-icon" aria-hidden="true">✦</span><span>Cleanup &amp; Optimization</span></a>
       </nav>
