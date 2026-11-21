@@ -7,8 +7,20 @@ async function request(url,options={}){
  if(!response.ok)throw Error(`${new URL(url).pathname}: HTTP ${response.status}`);
  return response;
 }
+// The PR branch can introduce new public pages before Pages deploys them.
+// Compare the proposed local sitemap with the *currently published* sitemap,
+// skipping only not-yet-deployed public URLs; validate those locally in static
+// and content tests. Existing live account/private pages are still tested.
+const localSitemap=await readFile('sitemap.xml','utf8');
+const publishedSitemap=await (await request(new URL('sitemap.xml',base))).text();
+const listed=xml=>new Set([...xml.matchAll(/<loc>(https:\/\/sathivo\.co\/[^<]*)<\/loc>/g)].map(m=>m[1]));
+const pending=new Set([...listed(localSitemap)].filter(url=>!listed(publishedSitemap).has(url)));
 const pages=(await readdir('.')).filter(p=>p.endsWith('.html'));
 for(const page of pages){
+ if(pending.has(new URL(page,base).href)){
+  console.log('SKIP pending new public page deployment',page);
+  continue;
+ }
  const r=await request(new URL(page,base));
  const html=await r.text();
  if(!html.includes('<html')||!/<title>[^<]+<\/title>/i.test(html))throw Error(page+': invalid HTML');
