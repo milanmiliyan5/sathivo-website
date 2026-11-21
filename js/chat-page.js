@@ -314,7 +314,21 @@ async function init(){try{
  const desktopLayout=window.matchMedia('(min-width: 961px)');
  if(desktopLayout.matches)void loadDesktopInbox();
  desktopLayout.addEventListener('change',event=>{if(event.matches)void loadDesktopInbox()});
- const blockState=await client.from('user_blocks').select('blocker_id').or('and(blocker_id.eq.'+user.id+',blocked_id.eq.'+otherId+'),and(blocker_id.eq.'+otherId+',blocked_id.eq.'+user.id+')');if(!blockState.error){blockedByMe=(blockState.data||[]).some(b=>b.blocker_id===user.id);blockedByOther=(blockState.data||[]).some(b=>b.blocker_id===otherId);if(blockedByMe){$('block-user').disabled=true;$('block-user').textContent='User blocked'}if(blockedByMe||blockedByOther)syncComposer()}applySafetyWatermark();$('safety-actions').hidden=false;protectPrivateMedia();setupPresence();await loadMessages(true);
+ const blockState=await client.from('user_blocks').select('blocker_id').or('and(blocker_id.eq.'+user.id+',blocked_id.eq.'+otherId+'),and(blocker_id.eq.'+otherId+',blocked_id.eq.'+user.id+')');if(!blockState.error){blockedByMe=(blockState.data||[]).some(b=>b.blocker_id===user.id);blockedByOther=(blockState.data||[]).some(b=>b.blocker_id===otherId);if(blockedByMe){$('block-user').disabled=true;$('block-user').textContent='User blocked'}if(blockedByMe||blockedByOther)syncComposer()}applySafetyWatermark();
+ const safetyMenu=$('chat-safety-menu');
+ safetyMenu.hidden=false;
+ document.addEventListener('click',event=>{
+  if(safetyMenu.open&&!safetyMenu.contains(event.target))safetyMenu.open=false;
+ });
+ safetyMenu.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&safetyMenu.open){
+   event.preventDefault();safetyMenu.open=false;safetyMenu.querySelector('summary')?.focus();
+  }
+ });
+ for(const id of ['report-user','block-user']){
+  $(id).addEventListener('click',()=>{safetyMenu.open=false});
+ }
+ protectPrivateMedia();setupPresence();await loadMessages(true);
  messageChannel=client.channel('booking-messages:'+booking.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_messages',filter:'booking_id=eq.'+booking.id},()=>void loadMessages(false)).subscribe();
  bookingChannel=client.channel('booking-status:'+booking.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'booking_requests',filter:'id=eq.'+booking.id},()=>void loadBooking()).subscribe();
  $('message').addEventListener('input',()=>{sendTyping();fitComposer()});
