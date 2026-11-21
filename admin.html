@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="admin-dashboard.css?v=20261122-quality-1">
   <script defer src="assets/vendor/supabase-2.116.0.js"></script>
-  <script type="module" src="js/admin-page.js?v=20261122-quality-1"></script>
+  <script type="module" src="js/admin-page.js?v=20261122-manual-refresh-1"></script>
 </head>
 <body class="admin-body">
   <div class="admin-app">
@@ -53,12 +53,12 @@
           <div>
             <span class="topbar-kicker">SATHIVO ADMIN</span>
             <h1>Dashboard</h1>
-            <p>Platform overview, bookings and moderation controls. Use Refresh to update data.</p>
+            <p>All sections load once when you open Admin. Press Refresh to update all data; no automatic data polling.</p>
           </div>
         </div>
         <div class="topbar-actions">
-          <span class="live-badge"><i></i> Online Now live</span>
-          <button class="refresh-btn" id="refresh-dashboard" type="button">↻ Refresh</button>
+          <span class="live-badge">Manual updates</span>
+          <button class="refresh-btn" id="refresh-dashboard" type="button" aria-label="Refresh all admin sections">↻ Refresh All</button>
         </div>
       </header>
 
@@ -79,7 +79,7 @@
               <article class="metric-card"><div class="metric-card-top"><span>Total Bookings</span><span class="metric-icon">B</span></div><strong id="metric-total-bookings">—</strong><small>All booking requests</small></article>
               <article class="metric-card"><div class="metric-card-top"><span>Today Visitors</span><span class="metric-icon">TD</span></div><strong id="metric-visitors-today">0</strong><small>Unique browsers · India date</small></article>
               <article class="metric-card"><div class="metric-card-top"><span>Total Visitors</span><span class="metric-icon">TV</span></div><strong id="metric-total-visitors">0</strong><small>Unique browsers since tracking began</small></article>
-              <article class="metric-card metric-online"><div class="metric-card-top"><span>Online Now</span><span class="metric-icon"><i></i></span></div><strong id="metric-online">0</strong><small>Unique active browsers</small></article>
+              <article class="metric-card metric-online"><div class="metric-card-top"><span>Online snapshot</span><span class="metric-icon"><i></i></span></div><strong id="metric-online">0</strong><small>Active browsers at last refresh</small></article>
 
               <article class="metric-card"><div class="metric-card-top"><span>Pending</span><span class="metric-icon">P</span></div><strong id="metric-pending">—</strong><small>Pending bookings</small></article>
               <article class="metric-card"><div class="metric-card-top"><span>Accepted</span><span class="metric-icon">A</span></div><strong id="metric-accepted">—</strong><small>Accepted bookings</small></article>
@@ -199,7 +199,7 @@
             </div>
           </section>
 
-          <section class="data-panel dashboard-section" id="contributions-section"><div class="panel-head"><div><p class="panel-kicker">VOLUNTARY PLATFORM SUPPORT</p><h2>Contributions</h2><p id="contribution-admin-status" class="panel-note">Not loaded.</p></div><button class="refresh-btn" id="contribution-admin-refresh" type="button">Refresh contributions</button></div><div class="metrics-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px"><article class="metric-card"><span>All time (net of refunds)</span><strong id="contribution-total">—</strong></article><article class="metric-card"><span>Today (IST)</span><strong id="contribution-today">—</strong></article><article class="metric-card"><span>This month (IST)</span><strong id="contribution-month">—</strong></article><article class="metric-card"><span>Captured contributions</span><strong id="contribution-captured">—</strong></article><article class="metric-card"><span>Failed orders</span><strong id="contribution-failed">—</strong></article></div><p class="panel-note">Verified payments only; excludes gateway charges and bank settlement adjustments. Latest 100 orders below.</p><div class="table-wrap" style="overflow:auto"><table><thead><tr><th>Date (IST)</th><th>Contributor ID</th><th>Amount</th><th>Refunded</th><th>Status</th><th>Payment reference</th></tr></thead><tbody id="contribution-history"></tbody></table></div></section>
+          <section class="data-panel dashboard-section" id="contributions-section"><div class="panel-head"><div><p class="panel-kicker">VOLUNTARY PLATFORM SUPPORT</p><h2>Contributions</h2><p id="contribution-admin-status" class="panel-note">Not loaded.</p><p class="panel-note">Updated with the top Refresh All button.</p></div></div><div class="metrics-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px"><article class="metric-card"><span>All time (net of refunds)</span><strong id="contribution-total">—</strong></article><article class="metric-card"><span>Today (IST)</span><strong id="contribution-today">—</strong></article><article class="metric-card"><span>This month (IST)</span><strong id="contribution-month">—</strong></article><article class="metric-card"><span>Captured contributions</span><strong id="contribution-captured">—</strong></article><article class="metric-card"><span>Failed orders</span><strong id="contribution-failed">—</strong></article></div><p class="panel-note">Verified payments only; excludes gateway charges and bank settlement adjustments. Latest 100 orders below.</p><div class="table-wrap" style="overflow:auto"><table><thead><tr><th>Date (IST)</th><th>Contributor ID</th><th>Amount</th><th>Refunded</th><th>Status</th><th>Payment reference</th></tr></thead><tbody id="contribution-history"></tbody></table></div></section>
           <section class="data-panel dashboard-section" id="reports-section">
             <div class="panel-head">
               <div><p class="panel-kicker">TRUST & SAFETY</p><h2>Reports</h2><p id="report-count" class="panel-note"></p></div>
