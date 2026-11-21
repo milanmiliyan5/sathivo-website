@@ -13,6 +13,7 @@ test('new step-by-step guide and three substantive practical articles are discov
   assert.match(html,new RegExp('rel="canonical" href="https://sathivo\\.co/'+file.replace('.','\\.')+'"'),file);
   assert.match(html,/<script type="application\/ld\+json">/,file);
   assert.match(html,/<main id="main"/,file);
+  assert.match(html,/js\/site-presence\.js/,file);
   assert.match(html,/<h1>/,file);
   assert.ok(html.length>10000,file+': text too short');
   assert.ok((html.match(/<section\b/g)||[]).length>=7,file+': actionable sections');
