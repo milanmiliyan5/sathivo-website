@@ -9,12 +9,13 @@ test('private chat keeps its current DOM controls inside responsive two-column w
  assert.match(html,/<aside class="chat-inbox-panel" aria-label="Your booking conversations">/);
  assert.match(html,/id="chat-inbox-list"/);
  assert.match(html,/<main id="main" class="chat-shell">/);
- for(const id of ['chat-avatar','chat-title','presence-status','chat-booking-pill','chat-context','messages','jump-latest','message-form','photo-input','photo-draft','view-once','message','send-message','safety-actions','report-user','block-user']){
+ for(const id of ['chat-avatar','chat-title','presence-status','chat-booking-pill','messages','jump-latest','message-form','photo-input','photo-draft','view-once','message','send-message','safety-actions','report-user','block-user']){
    assert.match(html,new RegExp('id="'+id+'"'),id);
  }
  assert.match(css,/\.chat-workspace\{[\s\S]*?grid-template-columns:minmax\(275px,330px\) minmax\(0,1fr\)/);
  assert.match(css,/@media\(max-width:960px\)\{[\s\S]*?\.chat-inbox-panel\{display:none\}/);
  assert.match(css,/@media\(max-width:640px\)\{[\s\S]*?\.chat-workspace\{/);
+ assert.match(html,/class="chat-context"/);
  assert.match(html,/href="safety\.html#first-meeting"/);
  assert.match(html,/href="privacy\.html"/);
 });
