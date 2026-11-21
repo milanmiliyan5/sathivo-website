@@ -23,10 +23,10 @@ test('daily card opens date-filtered admin users using the manually refreshed si
   assert.match(html,/id="user-date-filter"/);
   assert.match(js,/client\.functions\.invoke\('admin-users-list'\)/);
   assert.doesNotMatch(js,/setInterval\(|refreshLiveMetrics|refreshRegisteredUsers|metricsTimer/);
-  assert.match(js,/\$\('refresh-dashboard'\)\.addEventListener\('click',\(\)=>void refreshAll\(true\)\)/);
-  assert.match(js,/await refreshAll\(true\);startPresence\(\)/);
+  assert.match(js,/\$\('refresh-dashboard'\)\.addEventListener\('click',\(\)=>void refreshAll\(\)\)/);
+  assert.match(js,/await refreshAll\(\);startPresence\(\)/);
   assert.match(js,/Manual refresh/);
-  assert.match(js,/\.on\('presence',\{event:'sync'\},updateOnline\)/);
+  assert.match(js,/\.on\('presence',\{event:'sync'\},\(\)=>\{/);
   assert.match(js,/\$\('user-date-filter'\)\.value='today'/);
   assert.match(js,/registeredUsersAvailable=users!==null/);
   assert.match(js,/if\(todays===null\)/);
