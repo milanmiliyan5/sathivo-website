@@ -63,3 +63,13 @@ button,input,select{font:inherit}button{cursor:pointer}.admin-app{min-height:100
 .sidebar-count{margin-left:auto;flex:0 0 auto;min-width:22px;height:22px;display:inline-flex;align-items:center;justify-content:center;padding:0 5px;border-radius:999px;background:#b8325d;color:#fff;font-size:11px;line-height:1;font-weight:800;font-variant-numeric:tabular-nums;box-shadow:0 1px 4px rgba(0,0,0,.12)}
 .sidebar-count[hidden]{display:none}
 .sidebar-link:focus-visible{outline:2px solid #93c5fd;outline-offset:2px}
+
+/* Admin-only editorial-quality review: informational; no automatic moderation. */
+.listing-quality-panel{padding:16px 22px;border-block:1px solid var(--admin-line);background:#f8fafc}
+.listing-quality-panel>strong{display:block;font-size:15px;margin-bottom:6px}
+.listing-quality-panel p{font-size:13px;line-height:1.6;color:var(--admin-muted);margin:7px 0}
+.listing-quality-panel .quality-policy-note{border-left:3px solid #d97706;padding-left:11px;color:#774317}
+.listing-quality-mark{font-size:12px;line-height:1.5}
+.listing-quality-mark[data-flagged="true"]{color:#92400e;font-weight:600}
+.listing-quality-mark[data-flagged="false"]{color:#166534}
+@media(max-width:600px){.listing-quality-panel{padding:14px}}
