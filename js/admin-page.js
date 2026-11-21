@@ -1,6 +1,6 @@
-import {updateSidebarBadges,sidebarBadgeSections,sidebarReadAcknowledgements,safeBadgeCount,startSidebarBadgePolling} from './admin-sidebar-badges.js?v=20261121-sidebar-badges-1';
-import {initContributions,refreshContributions} from './admin-contributions.js?v=20261119-1';
-import {initMaintenance} from './admin-maintenance.js?v=20261118-1';
+import {updateSidebarBadges,sidebarBadgeSections,sidebarReadAcknowledgements,safeBadgeCount} from './admin-sidebar-badges.js?v=20261122-manual-refresh-1';
+import {refreshContributions} from './admin-contributions.js?v=20261122-manual-refresh-1';
+import {initMaintenance} from './admin-maintenance.js?v=20261122-manual-refresh-1';
 import {runRecovery} from './booking-recovery.js?v=20261116-1';
 import {assessListingQuality,summarizeListingQuality} from './companion-quality.js?v=20261122-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
@@ -21,9 +21,9 @@ function metric(id,value){const n=$(id);if(n)n.textContent=nf.format(Number(valu
 function setStatus(message){$('status').textContent=message||''}
 function value(id){return $(id)?.value??'all'}
 function includesAny(values,q){return values.some(v=>String(v??'').toLowerCase().includes(q))}
-function setRefreshing(on){const b=$('refresh-dashboard');if(!b)return;b.classList.toggle('is-loading',on);b.disabled=on;b.textContent=on?'↻ Refreshing…':'↻ Refresh'}
+function setRefreshing(on){const b=$('refresh-dashboard');if(!b)return;b.classList.toggle('is-loading',on);b.disabled=on;b.textContent=on?'↻ Refreshing all…':'↻ Refresh All'}
 
-let badgeRequest=null,badgeSnapshot=null,badgeCounts=null,stopBadgePolling=null;
+let badgeRequest=null,badgeSnapshot=null,badgeCounts=null;
 const acknowledgingSections=new Set();
 async function refreshSidebarBadges(){
  if(!client||!user)return null;
@@ -42,31 +42,26 @@ async function refreshSidebarBadges(){
  }).finally(()=>{badgeRequest=null;});
  return badgeRequest;
 }
-function startBadgeUpdates(){
- if(stopBadgePolling)return;
- stopBadgePolling=startSidebarBadgePolling(()=>void refreshSidebarBadges());
-}
+// Navigation never reloads all tables. Only acknowledge items already in a successful
+// initial/manual snapshot; no new records are hidden without first being loaded.
 async function onSidebarSectionSelected(section){
- const key=sidebarBadgeSections[section];
- if(!key||!sidebarReadAcknowledgements.includes(key)||!client||!user)return;
- if(acknowledgingSections.has(key))return;
- const count=safeBadgeCount(badgeCounts?.[key]);
- if(!count)return;
- acknowledgingSections.add(key);
- try{
-   // Do not clear a badge for an activity that failed to load for review.
-   if(!await refreshAll(false))return;
-   if(key==='users'&&!registeredUsersAvailable)return;
-   if(key==='contributions'&&$('contribution-admin-status').textContent.includes('unavailable'))return;
-   const current=await refreshSidebarBadges();
-   if(!current||!safeBadgeCount(current[key]))return;
-   const {error}=await client.rpc('sathivo_admin_mark_sidebar_seen',{
-     p_section:key,p_seen_through:current.snapshot,
-   });
-   if(error)throw error;
-   await refreshSidebarBadges();
- }catch(e){console.warn('Could not acknowledge new '+key+' items:',e?.message||'Connection problem')}
- finally{acknowledgingSections.delete(key)}
+  const key=sidebarBadgeSections[section];
+  if(!key||!sidebarReadAcknowledgements.includes(key)||!client||!user||!badgeSnapshot)return;
+  if(acknowledgingSections.has(key)||!safeBadgeCount(badgeCounts?.[key]))return;
+  if(key==='users'&&!registeredUsersAvailable)return;
+  if(key==='contributions'&&$('contribution-admin-status').textContent.includes('unavailable'))return;
+  acknowledgingSections.add(key);
+  try{
+    const {error}=await client.rpc('sathivo_admin_mark_sidebar_seen',{
+      p_section:key,p_seen_through:badgeSnapshot,
+    });
+    if(error)throw error;
+    // The next manual refresh will fetch counts again. Clear only the acknowledged
+    // badge in this browser; preserve other sections and newly arriving records.
+    badgeCounts={...badgeCounts,[key]:0};
+    updateSidebarBadges(document,badgeCounts);
+  }catch(e){console.warn('Could not acknowledge new '+key+' items:',e?.message||'Connection problem')}
+  finally{acknowledgingSections.delete(key)}
 }
 
 let statsRequest=null;
@@ -76,9 +71,9 @@ function loadStats(){
 }
 async function fetchStats(){
   const {data,error}=await client.functions.invoke('admin-dashboard-stats');
-  if(error){$('metrics-updated').textContent='Dashboard refresh failed';return}
+  if(error){$('metrics-updated').textContent='Dashboard refresh failed';throw error}
   const row=Array.isArray(data)?data[0]:data;
-  if(!row)return;
+  if(!row)throw Error('Dashboard statistics unavailable');
   metric('metric-accounts',row.total_accounts);
   metric('metric-today-bookings',row.bookings_today);
   metric('metric-total-bookings',row.total_bookings);
@@ -96,15 +91,18 @@ async function fetchStats(){
   $('metrics-updated').textContent='Updated '+new Intl.DateTimeFormat('en-IN',{hour:'numeric',minute:'2-digit',second:'2-digit'}).format(new Date())+' · Manual refresh';
 }
 
+// The presence connection stays subscribed for accurate counts; the displayed
+// snapshot updates on first connection and when the owner presses Refresh only.
 function updateOnline(){if(!presenceChannel)return;metric('metric-online',Object.keys(presenceChannel.presenceState()||{}).length)}
 function startPresence(){
+  let initialSnapshotShown=false;
   $('metric-online').textContent='—';
   presenceChannel=client.channel('site-presence-v1')
-    .on('presence',{event:'sync'},updateOnline)
-    .on('presence',{event:'join'},updateOnline)
-    .on('presence',{event:'leave'},updateOnline)
+    .on('presence',{event:'sync'},()=>{
+      if(!initialSnapshotShown){initialSnapshotShown=true;updateOnline();}
+    })
     .subscribe(status=>{
-      if(status==='SUBSCRIBED')updateOnline();
+      if(status==='SUBSCRIBED'&&!initialSnapshotShown)updateOnline();
       else if(['CHANNEL_ERROR','TIMED_OUT','CLOSED'].includes(status))$('metric-online').textContent='—';
     });
 }
@@ -112,18 +110,33 @@ function startPresence(){
 async function setSupport(id,status){
   const {error}=await client.from('support_requests').update({status}).eq('id',id);
   setStatus(error?error.message:'Support request updated.');
-  if(!error)await refreshAll(false);
+  if(!error){
+    const row=supports.find(r=>r.id===id);
+    if(row)row.status=status;
+    renderSupport();renderFeedback();renderRecentActivity();
+    setStatus('Support status saved. Use Refresh for updated dashboard totals.');
+  }
 }
 async function setReport(id,status){
   const {error}=await client.from('user_reports').update({status}).eq('id',id);
   setStatus(error?error.message:'Report updated.');
-  if(!error)await refreshAll(false);
+  if(!error){
+    const row=reports.find(r=>r.id===id);
+    if(row)row.status=status;
+    renderReports();renderRecentActivity();
+    setStatus('Report status saved. Use Refresh for updated dashboard totals.');
+  }
 }
 async function setListing(userId,status){
   const note=status==='suspended'?(prompt('Moderation note (optional)')||''):null;
   const {error}=await client.from('companion_listings').update({moderation_status:status,moderation_note:note}).eq('user_id',userId);
   setStatus(error?error.message:'Listing updated.');
-  if(!error)await refreshAll(false);
+  if(!error){
+    const row=listings.find(r=>r.user_id===userId);
+    if(row){row.moderation_status=status;row.moderation_note=note;}
+    renderListings();
+    setStatus('Listing status saved. Use Refresh for updated dashboard totals.');
+  }
 }
 
 function userRow(p){
@@ -182,7 +195,7 @@ async function adminReopen(b,button){
  if(!reason||reason.trim().length<5||reason.trim().length>500)return;
  if(!window.confirm('Reopen this booking? Both participants will be notified, and your action will be logged.'))return;
  button.disabled=true;
- try{await runRecovery(client,b.id,'admin_reopen',reason.trim());await refreshAll(false);setStatus('Booking reopened. Admin action recorded.');}
+ try{await runRecovery(client,b.id,'admin_reopen',reason.trim());setStatus('Booking reopened. Admin action recorded. Press Refresh to reload booking details.');}
  catch(e){setStatus(e.message||'Could not reopen booking.');}
  finally{button.disabled=false;}
 }
@@ -372,13 +385,33 @@ function initUi(){
 }
 
 let dashboardRequest=null;
-async function refreshAll(showLoading=true){
-  if(showLoading)setRefreshing(true);
-  try{
-    if(!dashboardRequest)dashboardRequest=Promise.all([load(),loadStats(),refreshContributions(client),refreshSidebarBadges()]).finally(()=>{dashboardRequest=null});
-    await dashboardRequest;
-    return true;
-  }catch(e){setStatus(e.message||'Could not refresh admin data.');return false}finally{if(showLoading)setRefreshing(false)}
+async function refreshAll(){
+  // Coalesce double clicks and wait for *all* sections to finish.
+  if(dashboardRequest)return dashboardRequest;
+  setRefreshing(true);
+  dashboardRequest=(async()=>{
+    try{
+      const [, , , badges]=await Promise.all([load(),loadStats(),refreshContributions(client),refreshSidebarBadges()]);
+      updateOnline();
+      if(!badges||$('contribution-admin-status').textContent.includes('unavailable')){
+        setStatus('Some admin sections could not be refreshed. Try Refresh again.');
+        return false;
+      }
+      if(!registeredUsersAvailable){
+        setStatus('Other sections updated, but the complete signup list is temporarily unavailable.');
+        return false;
+      }
+      setStatus('All admin sections updated. Use Refresh to load new activity.');
+      return true;
+    }catch(e){
+      setStatus('Could not refresh all admin data: '+(e?.message||'Connection problem'));
+      return false;
+    }finally{
+      setRefreshing(false);
+      dashboardRequest=null;
+    }
+  })();
+  return dashboardRequest;
 }
 
 async function init(){
@@ -392,10 +425,9 @@ async function init(){
     if(a.error)throw Error('Could not verify admin access. Try Refresh or log out and sign in again.');
     if(!a.data)throw Error('This account is not authorized for Sathivo admin. Log out and sign in with the owner account.');
     $('admin-email').textContent=user.email||a.data.role||'Authorized admin';
-    $('refresh-dashboard').addEventListener('click',()=>void refreshAll(true));
+    $('refresh-dashboard').addEventListener('click',()=>void refreshAll());
     initMaintenance(client,user.id);
-    initContributions(client);
-    await refreshAll(true);startPresence();startBadgeUpdates();
+    await refreshAll();startPresence();
     const initialSection=location.hash.slice(1);
     if(initialSection&&sidebarBadgeSections[initialSection])void onSidebarSectionSelected(initialSection);
     window.addEventListener('hashchange',()=>{const section=location.hash.slice(1);if(sidebarBadgeSections[section])void onSidebarSectionSelected(section)});
@@ -405,7 +437,6 @@ async function init(){
 window.addEventListener('pagehide',event=>{
 
   if(!event.persisted&&presenceChannel&&client)void client.removeChannel(presenceChannel);
-  if(!event.persisted&&stopBadgePolling){stopBadgePolling();stopBadgePolling=null;}
 });
 window.addEventListener('pageshow',event=>{
   if(!event.persisted||!presenceChannel)return;

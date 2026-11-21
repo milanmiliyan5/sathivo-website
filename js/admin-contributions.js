@@ -1,7 +1,6 @@
 const $=id=>document.getElementById(id);
 const currency=n=>new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'}).format(Number(n||0)/100);
 let running=null;
-export function initContributions(client){$('contribution-admin-refresh')?.addEventListener('click',()=>void refreshContributions(client))}
 export function refreshContributions(client){
  if(running)return running;
  running=(async()=>{const status=$('contribution-admin-status');if(!status)return;
