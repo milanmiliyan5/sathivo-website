@@ -1,11 +1,11 @@
 // Manual scans only. No timers or user-data mutations.
 export const checklist=[
- ['Admin automatic refresh','Optimized','Manual dashboard refresh; Online Now stays live.'],
+ ['Admin automatic refresh','Optimized','One initial load and global manual Refresh All for all sections, badges and contribution history.'], 
  ['Duplicate database requests','Partial','Admin requests are coalesced. Other pages need review.'],
- ['Background API requests','Website reviewed','Dashboard uses manual refresh; header counts update from events and visibility.'],
+ ['Background API requests','Optimized','Sidebar polling, focus-based refresh and section-navigation refetch removed.'], 
  ['Repeated chat count requests','Optimized','Header event bursts are coalesced; chat events refresh only chat counts.'],
  ['Log query usage','Provider metric','Check Supabase usage. Billing quota cannot be cleared here.'],
- ['Realtime connections','Review required','Database connection count is not a count of duplicate Realtime subscriptions.'],
+ ['Realtime connections','Optimized','One lightweight presence channel stays subscribed; Online snapshot display updates on manual refresh.'], 
  ['Image compression','Website enabled','New profile and chat photos already use compression. Existing photos are untouched.'],
  ['Image caching','Review required','Private photos must not be cached indiscriminately.'],
  ['Unnecessary data fetching','Review required','Requires code audit; not a storage bucket.'],
