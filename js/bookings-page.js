@@ -111,7 +111,7 @@ async function load(){
  const unreviewed=reviewLookupOk&&rows.find(r=>r.customer_id===user.id&&r.status==='completed'&&!reviewedBookings.has(r.id)&&!autoPrompted.has(r.id));
  if(unreviewed&&document.visibilityState!=='hidden'){
   const storageKey='sathivo:rating-prompt:'+user.id+':'+unreviewed.id;
-  try{if(sessionStorage.getItem(storageKey)==='1')return;sessionStorage.setItem(storageKey,'1');}catch{}
+  try{if(localStorage.getItem(storageKey)==='1')return;localStorage.setItem(storageKey,'1');}catch{}
   autoPrompted.add(unreviewed.id);
   setTimeout(()=>{if(!document.querySelector('dialog[open]'))void rateBooking(unreviewed);},1100);
  }

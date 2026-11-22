@@ -9,7 +9,7 @@ test('Only completed booking customer can rate, and only once',async()=>{
  assert.match(ratings,/Not now/);
  assert.match(page,/reviewedBookings\.has\(r.id\)/);
  assert.match(page,/rateBooking\(r\)/);
- assert.match(page,/sessionStorage\.getItem\(storageKey\)/);
+ assert.match(page,/localStorage\.getItem\(storageKey\)/);
  assert.match(page,/client\.from\('booking_reviews'\)\.select\('booking_id'\)/);
 });
 test('Completed bookings always retain review action if not yet rated',async()=>{
