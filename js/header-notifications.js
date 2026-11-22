@@ -1,5 +1,6 @@
 import {createRefreshQueue} from './refresh-queue.js?v=20261118-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
+import './incoming-booking-popup.js?v=20261122-1';
 
 function addBadge(link,kind){
  const cls=kind==='chat'?'chat-header-badge':'notification-badge';
