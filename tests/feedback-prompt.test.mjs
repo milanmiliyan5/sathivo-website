@@ -30,7 +30,7 @@ test('feedback shortcut is directly before bell and old form remains connected',
 test('completion checks only successful updates or accepted to completed transitions',async()=>{
  for(const file of ['js/bookings-page.js','js/requests-page.js']){
   const js=await read(file);
-  assert.match(js,/r.status==='completed'&&rows.some\(old=>old.id===r.id&&old.status==='accepted'\)/);
+  assert.match(js,/r.status==='completed'&&(?:rows|prior).some\(old=>old.id===r.id&&old.status==='accepted'\)/);
   assert.match(js,/if\(status==='completed'\)\{offerCompletionFeedback\(user\)/);
  }
  for(const file of ['chat.html','profile.html','companion.html'])assert.doesNotMatch(await read(file),/feedback-prompt\.js/);
