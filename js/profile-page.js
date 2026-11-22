@@ -8,6 +8,7 @@ import { compressImageFile,formatBytes } from './image-compress.js?v=20261006-1'
 const $ = id => document.getElementById(id);
 const form = $('profile-form');
 const categories = experienceCategories;
+const el=(tag,text,cssClass)=>{const element=document.createElement(tag);if(text!==undefined)element.textContent=text;if(cssClass)element.className=cssClass;return element;};
 let client, user, locations = [], avatarPath = null, savedAvatarPath = null, dirty = false, publishing = null;
 function message(text, error=false) { $('profile-status').textContent=text; $('profile-status').dataset.error=String(error); }
 function options(select, items, placeholder) {
