@@ -231,11 +231,11 @@ export function initIncomingBookingPopup(){
   if(booted)return;
   booted=true;
   void getSathivoClient().then(client=>{
-    const schedule=()=>setTimeout(()=>void maybeOpen(client),1200);
+    const schedule=()=>setTimeout(()=>void maybeOpen(client),4000);
     if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',schedule,{once:true});
     else schedule();
     client.auth.onAuthStateChange((event)=>{
-      if(event==='SIGNED_IN')setTimeout(()=>void maybeOpen(client),1600);
+      if(event==='SIGNED_IN')setTimeout(()=>void maybeOpen(client),4000);
     });
   }).catch(()=>{});
 }

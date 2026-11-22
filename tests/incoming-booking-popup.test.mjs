@@ -12,12 +12,14 @@ test('incoming reminders use pending bookings and secure per-booking suppression
  assert.match(js,/pointermove/);
  assert.match(js,/showModal/);
  assert.match(js,/sessionStorage/);
+ assert.match(js,/setTimeout\(\(\)=>void maybeOpen\(client\),4000\)/);
+ assert.doesNotMatch(js,/maybeOpen\(client\),1200|maybeOpen\(client\),1600/);
 });
 test('all main app pages include the incoming popup through notification boot',async()=>{
  const header=await read('js/header-notifications.js');
  assert.match(header,/incoming-booking-popup\.js/);
  for(const path of ['index','account','companions','companion','bookings','requests','chats','chat','notifications','profile']){
   const html=await read(path+'.html');
-  assert.match(html,/header-notifications\.js\?v=20261122-incoming-1/);
+  assert.match(html,/header-notifications\.js\?v=20261122-incoming-4sec/);
  }
 });
