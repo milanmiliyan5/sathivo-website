@@ -1,0 +1,62 @@
+/* Sathivo's one-time new-activities notice for existing companion members. */
+.activity-update-announcement{
+ width:min(435px,calc(100vw - 24px));max-height:min(88dvh,770px);
+ padding:0;border:1px solid #eac8d7;border-radius:24px;
+ background:#fffafc;color:#4a293c;box-shadow:0 20px 70px #30142842;
+ overflow:auto;overscroll-behavior:contain;
+}
+.activity-update-announcement::backdrop{background:rgba(33,17,31,.64);backdrop-filter:blur(4px)}
+.activity-update-inner{position:relative;padding:29px 27px 25px;text-align:left}
+.activity-update-close{
+ position:absolute;right:12px;top:12px;width:36px;height:36px;min-height:36px;
+ display:grid;place-items:center;border:1px solid #e6c3d3;background:#fff;
+ border-radius:50%;color:#704560;font-size:26px;line-height:1;cursor:pointer;
+}
+.activity-update-icon{
+ display:grid;place-items:center;width:60px;height:60px;border-radius:18px;
+ color:#a42e66;background:#fbe1ed;font-size:31px;margin-bottom:15px;
+ box-shadow:4px 4px 0 #f4cbdc;
+}
+.activity-update-kicker{
+ display:block;font-size:.69rem;letter-spacing:.11em;font-weight:800;
+ color:#a42e66;margin-bottom:8px;
+}
+.activity-update-announcement h2{
+ margin:0;color:#4a293c;font-family:Georgia,serif;font-size:clamp(1.5rem,4vw,1.95rem);
+ line-height:1.22;letter-spacing:-.03em;
+}
+.activity-update-announcement h2 span{color:#b34878}
+.activity-update-announcement p{
+ margin:15px 0 0;font-size:.88rem;line-height:1.65;color:#694a5e;
+}
+.activity-update-announcement strong{color:#86385e}
+.activity-update-announcement .activity-update-reassurance{
+ padding:11px 13px;border:1px solid #e7c7d6;background:#faeaf2;
+ border-radius:12px;font-weight:650;color:#743450;font-size:.79rem;
+}
+.activity-update-announcement .activity-update-safety{
+ font-size:.72rem;color:#7a5f6e;margin:9px 1px 17px;
+}
+.activity-update-cta{
+ width:100%;display:flex;align-items:center;justify-content:center;gap:7px;
+ padding:14px 13px;min-height:48px;border-radius:12px;
+ background:#a42e66;color:#fff!important;text-decoration:none!important;
+ text-align:center;font-size:.88rem;font-weight:800;box-sizing:border-box;
+ box-shadow:0 4px 0 #75254a;transition:background .2s,transform .2s;
+}
+.activity-update-cta:hover{background:#882655;transform:translateY(-1px)}
+.activity-update-later{
+ display:block;margin:17px auto 0;padding:7px 14px;border:0;background:transparent;
+ color:#735364;font-size:.86rem;font-weight:700;cursor:pointer;min-height:38px;
+}
+.activity-update-announcement :is(a,button):focus-visible{
+ outline:3px solid #90315b;outline-offset:4px;
+}
+@media(max-width:480px){
+ .activity-update-inner{padding:24px 18px 20px}
+ .activity-update-announcement{border-radius:18px}
+ .activity-update-announcement p{font-size:.83rem}
+}
+@media(prefers-reduced-motion:reduce){
+ .activity-update-cta{transition:none}
+}
