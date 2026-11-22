@@ -119,6 +119,27 @@ async function withCompletedCounts(rows){
  }
 }
 
+async function withActiveMemberBadges(rows){
+ const ids=[...new Set(rows.map(row=>row.public_id).filter(Boolean))];
+ if(!ids.length)return rows;
+ try{
+  const {data,error}=await publicClient.rpc('public_active_member_badges',{p_public_ids:ids});
+  if(error)throw error;
+  const recognized=new Set((data||[]).map(item=>item.public_id));
+  return rows.map(row=>({...row,is_active_member:recognized.has(row.public_id)}));
+ }catch(error){
+  console.warn('Active Member badges unavailable:',error?.message||'Network error');
+  return rows; // Never claim that an offline badge lookup verified a member.
+ }
+}
+function activeMemberBadge(row){
+ if(row.is_active_member!==true)return null;
+ const badge=el('span','💬 Active Member','active-member-badge');
+ badge.title='Recognized for community activity only. Not identity or safety verification.';
+ badge.setAttribute('aria-label','Active Member community recognition, not identity verification');
+ return badge;
+}
+
 async function loadFavorites(){
  favoriteIds=new Set();
  if(!currentUser)return;
@@ -163,7 +184,13 @@ async function shareProfile(row,button){
   prompt('Copy this Sathivo profile link:',url);
  }catch(error){if(error?.name!=='AbortError')prompt('Copy this Sathivo profile link:',url);}
 }
-function namedHeading(tag,row){const heading=el(tag,row.display_name),label={male:'Male',female:'Female',other:'Other'}[row.public_gender];if(label){heading.append(document.createTextNode(' '),el('span',label,'public-gender-chip'));}return heading;}
+function namedHeading(tag,row){
+ const heading=el(tag,row.display_name),label={male:'Male',female:'Female',other:'Other'}[row.public_gender];
+ if(label)heading.append(document.createTextNode(' '),el('span',label,'public-gender-chip'));
+ const activity=activeMemberBadge(row);
+ if(activity)heading.append(document.createTextNode(' '),activity);
+ return heading;
+}
 function card(row){
  const n=el('article',undefined,'companion-card'),copy=el('div',undefined,'card-copy'),head=el('div',undefined,'card-heading-row'),name=namedHeading('h2',row);
  head.append(name,favoriteButton(row));
@@ -218,7 +245,7 @@ async function list({fromPagination=false}={}){
    p_limit:25
   });
   if(seq!==request)return;if(error)throw error;
-  const all=data||[],rows=await withCompletedCounts(all.slice(0,24));
+  const all=data||[],rows=await withActiveMemberBadges(await withCompletedCounts(all.slice(0,24)));
   if(seq!==request)return;
   $('results').replaceChildren(...feedNodes(rows));$('empty').hidden=rows.length>0;
   $('status').textContent=rows.length?'Explore companions · '+scopeName()+' · '+sortLabel()+'.':'No published companions match these filters yet.';
@@ -313,7 +340,7 @@ async function detail(){
   ]);
   if(error)throw error;if(!r){$('status').textContent='This profile is unavailable or has been hidden by its owner.';return;}
   r.review_count=rating?.review_count||0;r.average_rating=rating?.average_rating||null;
-  const [current]=await withCompletedCounts([r]);r.completed_count=current?.completed_count??null;
+  const [current]=await withActiveMemberBadges(await withCompletedCounts([r]));r.completed_count=current?.completed_count??null;r.is_active_member=current?.is_active_member===true;
   const copy=el('div',undefined,'detail-copy');copy.append(el('p','GOOD COMPANY, ON YOUR TERMS','eyebrow'));
   const titleRow=el('div',undefined,'detail-title-row');titleRow.append(namedHeading('h1',r),favoriteButton(r,true));copy.append(titleRow);
   copy.append(experienceAndRating(r));
