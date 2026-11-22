@@ -49,7 +49,10 @@ export async function setupPublishing({client,user,isDirty}) {
   if(saved.error)throw Error('Listing remains hidden. Could not publish; try again.');
   // Remember an explicit publication choice so the one-time question is not repeated.
   if(['male','female','other'].includes(p.gender)){
-   try{await client.from('companion_gender_prompt_responses').insert({user_id:user.id,show_gender:!!showGender});}catch{}
+   try{await client.from('companion_gender_prompt_responses').upsert(
+    {user_id:user.id,show_gender:!!showGender},
+    {onConflict:'user_id',ignoreDuplicates:true}
+   );}catch{}
   }
   $('publish-consent').checked=false;await refresh();
   // Matching and in-app notices are created atomically by the database.
