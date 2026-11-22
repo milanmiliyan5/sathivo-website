@@ -111,11 +111,11 @@ async function withCompletedCounts(rows){
   const {data,error}=await publicClient.rpc('public_companion_completed_counts',{p_public_ids:ids});
   if(error)throw error;
   const counts=new Map((data||[]).map(row=>[row.public_id,Number(row.completed_count)]));
-  return rows.map(row=>({...row,completed_count:counts.get(row.public_id)??null}));
+  return withActiveMemberBadges(rows.map(row=>({...row,completed_count:counts.get(row.public_id)??null})));
  }catch(error){
   // Discovery stays available if the optional count service is offline.
   console.warn('Completed-booking badges unavailable:',error?.message||'Network error');
-  return rows;
+  return withActiveMemberBadges(rows);
  }
 }
 
@@ -245,7 +245,7 @@ async function list({fromPagination=false}={}){
    p_limit:25
   });
   if(seq!==request)return;if(error)throw error;
-  const all=data||[],rows=await withActiveMemberBadges(await withCompletedCounts(all.slice(0,24)));
+  const all=data||[],rows=await withCompletedCounts(all.slice(0,24));
   if(seq!==request)return;
   $('results').replaceChildren(...feedNodes(rows));$('empty').hidden=rows.length>0;
   $('status').textContent=rows.length?'Explore companions · '+scopeName()+' · '+sortLabel()+'.':'No published companions match these filters yet.';
@@ -340,7 +340,7 @@ async function detail(){
   ]);
   if(error)throw error;if(!r){$('status').textContent='This profile is unavailable or has been hidden by its owner.';return;}
   r.review_count=rating?.review_count||0;r.average_rating=rating?.average_rating||null;
-  const [current]=await withActiveMemberBadges(await withCompletedCounts([r]));r.completed_count=current?.completed_count??null;r.is_active_member=current?.is_active_member===true;
+  const [current]=await withCompletedCounts([r]);r.completed_count=current?.completed_count??null;r.is_active_member=current?.is_active_member===true;
   const copy=el('div',undefined,'detail-copy');copy.append(el('p','GOOD COMPANY, ON YOUR TERMS','eyebrow'));
   const titleRow=el('div',undefined,'detail-title-row');titleRow.append(namedHeading('h1',r),favoriteButton(r,true));copy.append(titleRow);
   copy.append(experienceAndRating(r));
