@@ -1,0 +1,19 @@
+/* Sathivo Active Member badge: community activity only, NOT verification. */
+body.sathivo-2d .active-member-badge{
+ display:inline-flex;align-items:center;vertical-align:middle;justify-content:center;
+ margin:2px 0 2px 5px;padding:3px 9px;max-width:100%;
+ border:1px solid #eab6ce;border-radius:999px;background:#f9e2ee;
+ color:#842853;font-family:system-ui,-apple-system,sans-serif;
+ font-size:.65rem;font-weight:800;letter-spacing:0;line-height:1.45;
+ white-space:nowrap;box-sizing:border-box;
+}
+body.sathivo-2d .card-heading-row .active-member-badge,
+body.sathivo-2d .detail-title-row .active-member-badge{
+ text-transform:none;text-decoration:none;
+}
+body.sathivo-2d .active-member-badge:focus-visible{outline:2px solid #9c426e;outline-offset:2px}
+body.sathivo-2d #active-member-own-badge{margin-left:0}
+body.sathivo-2d #active-member-own-badge[hidden]{display:none!important}
+@media(max-width:560px){
+ body.sathivo-2d .active-member-badge{font-size:.6rem;margin-left:4px;padding:3px 7px}
+}
