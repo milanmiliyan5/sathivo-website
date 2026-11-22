@@ -85,7 +85,7 @@ function portrait(row){
 function trustChips(row,compact=false){const n=el('div',undefined,'trust-chips'+(compact?' compact':''));if(row.email_verified_at)n.append(el('span','✓ Email verified'));if(row.adult_confirmed)n.append(el('span','18+ self-declared'));if(row.boundaries_accepted)n.append(el('span','Platonic boundaries'));return n;}
 function rateText(rate){return Number(rate)>0?'₹'+Number(rate).toLocaleString('en-IN')+' / hour':'Rate not set'}
 function totalFor(rate,minutes){return Number(rate)>0?Math.round(Number(rate)*Number(minutes)/60):null}
-function ratingText(row){const n=Number(row.review_count||0);return n>0?'★ '+Number(row.average_rating||0).toFixed(1)+' · '+n+' review'+(n===1?'':'s'):'No reviews yet';}
+function ratingText(row){const n=Number(row.review_count||0);return n>0?'★ '+Number(row.average_rating||0).toFixed(1)+' · '+n+' review'+(n===1?'':'s'):'☆ No reviews yet';}
 function completedBookingBadge(row){
  const raw=row.completed_count;
  if(raw===null||raw===undefined)return null; // Never mislabel a failed lookup as 0.
