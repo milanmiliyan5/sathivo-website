@@ -1,0 +1,57 @@
+/* Original Sathivo Android splash artwork with soft website fade (no zoom). */
+.sathivo-launch-screen{
+ position:fixed;inset:0;z-index:2147483600;display:grid;place-items:center;
+ width:100%;height:100vh;height:100dvh;overflow:hidden;
+ background:#fff7f4;color:#471429;isolation:isolate;
+ animation:sathivo-splash-dissolve 2200ms cubic-bezier(.25,.7,.25,1) both;
+ will-change:opacity;pointer-events:auto
+}
+.sathivo-launch-screen,.sathivo-launch-screen *{box-sizing:border-box}
+.sathivo-launch-screen__oval{position:absolute;display:block;border-radius:50%;background:#fbe3e8;pointer-events:none}
+.sathivo-launch-screen__oval--top-right{left:72%;top:-10%;width:47%;height:28%}
+.sathivo-launch-screen__oval--left{left:-20%;top:12%;width:32%;height:17%}
+.sathivo-launch-screen__oval--bottom-right{left:69%;top:86%;width:55%;height:27%}
+.sathivo-launch-screen__oval--bottom-left{left:-18%;top:88%;width:52%;height:27%;background:#f4e4da}
+.sathivo-launch-screen__content{
+ position:relative;z-index:1;padding:24px;display:flex;flex-direction:column;
+ align-items:center;justify-content:center;width:100%;max-width:100%;text-align:center
+}
+.sathivo-launch-screen__heart{width:148px;height:142px;display:block;overflow:visible}
+.sathivo-launch-screen__heart path{
+ fill:none;stroke-linejoin:round;stroke-linecap:round;stroke-width:8;
+ stroke-dasharray:1;stroke-dashoffset:1
+}
+.sathivo-launch-screen__heart .sathivo-launch-screen__stroke--one{
+ stroke:#90264b;animation:sathivo-splash-ink 640ms ease-in-out 0ms both
+}
+.sathivo-launch-screen__heart .sathivo-launch-screen__stroke--two{
+ stroke:#59172f;animation:sathivo-splash-ink 640ms ease-in-out 260ms both
+}
+.sathivo-launch-screen__name{
+ margin:12px 0 0;font-family:Georgia,'Times New Roman',serif;
+ font-size:58px;line-height:1.1;letter-spacing:-2px;font-weight:400;
+ color:#471429;opacity:0;transform:translateY(12px);
+ animation:sathivo-splash-name 370ms cubic-bezier(.22,1,.36,1) 520ms both
+}
+.sathivo-launch-screen__tagline{
+ margin:7px 0 0;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;
+ font-size:16px;line-height:1.35;letter-spacing:normal;font-weight:400;
+ color:#542639;opacity:0;
+ animation:sathivo-splash-tagline 300ms ease-out 750ms both
+}
+@keyframes sathivo-splash-ink{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes sathivo-splash-name{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes sathivo-splash-tagline{from{opacity:0}to{opacity:1}}
+@keyframes sathivo-splash-dissolve{
+ 0%,58%{opacity:1;filter:blur(0);visibility:visible}
+ 79%{opacity:.57;filter:blur(1.5px);visibility:visible}
+ 98%{opacity:.02;filter:blur(3px);visibility:visible}
+ 100%{opacity:0;filter:blur(3px);visibility:hidden}
+}
+@media(max-width:420px){
+ .sathivo-launch-screen__name{font-size:54px}
+ .sathivo-launch-screen__tagline{font-size:15px}
+}
+@media(prefers-reduced-motion:reduce){
+ .sathivo-launch-screen{animation:none;display:none}
+}
