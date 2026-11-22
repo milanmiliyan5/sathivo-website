@@ -1,0 +1,79 @@
+/* Premium incoming-request dialog. Isolated from existing booking and chat styles. */
+dialog.sbi-dialog{
+  box-sizing:border-box;position:fixed;inset:0;margin:auto;padding:18px;
+  border:1px solid #ead2df;border-radius:25px;
+  width:min(430px,calc(100vw - 24px));max-height:min(92dvh,740px);
+  background:#fffafc;color:#372330;box-shadow:0 25px 90px #3215234d;
+  overflow-y:auto;overscroll-behavior:contain;z-index:11000;
+}
+dialog.sbi-dialog[open]{animation:sbi-rise .28s cubic-bezier(.2,.8,.2,1) both}
+dialog.sbi-dialog::backdrop{background:#180c1b9e;backdrop-filter:blur(5px)}
+@keyframes sbi-rise{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.sbi-dialog *{box-sizing:border-box}
+.sbi-header{display:flex;align-items:center;gap:9px}
+.sbi-mark{display:grid;place-items:center;width:36px;height:36px;
+  border-radius:12px;background:#fbe4ee;color:#c03270;font-size:24px;font-weight:800}
+.sbi-brand{font-size:13px;font-weight:800;letter-spacing:.1px}
+.sbi-x{margin-left:auto;width:36px;height:36px;border-radius:50%;
+  border:1px solid #ead9e0;background:#fff;color:#603e51;
+  font-size:23px;line-height:1;cursor:pointer}
+.sbi-title{text-align:center;font-size:22px;line-height:1.2;letter-spacing:-.5px;
+  margin:18px 0 7px;color:#372330;font-weight:850}
+.sbi-subtitle{text-align:center;color:#937585;margin:0;font-size:12px;line-height:1.5}
+.sbi-stage{height:343px;margin:21px 4px 8px;position:relative;perspective:850px}
+.sbi-back{position:absolute;inset:0;border-radius:22px;pointer-events:none;
+  border:1px solid #eab9d0;transition:opacity .25s,transform .3s}
+.sbi-back-far{background:#edbfd3;transform:translateY(18px) scale(.92);opacity:.73}
+.sbi-back-near{background:#f7d9e6;transform:translateY(9px) scale(.96)}
+.sbi-stage.sbi-single .sbi-back{opacity:0}
+.sbi-card{position:absolute;inset:0;border:1px solid #eed7e1;border-radius:22px;
+  background:#fff;box-shadow:0 10px 25px #672d482b;
+  padding:16px;display:flex;flex-direction:column;gap:11px;touch-action:pan-y;
+  user-select:none;cursor:grab;will-change:transform,opacity;overflow:hidden}
+.sbi-card:active{cursor:grabbing}
+.sbi-between{display:flex;justify-content:space-between;gap:7px;align-items:center}
+.sbi-pending{border-radius:20px;background:#fff2de;color:#895c1d;
+  padding:6px 9px;font-size:10px;font-weight:800}
+.sbi-count{font-size:11px;color:#876b7b}
+.sbi-person{display:flex;gap:11px;align-items:center}
+.sbi-avatar{width:47px;height:47px;flex-shrink:0;border-radius:50%;
+  background:linear-gradient(135deg,#f8b6d3,#f2deeb);display:grid;place-items:center;
+  color:#852956;font-size:17px;font-weight:850}
+.sbi-person-copy{display:flex;min-width:0;flex-direction:column;gap:3px;overflow:hidden}
+.sbi-person-copy strong{font-weight:800;font-size:16px;color:#382233;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sbi-person-copy span{font-size:11px;color:#907b87}
+.sbi-rule{height:1px;background:#f1e4eb}
+.sbi-details{display:flex;flex-direction:column;gap:9px}
+.sbi-line{display:flex;align-items:center;gap:9px;font-size:12px;min-height:19px}
+.sbi-line-icon{font-size:15px;text-align:center;width:20px;flex-shrink:0;color:#b33a72;font-weight:800}
+.sbi-actions{margin-top:auto;display:grid;gap:3px}
+.sbi-open{width:100%;background:linear-gradient(100deg,#e34b85,#b62d69);
+  color:white;border:none;border-radius:12px;min-height:43px;font-size:13px;
+  font-weight:800;cursor:pointer;box-shadow:0 5px 12px #c2357033}
+.sbi-hide{background:none;border:0;color:#805d72;min-height:31px;
+  font-size:11px;font-weight:650;cursor:pointer}
+.sbi-navigation{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:8px 3px 0}
+.sbi-arrow{width:37px;height:37px;display:grid;place-items:center;border:1px solid #ead5df;
+  background:#fff;border-radius:50%;font-size:23px;color:#654354;cursor:pointer}
+.sbi-arrow:disabled{opacity:.35}
+.sbi-dots{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap}
+.sbi-dot{height:7px;width:7px;border:0;border-radius:10px;background:#dfc7d3;
+  padding:0;cursor:pointer;transition:width .25s ease,background .25s}
+.sbi-dot-active{width:23px;background:#d33a76}
+.sbi-hint{margin:12px 0 5px;text-align:center;font-size:11px;color:#947585}
+.sbi-later{display:block;margin:0 auto;background:transparent;border:0;
+  padding:10px 14px;color:#795b70;font-weight:750;font-size:12px;cursor:pointer}
+.sbi-status{margin:7px 0 0;border-radius:9px;color:#ac325a;background:#ffebf1;
+  padding:8px;font-size:12px;text-align:center}
+.sbi-dialog button:focus-visible{outline:3px solid #d33a76;outline-offset:2px}
+@media(max-width:400px){
+ dialog.sbi-dialog{padding:12px;border-radius:20px;max-height:94dvh}
+ .sbi-title{font-size:20px;margin-top:12px}
+ .sbi-stage{height:336px;margin-top:15px}
+ .sbi-card{padding:13px}
+ .sbi-details{gap:7px}
+}
+@media(prefers-reduced-motion:reduce){
+ dialog.sbi-dialog[open]{animation:none}
+ .sbi-card,.sbi-back,.sbi-dot{transition:none!important;animation:none!important}
+}
