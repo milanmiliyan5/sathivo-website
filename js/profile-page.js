@@ -311,6 +311,15 @@ async function init(){
     }
     syncModeUI();
     $('fields').disabled=false;message(p?'Your saved profile. Make it feel like you.':'Let’s create your free profile.');
+    // The 21-activity announcement deep-links here, after saved selections
+    // are restored. Do not alter selections or force profile publishing.
+    if(location.hash==='#your-kind-of-company'&&isCompanionKind()){
+      requestAnimationFrame(()=>{
+        const heading=$('your-kind-of-company');
+        heading?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});
+        heading?.focus({preventScroll:true});
+      });
+    }
     if(isCompanionKind()&&avatarPath)await showPhoto(avatarPath);updateCompleteness();
     publishing=await setupPublishing({client,user,isDirty:()=>dirty});
     $('publication').hidden=!isCompanionKind();
