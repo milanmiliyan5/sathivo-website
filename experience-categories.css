@@ -47,3 +47,7 @@
  .profile-card #categories .category-group-choices{gap:7px;padding:10px}
  .profile-card #categories .category-group-choices label{font-size:.74rem}
 }
+
+/* Keep the announcement's category destination below Sathivo's sticky header. */
+#your-kind-of-company{scroll-margin-top:112px}
+#your-kind-of-company:focus-visible{outline:2px solid #9e396c;outline-offset:7px;border-radius:4px}
