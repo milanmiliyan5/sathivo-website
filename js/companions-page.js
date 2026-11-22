@@ -74,7 +74,14 @@ function scopeName(){
  if($('state').value)return $('state').value;
  return 'All India';
 }
-function tags(row){const n=el('div',undefined,'tags');[{'online':'Online','in-person':'In person','both':'Online & in person'}[row.meeting_mode],...row.categories.map(experienceLabel)].forEach(v=>n.append(el('span',v)));return n;}
+function tags(row,compact=false){
+ const n=el('div',undefined,'tags');
+ const values=[{'online':'Online','in-person':'In person','both':'Online & in person'}[row.meeting_mode],...row.categories.map(experienceLabel)].filter(Boolean);
+ const visible=compact?values.slice(0,4):values;
+ visible.forEach(v=>n.append(el('span',v)));
+ if(compact&&visible.length<values.length)n.append(el('span','+'+(values.length-visible.length)+' more','more-experiences'));
+ return n;
+}
 function portrait(row){
  const initial=row.display_name.slice(0,1).toUpperCase(),n=el('div',initial,'portrait');
  if(!row.photo_path)return n;
@@ -197,7 +204,7 @@ function card(row){
  head.append(name,favoriteButton(row));
  copy.append(head);
  copy.append(experienceAndRating(row));
- copy.append(el('p',locationName(row.location_id,row.city_name)),el('strong',rateText(row.hourly_rate),'rate-chip'),trustChips(row,true),tags(row),el('p',row.bio.length>150?row.bio.slice(0,147)+'…':row.bio));
+ copy.append(el('p',locationName(row.location_id,row.city_name)),el('strong',rateText(row.hourly_rate),'rate-chip'),trustChips(row,true),tags(row,true),el('p',row.bio.length>150?row.bio.slice(0,147)+'…':row.bio));
  const actions=el('div',undefined,'card-actions'),link=el('a','Get to know '+row.display_name+' ↗','text-link companion-profile-link'),share=el('button','Share ↗','text-link share-link');
  const profileHref='companion.html?id='+encodeURIComponent(row.public_id);
  link.href=profileHref;share.type='button';share.onclick=()=>void shareProfile(row,share);
