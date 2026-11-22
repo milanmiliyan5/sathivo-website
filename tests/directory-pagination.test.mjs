@@ -8,7 +8,7 @@ async function harness({reduced=false}={}){
  const fragment=source.slice(source.indexOf('function scrollToDirectoryResults('),source.indexOf('function bookingForm('));
  const calls=[],pending=[],nodes={};
  const $=id=>nodes[id]??=( {value:'',checked:false,replaceChildren(...children){this.children=children},focus(options){calls.push({id,focus:options})},scrollIntoView(options){calls.push({id,scroll:options,rendered:this.children?.length})}} );
- const context=vm.createContext({$,window:{matchMedia:()=>({matches:reduced})},request:0,page:1,locationsLoaded:true,currentUser:null,selectedLocationIds:()=>null,selectedCity:()=>'',scopeName:()=>'',sortLabel:()=>'',el:()=>({}),feedNodes:rows=>rows,publicClient:{rpc:()=>new Promise(resolve=>pending.push(resolve))}});
+ const context=vm.createContext({$,window:{matchMedia:()=>({matches:reduced})},request:0,page:1,locationsLoaded:true,currentUser:null,selectedLocationIds:()=>null,selectedCity:()=>'',scopeName:()=>'',sortLabel:()=>'',el:()=>({}),feedNodes:rows=>rows,withCompletedCounts:async rows=>rows,publicClient:{rpc:()=>new Promise(resolve=>pending.push(resolve))}});
  vm.runInContext(fragment,context);
  return {calls,pending,nodes,list:options=>context.list(options)};
 }
@@ -42,5 +42,5 @@ test('both pagination buttons opt in and directory scroll targets are focusable'
  const html=await read('companions.html');
  assert.match(html,/id="results" tabindex="-1"/);
  assert.match(html,/id="status" tabindex="-1"/);
- for(const page of ['companions.html','companion.html'])assert.match(await read(page),/companions-page\.js\?v=20261121-quality-1/);
+ for(const page of ['companions.html','companion.html'])assert.match(await read(page),/companions-page\.js\?v=20261122-booking-done-1/);
 });
