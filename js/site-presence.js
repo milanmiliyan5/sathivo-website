@@ -39,22 +39,92 @@ async function init(){
     void recordVisit(client,visitorId);
 
     const channel=client.channel('site-presence-v1',{config:{presence:{key:visitorId}}});
-    const track=async()=>{
-      if(document.visibilityState!=='visible')return;
-      try{await channel.track({page:location.pathname.split('/').pop()||'index.html',online_at:new Date().toISOString()})}catch{}
-    };
-    channel.subscribe(status=>{if(status==='SUBSCRIBED')void track()});
-    document.addEventListener('visibilitychange',()=>{
-      if(document.visibilityState==='visible'){void track();void recordVisit(client,visitorId)}
-      else void channel.untrack();
+    // Realtime permits at most five Presence updates per client per 30 seconds.
+    // Throttle to four, debounce short tab switches, and never untrack twice.
+    const presenceWindowMs=30000;
+    const presenceBudget=4;
+    const hiddenGraceMs=9000;
+    const presenceCalls=[];
+    let subscribed=false,tracked=false,inFlight=false,closed=false;
+    let hiddenTimer=null,retryTimer=null;
+    function clearHiddenTimer(){if(hiddenTimer){clearTimeout(hiddenTimer);hiddenTimer=null}}
+    function clearRetryTimer(){if(retryTimer){clearTimeout(retryTimer);retryTimer=null}}
+    async function syncPresence(){
+      if(closed||!subscribed||inFlight)return;
+      const shouldBeOnline=document.visibilityState==='visible';
+      if(shouldBeOnline===tracked)return;
+      const now=Date.now();
+      while(presenceCalls.length&&now-presenceCalls[0]>=presenceWindowMs)presenceCalls.shift();
+      if(presenceCalls.length>=presenceBudget){
+        clearRetryTimer();
+        retryTimer=setTimeout(()=>{retryTimer=null;void syncPresence()},
+          Math.max(1000,presenceWindowMs-(now-presenceCalls[0])+500));
+        return;
+      }
+      // Reserve one token before awaiting so rapid events cannot race.
+      presenceCalls.push(now);
+      inFlight=true;
+      let succeeded=false;
+      try{
+        const result=shouldBeOnline
+          ?await channel.track({page:location.pathname.split('/').pop()||'index.html',online_at:new Date().toISOString()})
+          :await channel.untrack();
+        succeeded=result==='ok';
+        if(succeeded)tracked=shouldBeOnline;
+      }catch{
+        // Network/Realtime failure should not affect the visitor's page.
+      }finally{
+        inFlight=false;
+        if(!closed&&subscribed&&succeeded&&
+          (document.visibilityState==='visible')!==tracked){
+          scheduleVisibility();
+        }
+      }
+    }
+    function scheduleVisibility(){
+      clearHiddenTimer();
+      if(closed||!subscribed)return;
+      if(document.visibilityState==='visible'){
+        void syncPresence();
+      }else if(tracked){
+        // A tab that is briefly hidden should not churn track/untrack.
+        hiddenTimer=setTimeout(()=>{hiddenTimer=null;void syncPresence()},hiddenGraceMs);
+      }
+    }
+    channel.subscribe(status=>{
+      if(closed)return;
+      if(status==='SUBSCRIBED'){
+        subscribed=true;
+        tracked=false;
+        scheduleVisibility();
+      }else if(status==='CHANNEL_ERROR'||status==='TIMED_OUT'||status==='CLOSED'){
+        subscribed=false;
+        tracked=false;
+        clearHiddenTimer();
+      }
     });
-    // Keep the channel available when the browser caches this document for Back.
+    document.addEventListener('visibilitychange',()=>{
+      scheduleVisibility();
+      if(document.visibilityState==='visible')void recordVisit(client,visitorId);
+    });
     window.addEventListener('pagehide',event=>{
-      void channel.untrack();
-      if(!event.persisted)void client.removeChannel(channel);
+      clearHiddenTimer();
+      clearRetryTimer();
+      if(!event.persisted){
+        // Closing the channel releases Presence automatically. Calling
+        // untrack() as well would create an unnecessary extra event.
+        closed=true;
+        void client.removeChannel(channel);
+      }else if(tracked){
+        // Preserve the BFCache channel, but mark background tabs offline.
+        void syncPresence();
+      }
     });
     window.addEventListener('pageshow',event=>{
-      if(event.persisted){void track();void recordVisit(client,visitorId)}
+      if(event.persisted){
+        scheduleVisibility();
+        void recordVisit(client,visitorId);
+      }
     });
   }catch{}
 }
