@@ -1,3 +1,4 @@
+import {experienceCategoryGroups,experienceLabel,experienceSafetyNote} from './experience-categories.js?v=20261122-21-1';
 import {getSathivoClient,getSathivoPublicClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
 import {sendBookingEmail} from './booking-email-events.js?v=20261017-1';
@@ -73,7 +74,7 @@ function scopeName(){
  if($('state').value)return $('state').value;
  return 'All India';
 }
-function tags(row){const n=el('div',undefined,'tags');[{'online':'Online','in-person':'In person','both':'Online & in person'}[row.meeting_mode],...row.categories].forEach(v=>n.append(el('span',v)));return n;}
+function tags(row){const n=el('div',undefined,'tags');[{'online':'Online','in-person':'In person','both':'Online & in person'}[row.meeting_mode],...row.categories.map(experienceLabel)].forEach(v=>n.append(el('span',v)));return n;}
 function portrait(row){
  const initial=row.display_name.slice(0,1).toUpperCase(),n=el('div',initial,'portrait');
  if(!row.photo_path)return n;
@@ -259,17 +260,20 @@ function bookingForm(r){
  if(!Number(r.hourly_rate)){wrap.append(el('p','This companion has not set a rate yet, so new booking requests are temporarily unavailable.','payment-note'));return wrap;}
  if(!currentUser){const a=el('a','Sign in to send a request ↗','button button-primary');a.href='account.html#login';wrap.append(a);return wrap;}
  const form=document.createElement('form'),grid=el('div',undefined,'booking-grid');
- const category=document.createElement('select');category.required=true;r.categories.forEach(v=>category.add(new Option(v,v)));
+ const category=document.createElement('select');category.required=true;r.categories.forEach(v=>category.add(new Option(experienceLabel(v),v)));
  const mode=document.createElement('select');mode.required=true;if(['online','both'].includes(r.meeting_mode))mode.add(new Option('Online','online'));if(['in-person','both'].includes(r.meeting_mode))mode.add(new Option('In person — public place','in-person'));
  const when=document.createElement('input');when.type='datetime-local';when.required=true;const minDate=new Date(Date.now()+30*60*1000);const pad=n=>String(n).padStart(2,'0');when.min=`${minDate.getFullYear()}-${pad(minDate.getMonth()+1)}-${pad(minDate.getDate())}T${pad(minDate.getHours())}:${pad(minDate.getMinutes())}`;
  const duration=document.createElement('select');[30,60,90,120,180].forEach(v=>duration.add(new Option(v+' minutes',String(v))));duration.value='60';
  const offer=document.createElement('input');offer.type='number';offer.min='1';offer.max='100000';offer.step='1';offer.inputMode='numeric';offer.required=true;offer.value=String(r.hourly_rate);offer.placeholder='Your offer per hour';
  const estimate=el('small','', 'booking-helper deal-estimate');
  const updateEstimate=()=>{const rate=Number(offer.value),mins=Number(duration.value),total=totalFor(rate,mins);estimate.textContent=total?'Your offer: '+rateText(rate)+' · Approx. ₹'+total.toLocaleString('en-IN')+' for '+mins+' minutes.':'Enter a valid hourly offer.';};offer.addEventListener('input',updateEstimate);duration.addEventListener('change',updateEstimate);updateEstimate();
+ const bookingSafety=el('p','','booking-category-safety');bookingSafety.setAttribute('role','note');
+ const refreshBookingSafety=()=>{bookingSafety.textContent=experienceSafetyNote(category.value);};
+ category.addEventListener('change',refreshBookingSafety);refreshBookingSafety();
  const note=document.createElement('textarea');note.maxLength=1000;note.rows=3;note.placeholder='Example: Coffee and a relaxed conversation around 5 PM.';
  const field=(label,input,full=false,helper='')=>{const box=el('div',undefined,'booking-field'+(full?' full':'')),lab=el('label',label);lab.append(input);box.append(lab);if(helper)box.append(el('small',helper,'booking-helper'));return box;};
  grid.append(field('Experience',category),field('Meeting type',mode),field('Preferred date & time',when,false,'Choose a future time that suits you.'),field('Duration',duration),field('Your hourly offer (₹)',offer,false,'You may offer the listed rate or a different amount. The companion decides whether to accept.'),field('Offer estimate',estimate,false),field('Note to companion',note,true,'Optional. Use this for the plan or preferred public meeting area. Do not share passwords, OTPs or your exact home address.'));
- form.append(grid);form.append(el('p','Sathivo currently charges no platform fees or commission and does not collect, process or manage payments. Agree directly on payment by your own UPI ID, QR code, UPI-linked mobile number or cash. Verify the recipient and amount first. Sathivo does not hold funds, process refunds or provide payment protection. Never share UPI PINs, banking passwords or payment OTPs.','payment-note'));
+ form.append(grid);form.append(bookingSafety);form.append(el('p','Sathivo currently charges no platform fees or commission and does not collect, process or manage payments. Agree directly on payment by your own UPI ID, QR code, UPI-linked mobile number or cash. Verify the recipient and amount first. Sathivo does not hold funds, process refunds or provide payment protection. Never share UPI PINs, banking passwords or payment OTPs.','payment-note'));
  const row=el('div',undefined,'booking-submit-row'),b=el('button','Send request ↗','button button-primary'),status=el('p','', 'field-hint');b.type='submit';row.append(b,status);form.append(row);
  form.onsubmit=async e=>{e.preventDefault();const chosen=new Date(when.value);if(!when.value||Number.isNaN(chosen.getTime())||chosen<=new Date()){status.textContent='Please choose a future date and time.';when.focus();return}b.disabled=true;status.textContent='Sending request…';try{const iso=chosen.toISOString();const offerRate=Number(offer.value);if(!Number.isInteger(offerRate)||offerRate<1||offerRate>100000){status.textContent='Enter a valid hourly offer between ₹1 and ₹1,00,000.';offer.focus();b.disabled=false;return}const {data,error}=await client.rpc('create_booking_request_with_offer',{p_companion_public_id:r.public_id,p_category:category.value,p_meeting_mode:mode.value,p_requested_for:iso,p_duration_minutes:Number(duration.value),p_note:note.value.trim(),p_offer_hourly_rate:offerRate});if(error)throw error;status.textContent='Request sent. Notifying the companion…';await Promise.all([sendBookingPush(client,data,'request'),sendBookingEmail(client,data,'request')]);status.textContent='Request sent. Opening your bookings…';location.href='bookings.html?id='+encodeURIComponent(data)+'&booked=1'}catch(err){status.textContent=err.message||'Could not send request.';b.disabled=false;}};
  wrap.append(form);return wrap;
@@ -422,7 +426,11 @@ function setupDirectory(){
  if(disclosure&&window.matchMedia('(max-width: 640px)').matches)disclosure.open=false;
  opts('state',statesAndUTs.map(v=>[v,v]),'All India — all states / UTs');
  districts();
- ['Conversation','Coffee','Movies','Shopping','Events','Walking','Online chat','Phone conversation'].forEach(v=>$('category').add(new Option(v,v)));
+ for(const group of experienceCategoryGroups){
+  const options=document.createElement('optgroup');options.label=group.title;
+  group.items.forEach(value=>options.append(new Option(experienceLabel(value),value)));
+  $('category').append(options);
+ }
  $('filters').onsubmit=e=>{e.preventDefault();page=0;const mobile=window.matchMedia('(max-width: 640px)').matches;if(mobile&&disclosure)disclosure.open=false;void list({fromPagination:mobile});};
  $('filters').onchange=e=>{
   if(e.target.id==='state')districts();
