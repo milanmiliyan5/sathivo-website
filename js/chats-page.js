@@ -1,4 +1,4 @@
-import {showChatAvatars} from './chat-avatars.js?v=20261121-dp';
+import {showChatAvatars} from './chat-avatars.js?v=20261122-current-account-dp-1';
 import {withCurrentBookingNames} from './booking-name-sync.js?v=20261030-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 const $=id=>document.getElementById(id);
