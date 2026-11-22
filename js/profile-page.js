@@ -1,3 +1,4 @@
+import {experienceCategoryGroups,experienceCategories,experienceLabel,experienceSafetyNote} from './experience-categories.js?v=20261122-21-1';
 import { setupPublishing } from './listing-publish.js?v=20261122-idempotent-gender-1';
 import {districtsByState,statesAndUTs} from './india-districts.js?v=20261015-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
@@ -6,7 +7,7 @@ import { avatarOptions, avatarMarker, avatarAsset, isBuiltinAvatar } from './ava
 import { compressImageFile,formatBytes } from './image-compress.js?v=20261006-1';
 const $ = id => document.getElementById(id);
 const form = $('profile-form');
-const categories = ['Conversation','Coffee','Movies','Shopping','Events','Walking','Online chat','Phone conversation'];
+const categories = experienceCategories;
 let client, user, locations = [], avatarPath = null, savedAvatarPath = null, dirty = false, publishing = null;
 function message(text, error=false) { $('profile-status').textContent=text; $('profile-status').dataset.error=String(error); }
 function options(select, items, placeholder) {
@@ -34,11 +35,38 @@ $('state').addEventListener('change',()=>{districts();dirty=true;});
 $('district').addEventListener('change',()=>{clearCity();dirty=true;});
 $('city_name').addEventListener('input',()=>{resolveLocationId();updateCompleteness();});
 $('city_name').addEventListener('change',resolveLocationId);
-categories.forEach(value=>{
-  const label=document.createElement('label'), input=document.createElement('input');
+// Five compact groups keep 21 choices usable on both desktop and phones.
+function updateCategoryGroupCounts(){
+ for(const section of $('categories').querySelectorAll('.category-group')){
+  const count=section.querySelectorAll('input[name="categories"]:checked').length;
+  const countLabel=section.querySelector('.category-count');
+  countLabel.textContent=count?count+' selected':'Choose';
+  if(count)section.open=true;
+ }
+}
+for(const [index,group] of experienceCategoryGroups.entries()){
+ const section=document.createElement('details');section.className='category-group';section.open=index===0;
+ const summary=document.createElement('summary');
+ const heading=el('strong',group.title),count=el('span','Choose','category-count');
+ summary.append(heading,count);section.append(summary);
+ const choices=el('div',undefined,'category-group-choices');
+ for(const value of group.items){
+  const label=document.createElement('label'),input=document.createElement('input');
   input.type='checkbox';input.name='categories';input.value=value;
-  label.append(input,document.createTextNode(value));$('categories').append(label);
-});
+  label.append(input,document.createTextNode(experienceLabel(value)));
+  label.title=experienceSafetyNote(value);
+  choices.append(label);
+ }
+ section.append(choices);
+ if(group.title==='Everyday Help & Companionship'){
+  section.append(el('p','Hospital visits and senior companionship are scheduled social assistance only—not emergency response, nursing, personal care or medical treatment.','category-safety-note'));
+ }
+ if(group.title==='Education & Career'){
+  section.append(el('p','Study and college-project help means guidance and practice, not doing someone else’s assessed work.','category-safety-note'));
+ }
+ $('categories').append(section);
+}
+$('categories').addEventListener('change',updateCategoryGroupCounts);
 const avatarChoices=$('avatar-choices');
 for(const group of [{title:'Male avatars',prefix:'male-'},{title:'Female avatars',prefix:'female-'}]){
   const section=document.createElement('section'),title=document.createElement('strong'),grid=document.createElement('div');
@@ -269,7 +297,7 @@ async function init(){
         resolveLocationId();
         if(!$('location_id').value)$('location_id').value=String(loc.id);
       }
-      form.querySelectorAll('[name=categories]').forEach(input=>input.checked=p.categories.includes(input.value));
+      form.querySelectorAll('[name=categories]').forEach(input=>input.checked=p.categories.includes(input.value));updateCategoryGroupCounts();
       form.elements.adult_confirmed.checked=p.adult_confirmed;form.elements.boundaries_accepted.checked=p.boundaries_accepted;
       avatarPath=p.avatar_path;savedAvatarPath=p.avatar_path;showSystemInfo(p);
     }else{
