@@ -85,7 +85,32 @@ function portrait(row){
 function trustChips(row,compact=false){const n=el('div',undefined,'trust-chips'+(compact?' compact':''));if(row.email_verified_at)n.append(el('span','✓ Email verified'));if(row.adult_confirmed)n.append(el('span','18+ self-declared'));if(row.boundaries_accepted)n.append(el('span','Platonic boundaries'));return n;}
 function rateText(rate){return Number(rate)>0?'₹'+Number(rate).toLocaleString('en-IN')+' / hour':'Rate not set'}
 function totalFor(rate,minutes){return Number(rate)>0?Math.round(Number(rate)*Number(minutes)/60):null}
-function ratingText(row){const n=Number(row.review_count||0);return n>0?'★ '+Number(row.average_rating||0).toFixed(1)+' · '+n+' review'+(n===1?'':'s'):'New companion';}
+function ratingText(row){const n=Number(row.review_count||0);return n>0?'★ '+Number(row.average_rating||0).toFixed(1)+' · '+n+' review'+(n===1?'':'s'):'No reviews yet';}
+function completedBookingBadge(row){
+ const raw=row.completed_count;
+ if(raw===null||raw===undefined)return null; // Never mislabel a failed lookup as 0.
+ const count=Number(raw);
+ if(!Number.isSafeInteger(count)||count<0)return null;
+ const text=count===0?'Newly Joined':count+' Booking'+(count===1?'':'s')+' Done';
+ const badge=el('span',text,'completed-booking-badge'+(count===0?' newly-joined':''));
+ badge.setAttribute('aria-label',count===0?'No completed bookings yet':text);
+ return badge;
+}
+async function withCompletedCounts(rows){
+ const ids=[...new Set(rows.map(row=>row.public_id).filter(Boolean))];
+ if(!ids.length)return rows;
+ try{
+  const {data,error}=await publicClient.rpc('public_companion_completed_counts',{p_public_ids:ids});
+  if(error)throw error;
+  const counts=new Map((data||[]).map(row=>[row.public_id,Number(row.completed_count)]));
+  return rows.map(row=>({...row,completed_count:counts.get(row.public_id)??null}));
+ }catch(error){
+  // Discovery stays available if the optional count service is offline.
+  console.warn('Completed-booking badges unavailable:',error?.message||'Network error');
+  return rows;
+ }
+}
+
 async function loadFavorites(){
  favoriteIds=new Set();
  if(!currentUser)return;
@@ -134,7 +159,9 @@ function namedHeading(tag,row){const heading=el(tag,row.display_name),label={mal
 function card(row){
  const n=el('article',undefined,'companion-card'),copy=el('div',undefined,'card-copy'),head=el('div',undefined,'card-heading-row'),name=namedHeading('h2',row);
  head.append(name,favoriteButton(row));
- copy.append(head,el('p',locationName(row.location_id,row.city_name)),el('strong',rateText(row.hourly_rate),'rate-chip'),el('span',ratingText(row),'rating-line'),trustChips(row,true),tags(row),el('p',row.bio.length>150?row.bio.slice(0,147)+'…':row.bio));
+ copy.append(head);
+ const badge=completedBookingBadge(row);if(badge)copy.append(badge);
+ copy.append(el('p',locationName(row.location_id,row.city_name)),el('strong',rateText(row.hourly_rate),'rate-chip'),el('span',ratingText(row),'rating-line'),trustChips(row,true),tags(row),el('p',row.bio.length>150?row.bio.slice(0,147)+'…':row.bio));
  const actions=el('div',undefined,'card-actions'),link=el('a','Get to know '+row.display_name+' ↗','text-link companion-profile-link'),share=el('button','Share ↗','text-link share-link');
  const profileHref='companion.html?id='+encodeURIComponent(row.public_id);
  link.href=profileHref;share.type='button';share.onclick=()=>void shareProfile(row,share);
@@ -183,7 +210,9 @@ async function list({fromPagination=false}={}){
    p_limit:25
   });
   if(seq!==request)return;if(error)throw error;
-  const all=data||[],rows=all.slice(0,24);$('results').replaceChildren(...feedNodes(rows));$('empty').hidden=rows.length>0;
+  const all=data||[],rows=await withCompletedCounts(all.slice(0,24));
+  if(seq!==request)return;
+  $('results').replaceChildren(...feedNodes(rows));$('empty').hidden=rows.length>0;
   $('status').textContent=rows.length?'Explore companions · '+scopeName()+' · '+sortLabel()+'.':'No published companions match these filters yet.';
   $('previous').disabled=page===0;$('next').disabled=all.length<=24;$('page-label').textContent='';
   if(fromPagination)scrollToDirectoryResults(rows.length>0);
@@ -276,8 +305,10 @@ async function detail(){
   ]);
   if(error)throw error;if(!r){$('status').textContent='This profile is unavailable or has been hidden by its owner.';return;}
   r.review_count=rating?.review_count||0;r.average_rating=rating?.average_rating||null;
+  const [current]=await withCompletedCounts([r]);r.completed_count=current?.completed_count??null;
   const copy=el('div',undefined,'detail-copy');copy.append(el('p','GOOD COMPANY, ON YOUR TERMS','eyebrow'));
   const titleRow=el('div',undefined,'detail-title-row');titleRow.append(namedHeading('h1',r),favoriteButton(r,true));copy.append(titleRow);
+  const proof=completedBookingBadge(r);if(proof)copy.append(proof);
   // Keep the lightweight share action below the name; safety controls live
   // together under Trust & account details so the profile header stays clean.
   const shareRow=el('div',undefined,'profile-actions sathivo-profile-share-row'),share=el('button','Share Profile ↗','sathivo-profile-share-button');

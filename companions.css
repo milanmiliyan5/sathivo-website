@@ -39,3 +39,16 @@
  .directory-nojs{margin-top:12px}
 }
 @media(prefers-reduced-motion:reduce){.directory-filter-disclosure>summary span{transition:none}}
+
+/* Verified completed-booking experience badge (not an unverified review). */
+.completed-booking-badge{
+ display:inline-flex;align-items:center;gap:6px;align-self:flex-start;
+ max-width:100%;padding:7px 12px;border-radius:999px;
+ color:#6e2148;background:#f8e5ed;border:1px solid #e5bed1;
+ font-size:.74rem;font-weight:800;line-height:1.25;white-space:nowrap;
+}
+.completed-booking-badge::before{content:'✓';font-weight:900}
+.completed-booking-badge.newly-joined{color:#7a5366;background:#f8f0f4;border-color:#e8d8e1}
+.completed-booking-badge.newly-joined::before{content:'♡'}
+.detail-copy>.completed-booking-badge{margin:6px 0 12px}
+@media(max-width:420px){.completed-booking-badge{font-size:.7rem;padding:6px 10px}}
