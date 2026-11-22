@@ -52,3 +52,15 @@
 .completed-booking-badge.newly-joined::before{content:'♡'}
 .detail-copy>.completed-booking-badge{margin:6px 0 12px}
 @media(max-width:420px){.completed-booking-badge{font-size:.7rem;padding:6px 10px}}
+
+.experience-rating-row{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:4px 0 8px}
+.experience-rating-row .completed-booking-badge{margin:0}
+.public-rating-link{font-size:.76rem;font-weight:800;display:inline-flex;align-items:center;color:#9d5b06;background:#fff7e7;border:1px solid #e5c88c;border-radius:999px;padding:7px 11px;text-decoration:none;min-height:32px}
+.public-rating-link:hover,.public-rating-link:focus-visible{background:#ffe8b5;outline-offset:2px}
+.public-reviews{scroll-margin-top:96px;margin:24px 0;border:1px solid #eacdd8;border-radius:18px;background:#fff9fc;padding:20px}
+.public-reviews-summary{color:#96630c;font-weight:750;margin:10px 0 16px}
+.public-review-list{display:grid;gap:12px}
+.public-review{border:1px solid #efdce4;border-radius:12px;padding:14px;background:white;overflow-wrap:anywhere}
+.public-review strong{color:#b07508}.public-review time{font-size:.75rem;color:#927387;margin-left:10px}
+.public-review p{margin:8px 0 0;white-space:pre-wrap;line-height:1.6}
+.public-review-empty{font-size:.88rem;color:#7d6571}

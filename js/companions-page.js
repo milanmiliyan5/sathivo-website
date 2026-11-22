@@ -96,6 +96,14 @@ function completedBookingBadge(row){
  badge.setAttribute('aria-label',count===0?'No completed bookings yet':text);
  return badge;
 }
+function experienceAndRating(row){
+ const wrap=el('div',undefined,'experience-rating-row');
+ const badge=completedBookingBadge(row);if(badge)wrap.append(badge);
+ const link=el('a',ratingText(row),'public-rating-link');
+ link.href='companion.html?id='+encodeURIComponent(row.public_id)+'#ratings-and-reviews';
+ link.setAttribute('aria-label',ratingText(row)+' — read ratings and reviews');
+ wrap.append(link);return wrap;
+}
 async function withCompletedCounts(rows){
  const ids=[...new Set(rows.map(row=>row.public_id).filter(Boolean))];
  if(!ids.length)return rows;
@@ -160,8 +168,8 @@ function card(row){
  const n=el('article',undefined,'companion-card'),copy=el('div',undefined,'card-copy'),head=el('div',undefined,'card-heading-row'),name=namedHeading('h2',row);
  head.append(name,favoriteButton(row));
  copy.append(head);
- const badge=completedBookingBadge(row);if(badge)copy.append(badge);
- copy.append(el('p',locationName(row.location_id,row.city_name)),el('strong',rateText(row.hourly_rate),'rate-chip'),el('span',ratingText(row),'rating-line'),trustChips(row,true),tags(row),el('p',row.bio.length>150?row.bio.slice(0,147)+'…':row.bio));
+ copy.append(experienceAndRating(row));
+ copy.append(el('p',locationName(row.location_id,row.city_name)),el('strong',rateText(row.hourly_rate),'rate-chip'),trustChips(row,true),tags(row),el('p',row.bio.length>150?row.bio.slice(0,147)+'…':row.bio));
  const actions=el('div',undefined,'card-actions'),link=el('a','Get to know '+row.display_name+' ↗','text-link companion-profile-link'),share=el('button','Share ↗','text-link share-link');
  const profileHref='companion.html?id='+encodeURIComponent(row.public_id);
  link.href=profileHref;share.type='button';share.onclick=()=>void shareProfile(row,share);
@@ -308,7 +316,7 @@ async function detail(){
   const [current]=await withCompletedCounts([r]);r.completed_count=current?.completed_count??null;
   const copy=el('div',undefined,'detail-copy');copy.append(el('p','GOOD COMPANY, ON YOUR TERMS','eyebrow'));
   const titleRow=el('div',undefined,'detail-title-row');titleRow.append(namedHeading('h1',r),favoriteButton(r,true));copy.append(titleRow);
-  const proof=completedBookingBadge(r);if(proof)copy.append(proof);
+  copy.append(experienceAndRating(r));
   // Keep the lightweight share action below the name; safety controls live
   // together under Trust & account details so the profile header stays clean.
   const shareRow=el('div',undefined,'profile-actions sathivo-profile-share-row'),share=el('button','Share Profile ↗','sathivo-profile-share-button');
@@ -345,7 +353,7 @@ async function detail(){
    }catch{ safetyFeedback.textContent='Could not block this user. Please try again.';}finally{if(blockBtn.textContent!=='User blocked')blockBtn.disabled=false;}};
   safetyActions.append(reportBtn,blockBtn);
   safetyControls.append(safetyHeading,safetyActions,safetyFeedback);
-  copy.append(el('p',locationName(r.location_id,r.city_name)),el('div',rateText(r.hourly_rate),'detail-rate'),el('p',ratingText(r),'rating-line'),trustChips(r),tags(r));
+  copy.append(el('p',locationName(r.location_id,r.city_name)),el('div',rateText(r.hourly_rate),'detail-rate'),trustChips(r),tags(r));
   // Prioritize the complete booking form immediately after rate and experience tags.
   // Keep all trust, safety, About and payment information intact below it.
   copy.append(bookingForm(r));
@@ -354,12 +362,28 @@ async function detail(){
   if(r.joined_at)trustGrid.append(el('span','Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(r.joined_at))));if(r.safety_id)trustGrid.append(el('span','Safety ID '+r.safety_id));trust.append(trustGrid);copy.append(trust,safetyControls);
   // About, languages, interests and availability appear on the photo overlay
   // (with full text available through See More), instead of repeating below the form.
-  if(Number(r.review_count)>0)copy.append(el('h2','Completed-booking rating'),el('p',Number(r.average_rating).toFixed(1)+' / 5 · '+r.review_count+' review'+(Number(r.review_count)===1?'':'s')));
+  const reviews=el('section',undefined,'public-reviews');reviews.id='ratings-and-reviews';reviews.tabIndex=-1;
+  reviews.append(el('h2','Ratings & Reviews'),el('p',ratingText(r),'public-reviews-summary'));
+  const reviewList=el('div',undefined,'public-review-list');reviews.append(reviewList);
+  try{
+   const {data,error:reviewError}=await publicClient.rpc('public_companion_review_comments',{p_public_id:r.public_id,p_limit:15});
+   if(reviewError)throw reviewError;
+   if(!data?.length)reviewList.append(el('p','No public written reviews yet. Only customers with completed bookings can rate. Written comments appear only with their permission.','public-review-empty'));
+   else for(const item of data){
+    const review=el('article',undefined,'public-review');
+    review.append(el('strong','★ '+Number(item.rating)+' / 5'));
+    const time=new Date(item.created_at);
+    if(!Number.isNaN(time.getTime()))review.append(el('time',new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(time)));
+    review.append(el('p',item.comment));reviewList.append(review);
+   }
+  }catch{reviewList.append(el('p','Written reviews are unavailable right now. Please try later.'));}
+  copy.append(reviews);
   const safetyNote=el('section',undefined,'sathivo-safety-panel');
   safetyNote.append(el('h3','🛡️ First meeting? Stay in control.'),el('p','Choose a public place, tell someone you trust, arrange your own travel and never share passwords or UPI PINs.'));
   const moreSafety=el('a','Read our Safety & Community Guidelines ↗');moreSafety.href='safety.html#first-meeting';safetyNote.append(moreSafety);copy.append(safetyNote);
   copy.append(el('p','The displayed amount is the companion’s own hourly rate. You can propose a different hourly amount in your request. A price becomes agreed only if the companion accepts your request. Payment happens directly between users outside Sathivo; Sathivo does not process payments.','payment-note'),el('p','Self-described profile. Identity and age have not been verified. Availability is a preference, not a confirmed booking.','launch-note'),el('p','18+ and strictly platonic. Respect boundaries and choose public places for in-person meetings.'));
   $('detail').replaceChildren(detailPhotoFrame(r),copy);$('detail').hidden=false;$('status').textContent='';document.title=r.display_name+' — Sathivo';
+  if(location.hash==='#ratings-and-reviews')requestAnimationFrame(()=>reviews.scrollIntoView({behavior:'smooth',block:'start'}));
  }catch(e){$('status').textContent=e.message||'Could not load this profile. Please try again.';$('retry').hidden=false;}
 }
 // State/district options are bundled locally, so they remain usable even when
