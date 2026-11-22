@@ -249,8 +249,10 @@ async function init(){
     client=await getSathivoClient();
     const result=await client.auth.getUser();user=result.data?.user;
     if(!user){message('Sign in to create or edit your free profile.');$('signin').hidden=false;return;}
-    const [loc,profile,nearbyPrefs]=await Promise.all([client.from('profile_locations').select('*').order('state'),client.from('member_profiles').select('*').eq('user_id',user.id).maybeSingle(),client.from('nearby_alert_preferences').select('in_app_enabled,email_enabled').eq('user_id',user.id).maybeSingle()]);
+    const [loc,profile,nearbyPrefs,activeBadge]=await Promise.all([client.from('profile_locations').select('*').order('state'),client.from('member_profiles').select('*').eq('user_id',user.id).maybeSingle(),client.from('nearby_alert_preferences').select('in_app_enabled,email_enabled').eq('user_id',user.id).maybeSingle(),client.from('active_member_badges').select('user_id').eq('user_id',user.id).maybeSingle()]);
     if(loc.error||profile.error||nearbyPrefs.error)throw Error('Your profile or notification preferences could not load. Refresh to retry; your saved details are safe.');
+    // A public community-activity badge is independent from account email verification.
+    $('active-member-own-badge').hidden=!!activeBadge.error||!activeBadge.data;
     locations=loc.data;states();districts();
     // The only source of email marketing consent is an explicit choice:
     // saved preferences, or the unchecked-by-default signup checkbox.
