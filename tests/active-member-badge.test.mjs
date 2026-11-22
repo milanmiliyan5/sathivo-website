@@ -11,7 +11,7 @@ test('public directory and detail render Active Member only when public API conf
  assert.match(script,/heading\.append\(document\.createTextNode\(' '\),activity\)/);
  assert.match(script,/withActiveMemberBadges\(await withCompletedCounts\(all\.slice\(0,24\)\)\)/);
  assert.match(script,/withActiveMemberBadges\(await withCompletedCounts\(\[r\]\)\)/);
- assert.match(script,/not identity verification/);
+ assert.match(script,/Not identity or safety verification/);
  assert.doesNotMatch(script,/\b(?:Gold|Silver|Bronze)\b.*badge/);
 });
 test('badge is included on both cards and opened profiles, plus member own profile',async()=>{
