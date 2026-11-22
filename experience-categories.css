@@ -1,0 +1,49 @@
+/* Grouped, responsive 21-category companion profile choices. */
+.profile-card #categories.choices{
+ display:flex;flex-direction:column;align-items:stretch;
+ gap:10px;min-width:0;margin:12px 0 18px;
+}
+.profile-card #categories .category-group{
+ display:block;width:100%;min-width:0;
+ border:1px solid #e4cbd7;border-radius:13px;background:#fff9fc;
+ box-sizing:border-box;
+}
+.profile-card #categories .category-group>summary{
+ display:flex;justify-content:space-between;align-items:center;gap:12px;
+ cursor:pointer;padding:13px 15px;min-height:44px;list-style:none;
+ color:#603047;font-size:.86rem;box-sizing:border-box;
+}
+.profile-card #categories .category-group>summary::-webkit-details-marker{display:none}
+.profile-card #categories .category-group>summary:focus-visible{outline:2px solid #a94979;outline-offset:2px}
+.profile-card #categories .category-group[open]>summary{border-bottom:1px solid #ead7e0}
+.profile-card #categories .category-count{flex:none;font-weight:650;color:#965572;font-size:.7rem}
+.profile-card #categories .category-group-choices{
+ display:flex;flex-wrap:wrap;gap:8px;padding:12px 14px;
+}
+.profile-card #categories .category-group-choices label{
+ margin:0;display:inline-flex;align-items:center;gap:7px;
+ border:1px solid #e1c7d4;border-radius:20px;background:#fff;
+ padding:8px 11px;cursor:pointer;font-size:.78rem;
+ max-width:100%;overflow-wrap:anywhere;
+}
+.profile-card #categories .category-group-choices label:has(input:checked){
+ background:#f9e3ee;border-color:#c681a4;color:#7b3158;
+}
+.profile-card #categories .category-group-choices input{flex:none;accent-color:#9d396d;margin:0}
+.profile-card #categories .category-safety-note{
+ padding:0 14px 12px;margin:0!important;
+ color:#785667;font-size:.74rem;line-height:1.55;
+}
+.profile-card .category-overview-note{
+ padding:10px 13px;border:1px solid #dfc9d3;border-radius:10px;
+ background:#fff9fc;color:#775366;font-size:.79rem;line-height:1.6;
+}
+.directory .booking-category-safety{
+ border-left:3px solid #a44c79;background:#fff7fb;
+ padding:8px 12px;margin:10px 0;font-size:.79rem;line-height:1.6;
+ color:#70425b;
+}
+@media(max-width:580px){
+ .profile-card #categories .category-group-choices{gap:7px;padding:10px}
+ .profile-card #categories .category-group-choices label{font-size:.74rem}
+}
