@@ -1,3 +1,4 @@
+import {showCompletedBookingRating} from './booking-rating-dialog.js?v=20261122-1';
 import {offerCompletionFeedback} from './feedback-prompt.js?v=20261119-feedback-1';
 import {confirmCompletion,appendRecoveryControls,runRecovery} from './booking-recovery.js?v=20261116-1';
 import {withCurrentBookingNames} from './booking-name-sync.js?v=20261030-1';
@@ -5,7 +6,8 @@ import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
 import {askCancellationReason,cancellationLabel} from './booking-cancel.js?v=20261006-1';
 import {renderBookingProgress} from './booking-progress.js?v=20261025-polish-1';
-const $=id=>document.getElementById(id); let client,user,rows=[],filter='all';
+const $=id=>document.getElementById(id); let client,user,rows=[],filter='all',reviewedBookings=new Set(),reviewLookupOk=false,promptOpen=false;
+const autoPrompted=new Set();
 
 const linkedBookingId=(()=>{
  try{
@@ -67,7 +69,12 @@ function card(r){const mine=r.customer_id===user.id,other=mine?r.companion_displ
  if(['pending','accepted'].includes(r.status)&&mine){const b=el('button','Cancel request','button button-outline');b.onclick=()=>void cancelBooking(r);a.append(b)}
  if(r.status==='accepted'&&!mine){const b=el('button','Mark completed','button button-primary');b.onclick=async()=>{if(await confirmCompletion()){b.disabled=true;await update(r.id,'completed');b.disabled=false}};a.append(b)}
  if(r.status==='accepted'&&!mine){const c=el('a','Open chat & photos ↗','button button-outline');c.href='chat.html?booking='+encodeURIComponent(r.id);a.append(c)}
- if(r.status==='completed'&&mine&&r.reopen_request_state!=='pending'){const review=el('form',undefined,'review-form');review.innerHTML='<strong>Leave a review</strong><select aria-label="Rating"><option value="5">5 — Excellent</option><option value="4">4 — Very good</option><option value="3">3 — Good</option><option value="2">2 — Fair</option><option value="1">1 — Poor</option></select><textarea maxlength="600" rows="2" placeholder="Optional comment"></textarea><button class="button button-outline" type="submit">Submit review</button>';review.onsubmit=e=>{e.preventDefault();void submitReview(r,review)};n.append(review)}
+ if(r.status==='completed'&&mine){
+  if(reviewedBookings.has(r.id))n.append(el('p','✓ You rated this completed booking','booking-rated'));
+  else if(reviewLookupOk){const rate=el('button','★ Rate your companion','button button-outline');
+   rate.type='button';rate.onclick=()=>void rateBooking(r);
+   a.append(rate);}
+ }
  appendRecoveryControls(a,r,user.id,recoverBooking);if(a.childNodes.length)n.append(a);if(r.status==='cancelled'&&r.cancel_reason){const text='Cancelled · '+cancellationLabel(r.cancel_reason)+(r.cancel_note?' — '+r.cancel_note:'');n.append(el('p',text,'cancellation-note'))}if(r.agreed_hourly_rate)n.append(el('p','Sathivo currently charges no platform fees or commission and does not collect, process or manage payments. Agree directly on payment by your own UPI ID, QR code, UPI-linked mobile number or cash. Verify the recipient and amount first. Sathivo does not hold funds, process refunds or provide payment protection. Never share UPI PINs, banking passwords or payment OTPs.','payment-note'));return n}
 function render(){
  const list=rows.filter(visible);
@@ -87,12 +94,38 @@ function render(){
   $('status').textContent='This booking was not found in your account. Please sign in with the account linked to the booking.';
  }
 }
-async function load(){const {data,error}=await client.from('booking_requests').select('*').order('created_at',{ascending:false});if(error)throw error;const newlyCompleted=(data||[]).some(r=>r.status==='completed'&&rows.some(old=>old.id===r.id&&old.status==='accepted'));
- rows=await withCurrentBookingNames(client,data||[]);
- if(newlyCompleted)offerCompletionFeedback(user);$('filters').hidden=false;render()}
+async function load(){
+ const [bookings,reviews]=await Promise.all([
+  client.from('booking_requests').select('*').order('created_at',{ascending:false}),
+  client.from('booking_reviews').select('booking_id').eq('reviewer_id',user.id)
+ ]);
+ if(bookings.error)throw bookings.error;
+ const prior=rows;
+ rows=await withCurrentBookingNames(client,bookings.data||[]);
+ reviewLookupOk=!reviews.error;
+ reviewedBookings=new Set((reviews.data||[]).map(r=>r.booking_id));
+ const newlyCompleted=rows.some(r=>r.customer_id===user.id&&r.status==='completed'&&prior.some(old=>old.id===r.id&&old.status==='accepted'));
+ if(newlyCompleted)offerCompletionFeedback(user);
+ $('filters').hidden=false;render();
+ // A completed booking is optional to rate, but the CTA stays in Completed forever.
+ const unreviewed=reviewLookupOk&&rows.find(r=>r.customer_id===user.id&&r.status==='completed'&&!reviewedBookings.has(r.id)&&!autoPrompted.has(r.id));
+ if(unreviewed&&document.visibilityState!=='hidden'){
+  const storageKey='sathivo:rating-prompt:'+user.id+':'+unreviewed.id;
+  try{if(sessionStorage.getItem(storageKey)==='1')return;sessionStorage.setItem(storageKey,'1');}catch{}
+  autoPrompted.add(unreviewed.id);
+  setTimeout(()=>{if(!document.querySelector('dialog[open]'))void rateBooking(unreviewed);},1100);
+ }
+}
 async function cancelBooking(r){const answer=await askCancellationReason();if(!answer)return;await update(r.id,'cancelled',{cancel_reason:answer.reason,cancel_note:answer.note||null})}
 async function recoverBooking(id,action){try{const result=await runRecovery(client,id,action);if(result==='accepted'){selectFilter('all');}await load();$('status').textContent=result==='accepted'?'Booking reopened.':result==='pending'?'Reopen request sent.':'Reopen request declined.';}catch(e){$('status').textContent=e.message||'Could not update recovery request.';}}
 async function update(id,status,extra={}){$('status').textContent='Updating…';const {error}=await client.from('booking_requests').update({status,...extra}).eq('id',id);if(error){$('status').textContent=error.message;return}if(status==='completed'){offerCompletionFeedback(user);selectFilter('all');}if(['cancelled','completed'].includes(status)){ await load();void sendBookingPush(client,id,status).catch(()=>{});return}await load()}
-async function submitReview(r,form){const rating=Number(form.querySelector('select').value),comment=form.querySelector('textarea').value.trim();const {error}=await client.from('booking_reviews').insert({booking_id:r.id,reviewer_id:user.id,companion_id:r.companion_id,rating,comment});if(error){$('status').textContent=error.code==='23505'?'You already reviewed this booking.':error.message;return}form.replaceWith(el('p','Thanks for your review.','launch-note'))}
+async function rateBooking(booking){
+ if(promptOpen||booking.status!=='completed'||reviewedBookings.has(booking.id))return;
+ promptOpen=true;
+ try{
+  const success=await showCompletedBookingRating({client,user,booking});
+  if(success){reviewedBookings.add(booking.id);render();$('status').textContent='Thanks for rating your completed plan.';}
+ }finally{promptOpen=false;}
+}
 async function init(){try{client=await getSathivoClient();const u=await client.auth.getUser();user=u.data.user;if(!user){if(linkedBookingId){const signIn=new URL('account.html',location.href);signIn.searchParams.set('next','bookings.html?id='+linkedBookingId);signIn.hash='login';location.replace(signIn.href)}else location.replace('account.html#login');return}showBookingConfirmation();selectFilter(filter);document.querySelectorAll('[data-filter]').forEach(b=>b.onclick=()=>{selectFilter(b.dataset.filter);render()});await load();client.channel('bookings:'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_requests'},()=>void load()).subscribe()}catch(e){$('status').textContent=e.message||'Could not load bookings.'}}
 void init();
