@@ -49,7 +49,7 @@ test('mobile bottom tabs are omitted only from individual conversation and compo
  const html=await read('chat.html'),css=await read('chat-premium.css');
  assert.doesNotMatch(html,/js\/mobile-nav\.js/);
  assert.match(html,/<a class="chat-back" href="chats\.html"/);
- assert.match(html,/chat-premium\.css\?v=20261123-premium-chat-2/);
+ assert.match(html,/chat-premium\.css\?v=20261123-chat-hint-cleanup-1/);
  assert.match(css,/body\.sathivo-2d\.chat-premium \.mobile-bottom-nav\{display:none!important\}/);
  assert.match(css,/\.chat-workspace\{\s*height:max\(330px,calc\(100dvh - 96px\)\)/);
  assert.match(css,/body\.sathivo-2d\.chat-premium\.chat-input-focused \.chat-workspace\{/);
@@ -94,4 +94,13 @@ test('approved mobile chat 2.0 retains native chat features and visual accessibi
  assert.match(js,/sendStagedPhoto\(\)/);
  assert.match(js,/setupPresence\(\)/);
  assert.match(js,/\.from\('booking_messages'\)\.insert\(/);
+});
+
+test('chat composer keeps only private conversation label and no redundant photo details',async()=>{
+ const html=await read('chat.html'),css=await read('chat-premium.css');
+ assert.match(html,/<div class="chat-compose-hint"><span>🔒 Private booking conversation<\/span><\/div>/);
+ assert.doesNotMatch(html,/Photo privacy &amp; limits|chat-photo-tips/);
+ assert.doesNotMatch(css,/chat-photo-tips/);
+ assert.match(html,/id="view-once" type="checkbox"/);
+ assert.match(html,/id="photo-input" type="file"/);
 });
