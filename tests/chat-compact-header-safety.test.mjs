@@ -47,3 +47,15 @@ test('header is reduced only by CSS and private conversation structure stays unc
  assert.match(script,/\.from\('booking_messages'\)\.insert\(/);
  assert.match(script,/openViewOnce\(r\)/);
 });
+
+test('Safety popover stays above the mobile chat and preserves the actions',async()=>{
+ const html=await read('chat.html'),css=await read('chat-premium.css'),script=await read('js/chat-page.js');
+ assert.match(html,/<section id="safety-actions"[^>]*popover="manual"/);
+ assert.match(css,/\.chat-safety-menu #safety-actions:popover-open\{/);
+ assert.match(css,/position:fixed!important;inset:auto!important/);
+ assert.match(css,/max-height:var\(--safety-overlay-height/);
+ assert.match(css,/@supports not selector\(:popover-open\)/);
+ assert.match(script,/safetyActions\.showPopover\(\)/);
+ assert.match(script,/safetyActions\.hidePopover\(\)/);
+ assert.match(script,/safetyMenu\.addEventListener\('toggle'/);
+});
