@@ -1,5 +1,66 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex"><title>Requests — Sathivo</title><link rel="icon" href="assets/favicon.svg"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="stylesheet" href="styles.css?v=20261119-brand-co"><link rel="stylesheet" href="marketplace.css?v=20261123-avatar-square-1"><script defer src="assets/vendor/supabase-2.116.0.js"></script><script type="module" src="js/requests-page.js?v=20261123-incoming-counts-1"></script><script type="module" src="js/mobile-nav.js?v=20261124-requests-label-1"></script><script type="module" src="js/header-requests.js?v=20261119-tabs"></script><link rel="stylesheet" href="responsive.css?v=20261025-polish-1"><script type="module" src="js/header-notifications.js?v=20261123-photo-gender-1"></script><script type="module" src="js/site-presence.js?v=20261122-rate-safe-1"></script><link rel="stylesheet" href="site-2d.css?v=20261018-alerts-1"><script src="js/site-motion.js?v=20261006-1" defer></script><link rel="stylesheet" href="booking-success-popup.css?v=20261017-1"><link rel="stylesheet" href="gender-prompt.css?v=20261116-1"><script type="module" src="js/gender-prompt.js?v=20261116-1"></script><link rel="stylesheet" href="mobile-header.css?v=20261118-hamburger-1"><link rel="stylesheet" href="feedback-prompt.css?v=20261119-feedback-1"><link rel="stylesheet" href="launch-splash.css?v=20261122-fade-1"><link rel="stylesheet" href="requests-compact.css?v=20261123-count-first-inline-1"><link rel="stylesheet" href="policy-warning-gate.css?v=20261124-1"><script type="module" src="js/policy-warning-gate.js?v=20261124-1"></script><link rel="stylesheet" href="safety-thanks-popup.css?v=20261124-thanks-1"><script type="module" src="js/safety-thanks-popup.js?v=20261124-thanks-1"></script></head>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="robots" content="noindex"><title>Requests — Sathivo</title><link rel="icon" href="assets/favicon.svg"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><link rel="stylesheet" href="styles.css?v=20261119-brand-co"><link rel="stylesheet" href="marketplace.css?v=20261123-avatar-square-1"><script defer src="assets/vendor/supabase-2.116.0.js"></script><script type="module" src="js/requests-page.js?v=20261124-vertical-hub-1"></script><script type="module" src="js/mobile-nav.js?v=20261124-requests-label-1"></script><script type="module" src="js/header-requests.js?v=20261119-tabs"></script><link rel="stylesheet" href="responsive.css?v=20261025-polish-1"><script type="module" src="js/header-notifications.js?v=20261123-photo-gender-1"></script><script type="module" src="js/site-presence.js?v=20261122-rate-safe-1"></script><link rel="stylesheet" href="site-2d.css?v=20261018-alerts-1"><script src="js/site-motion.js?v=20261006-1" defer></script><link rel="stylesheet" href="booking-success-popup.css?v=20261017-1"><link rel="stylesheet" href="booking-rating-dialog.css?v=20261122-1"><link rel="stylesheet" href="booking-progress.css?v=20261018-alerts-1"><link rel="stylesheet" href="gender-prompt.css?v=20261116-1"><script type="module" src="js/gender-prompt.js?v=20261116-1"></script><link rel="stylesheet" href="mobile-header.css?v=20261118-hamburger-1"><link rel="stylesheet" href="feedback-prompt.css?v=20261119-feedback-1"><link rel="stylesheet" href="launch-splash.css?v=20261122-fade-1"><link rel="stylesheet" href="requests-compact.css?v=20261124-vertical-hub-1"><link rel="stylesheet" href="policy-warning-gate.css?v=20261124-1"><script type="module" src="js/policy-warning-gate.js?v=20261124-1"></script><link rel="stylesheet" href="safety-thanks-popup.css?v=20261124-thanks-1"><script type="module" src="js/safety-thanks-popup.js?v=20261124-thanks-1"></script></head>
 <body class="sathivo-2d"><script src="js/launch-splash.js?v=20261122-fade-1"></script><a class="skip-link" href="#main">Skip to requests</a><header class="site-header"><div class="container marketplace-nav compact-header"><a class="brand" href="./"><span class="brand-mark">♡</span>sathivo<span class="brand-period">.co</span></a><nav class="desktop-header-links"><a href="companions.html">Explore</a><a href="requests.html" aria-current="page">Requests</a><a href="bookings.html">Bookings</a><a href="chats.html">Chats</a><a href="notifications.html">Notifications</a><a href="account.html">Account</a></nav><a class="notification-shortcut" href="notifications.html" aria-label="Notifications" title="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg></a><details class="mobile-header-menu"><summary aria-label="Open navigation"><svg viewBox="0 0 24 24" aria-hidden="true"><path class="menu-line menu-line-top" d="M3 6h18"/><path class="menu-line menu-line-middle" d="M3 12h18"/><path class="menu-line menu-line-bottom" d="M3 18h18"/></svg></summary><div class="mobile-header-panel" role="navigation" aria-label="Mobile header navigation"><a href="./">Home</a><a href="companions.html">Explore</a><a href="profile.html">My profile</a><a href="requests.html">Requests</a><a href="bookings.html">Bookings</a><a href="chats.html">Chats</a><a href="account.html">Account</a><a href="support.html">Support</a></div></details></div></header>
-<main id="main" class="container marketplace-shell incoming-compact-page"><h1 class="incoming-compact-title">Requests</h1><p id="status" role="status" aria-live="polite">Loading requests…</p><div id="request-filters" class="booking-tabs" role="group" aria-label="Filter incoming requests by status" hidden><button type="button" data-filter="pending" class="active" aria-pressed="true" aria-controls="requests"><span class="request-tab-count" data-count-for="pending">0</span><span class="request-tab-label">Pending</span></button><button type="button" data-filter="accepted" aria-pressed="false" aria-controls="requests"><span class="request-tab-count" data-count-for="accepted">0</span><span class="request-tab-label">Accepted</span></button><button type="button" data-filter="closed" aria-pressed="false" aria-controls="requests"><span class="request-tab-count" data-count-for="closed">0</span><span class="request-tab-label">Closed</span></button><button type="button" data-filter="all" aria-pressed="false" aria-controls="requests"><span class="request-tab-count" data-count-for="all">0</span><span class="request-tab-label">All</span></button></div><section id="requests" class="booking-list"></section><div id="empty" class="empty-state" hidden><h2>No requests in this section.</h2><p>When someone sends you a booking request, it will appear here.</p></div></main>
+<main id="main" class="container marketplace-shell incoming-compact-page">
+  <h1 class="incoming-compact-title">Requests</h1>
+  <p id="status" role="status" aria-live="polite">Loading requests…</p>
+  <nav id="request-menu" class="request-hub" aria-label="Request categories" hidden>
+  <button type="button" class="request-hub-card" data-view="sent" aria-controls="request-detail">
+    <span class="request-hub-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 3-7.5 18-3.7-7.8L3 9.5 21 3ZM21 3 9.8 13.2"/></svg></span>
+    <span class="request-hub-copy"><span class="request-hub-name">My Requests</span><span class="request-hub-desc">Requests you sent to companions</span></span>
+    <span class="request-hub-count" data-count-for="sent">0</span>
+    <svg class="request-hub-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+  </button>
+  <button type="button" class="request-hub-card" data-view="received" aria-controls="request-detail">
+    <span class="request-hub-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v11h-5l-2 3h-2l-2-3H4V4ZM3 20h18"/></svg></span>
+    <span class="request-hub-copy"><span class="request-hub-name">Received</span><span class="request-hub-desc">Requests other people sent you</span></span>
+    <span class="request-hub-count" data-count-for="received">0</span>
+    <svg class="request-hub-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+  </button>
+  <button type="button" class="request-hub-card" data-view="pending" aria-controls="request-detail">
+    <span class="request-hub-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18ZM12 7v5l3 2"/></svg></span>
+    <span class="request-hub-copy"><span class="request-hub-name">Pending</span><span class="request-hub-desc">Waiting for acceptance or response</span></span>
+    <span class="request-hub-count" data-count-for="pending">0</span>
+    <svg class="request-hub-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+  </button>
+  <button type="button" class="request-hub-card" data-view="accepted" aria-controls="request-detail">
+    <span class="request-hub-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7 10 17l-5-5"/></svg></span>
+    <span class="request-hub-copy"><span class="request-hub-name">Accepted</span><span class="request-hub-desc">Requests that have been accepted</span></span>
+    <span class="request-hub-count" data-count-for="accepted">0</span>
+    <svg class="request-hub-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+  </button>
+  <button type="button" class="request-hub-card" data-view="completed" aria-controls="request-detail">
+    <span class="request-hub-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 7 10 18 3 11M21 15v5H4V4h12"/></svg></span>
+    <span class="request-hub-copy"><span class="request-hub-name">Completed</span><span class="request-hub-desc">Successfully completed bookings</span></span>
+    <span class="request-hub-count" data-count-for="completed">0</span>
+    <svg class="request-hub-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+  </button>
+  <button type="button" class="request-hub-card" data-view="cancelled" aria-controls="request-detail">
+    <span class="request-hub-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></span>
+    <span class="request-hub-copy"><span class="request-hub-name">Cancelled</span><span class="request-hub-desc">Cancelled and declined requests</span></span>
+    <span class="request-hub-count" data-count-for="cancelled">0</span>
+    <svg class="request-hub-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+  </button>
+  <button type="button" class="request-hub-card" data-view="all" aria-controls="request-detail">
+    <span class="request-hub-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg></span>
+    <span class="request-hub-copy"><span class="request-hub-name">All</span><span class="request-hub-desc">Every request, sent and received</span></span>
+    <span class="request-hub-count" data-count-for="all">0</span>
+    <svg class="request-hub-chevron" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+  </button>
+  </nav>
+  <section id="request-detail" class="request-detail" aria-labelledby="request-view-title" hidden>
+    <div class="request-detail-top">
+      <button id="request-back" class="request-back" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m7-7-7 7 7 7"/></svg>
+        Back to Requests
+      </button>
+      <h2 id="request-view-title" class="request-detail-title" tabindex="-1"><span id="request-view-name">My Requests</span><span id="request-view-count" class="request-detail-count">0</span></h2>
+    </div>
+    <section id="requests" class="booking-list" aria-label="Matching booking requests"></section>
+    <div id="empty" class="empty-state" hidden>
+      <h3>No requests here yet.</h3>
+      <p id="request-empty-description">Requests matching this category will appear here.</p>
+    </div>
+  </section>
+</main>
 <footer class="container directory-footer">Accept only plans you are comfortable with · 18+ · Strictly platonic.<div class="footer-legal-inline"><a href="privacy.html">Privacy</a><a href="terms.html">Terms</a><a href="safety.html">Safety</a><a href="support.html">Support</a><a href="delete-account.html">Delete account</a></div></footer></body></html>
