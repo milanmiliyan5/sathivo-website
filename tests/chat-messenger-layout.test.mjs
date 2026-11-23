@@ -49,8 +49,25 @@ test('mobile bottom tabs are omitted only from individual conversation and compo
  const html=await read('chat.html'),css=await read('chat-premium.css');
  assert.doesNotMatch(html,/js\/mobile-nav\.js/);
  assert.match(html,/<a class="chat-back" href="chats\.html"/);
- assert.match(html,/chat-premium\.css\?v=20261123-chat-focus-1/);
+ assert.match(html,/chat-premium\.css\?v=20261123-keyboard-composer-1/);
  assert.match(css,/body\.sathivo-2d\.chat-premium \.mobile-bottom-nav\{display:none!important\}/);
  assert.match(css,/\.chat-workspace\{\s*height:max\(330px,calc\(100dvh - 96px\)\)/);
  assert.match(css,/body\.sathivo-2d\.chat-premium\.chat-input-focused \.chat-workspace\{/);
+});
+
+test('keyboard-safe mobile composer and paperclip preserve real photo attachment',async()=>{
+ const html=await read('chat.html'),css=await read('chat-premium.css'),js=await read('js/chat-page.js');
+ assert.match(html,/interactive-widget=resizes-content/);
+ assert.match(html,/id="attach-photo"[^>]*><svg/);
+ assert.match(html,/id="photo-input" type="file"/);
+ assert.doesNotMatch(html,/>📷<\/button>/);
+ assert.match(css,/top:var\(--chat-visible-top,0px\)!important/);
+ assert.match(css,/height:var\(--chat-visible-vh,100dvh\)!important/);
+ assert.match(css,/\.chat-input-focused \.chat-compose-hint\{display:none!important\}/);
+ assert.match(css,/\.chat-input-focused \.directory-footer\{display:none!important\}/);
+ assert.match(js,/viewport\?\.height\?\?window\.innerHeight/);
+ assert.match(js,/viewport\?\.offsetTop\?\?0/);
+ assert.match(js,/requestAnimationFrame\(syncChatKeyboard\)/);
+ assert.match(js,/addEventListener\('blur',resetChatKeyboard\)/);
+ assert.match(js,/\$\('attach-photo'\)\.onclick=\(\)=>\$\('photo-input'\)\.click\(\)/);
 });
