@@ -5,10 +5,10 @@ import {readFile} from 'node:fs/promises';
 
 const read=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
 
-test('Incoming Requests opens directly at compact heading and four counted filters',async()=>{
+test('Requests opens directly at compact heading and four counted filters',async()=>{
  const html=await read('requests.html');
  assert.match(html,/class="container marketplace-shell incoming-compact-page"/);
- assert.match(html,/<h1 class="incoming-compact-title">Incoming Requests<\/h1>/);
+ assert.match(html,/<h1 class="incoming-compact-title">Requests<\/h1>/);
  assert.doesNotMatch(html,/<section class="page-head">/);
  assert.doesNotMatch(html,/Sathivo does not collect payment\. Any cash or UPI payment/);
  assert.doesNotMatch(html,/As a companion, review requests customers have sent you/);
