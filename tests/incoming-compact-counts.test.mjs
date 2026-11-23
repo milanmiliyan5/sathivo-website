@@ -66,7 +66,7 @@ test('Sent and received bookings keep their distinct actions and secured access'
  assert.match(js,/function receivedCard\(r\)/);
  assert.match(js,/function sentCard\(r\)/);
  assert.match(js,/r\.companion_id===user\.id\?receivedCard\(r\):sentCard\(r\)/);
- assert.match(js,/client\.from\('booking_requests'\)\.select\('\*'\)\.order/);
+ assert.match(js,/client\.from\('booking_requests'\)\.select\('\*'\)\.or/);
  assert.match(js,/\.filter\(r=>r\.customer_id===user\.id\|\|r\.companion_id===user\.id\)/);
  for(const action of [
   "update(r.id,'accepted')","update(r.id,'declined')","update(r.id,'completed')",
