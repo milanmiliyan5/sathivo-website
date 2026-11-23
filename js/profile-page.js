@@ -1,4 +1,4 @@
-import {experienceCategoryGroups,experienceCategories,experienceLabel,experienceSafetyNote} from './experience-categories.js?v=20261122-21-1';
+import {experienceCategoryGroups,experienceCategories,experienceLabel,experienceSafetyNote,experienceVisual} from './experience-categories.js?v=20261123-pastels-1';
 import { setupPublishing,syncPublishedCardPhoto } from './listing-publish.js?v=20261123-nearby-1';
 import {districtsByState,statesAndUTs} from './india-districts.js?v=20261015-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
@@ -54,7 +54,11 @@ for(const [index,group] of experienceCategoryGroups.entries()){
  for(const value of group.items){
   const label=document.createElement('label'),input=document.createElement('input');
   input.type='checkbox';input.name='categories';input.value=value;
-  label.append(input,document.createTextNode(experienceLabel(value)));
+  const visual=experienceVisual(value);
+  label.dataset.activityTone=visual.tone;
+  const icon=el('i',visual.icon,'category-choice-icon');
+  icon.setAttribute('aria-hidden','true');
+  label.append(input,icon,document.createTextNode(experienceLabel(value)));
   label.title=experienceSafetyNote(value);
   choices.append(label);
  }
