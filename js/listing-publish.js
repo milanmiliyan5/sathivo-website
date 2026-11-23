@@ -1,4 +1,42 @@
 import { isBuiltinAvatar } from './avatar-utils.js?v=20261121-avatars-1';
+// Public identity is opted-in separately from private profile data.
+// Once a member has published, keep their card avatar in sync without
+// exposing unrelated draft edits or publishing a hidden listing.
+export async function syncPublishedCardPhoto(client,userId,avatarPath,photoChanged=false,uploadedBlob=null) {
+ const {data:listing,error:readError}=await client.from('companion_listings')
+  .select('published,photo_path').eq('user_id',userId).maybeSingle();
+ if(readError)throw Error('Could not check the public companion card.');
+ if(!listing?.published)return {published:false,updated:false,hidden:false};
+ if(!avatarPath){
+  const {error}=await client.from('companion_listings').update({published:false})
+   .eq('user_id',userId).eq('published',true);
+  if(error)throw Error('Could not hide the public listing after removing its photo.');
+  return {published:false,updated:false,hidden:true};
+ }
+ if(!photoChanged)return {published:true,updated:false,hidden:false};
+ let publicPath=avatarPath;
+ if(!isBuiltinAvatar(avatarPath)){
+  let blob=uploadedBlob;
+  if(!blob){
+   const download=await client.storage.from('profile-photos').download(avatarPath);
+   if(download.error||!download.data)throw Error('Could not read the saved profile photo.');
+   blob=download.data;
+  }
+  publicPath=userId+'/avatar.webp';
+  const upload=await client.storage.from('listing-photos').upload(publicPath,blob,
+   {upsert:true,contentType:'image/webp',cacheControl:'0',cacheControl:'0'});
+  if(upload.error)throw Error('Could not update the public companion photo.');
+ }
+ const {error:updateError}=await client.from('companion_listings').update({photo_path:publicPath})
+  .eq('user_id',userId).eq('published',true);
+ if(updateError)throw Error('Could not link the new photo to the public companion card.');
+ if(isBuiltinAvatar(avatarPath)&&listing.photo_path===userId+'/avatar.webp'){
+  // The replaced public upload is no longer needed. Ignore cleanup errors.
+  try{await client.storage.from('listing-photos').remove([userId+'/avatar.webp']);}catch{}
+ }
+ return {published:true,updated:true,hidden:false};
+}
+
 export async function setupPublishing({client,user,isDirty}) {
  const $=id=>document.getElementById(id);
  const panel=$('publication'), status=$('listing-status'), publish=$('publish-listing'), hide=$('hide-listing'), view=$('view-listing');
