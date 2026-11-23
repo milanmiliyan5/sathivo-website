@@ -1,5 +1,5 @@
 import {experienceCategoryGroups,experienceCategories,experienceLabel,experienceSafetyNote} from './experience-categories.js?v=20261122-21-1';
-import { setupPublishing } from './listing-publish.js?v=20261122-idempotent-gender-1';
+import { setupPublishing,syncPublishedCardPhoto } from './listing-publish.js?v=20261123-public-avatar-sync-1';
 import {districtsByState,statesAndUTs} from './india-districts.js?v=20261015-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { getSathivoClient } from './supabase-client.js?v=20261025-polish-1';
@@ -247,6 +247,19 @@ form.addEventListener('submit',async event=>{
     if(savedAvatarPath&&!isBuiltinAvatar(savedAvatarPath)&&savedAvatarPath!==avatarPath){
       try{await client.storage.from('profile-photos').remove([savedAvatarPath])}catch{}
     }
+    // Updating the account photo must update an ALREADY published card too.
+    // The DB trigger handles display_name; all other public edits still
+    // require the explicit Publish action.
+    let publicCardNote='',publicSyncFailed=false;
+    try{
+      const result=await syncPublishedCardPhoto(client,user.id,row.avatar_path,
+        !!preparedPhoto||savedAvatarPath!==row.avatar_path,preparedPhoto?.blob||null);
+      if(result.updated)publicCardNote=' Your public companion card photo is updated.';
+      if(result.hidden)publicCardNote=' Your public listing was hidden because it has no photo or is now a customer profile.';
+    }catch(error){
+      publicSyncFailed=true;
+      publicCardNote=' Profile saved, but the public card could not be updated. Please retry saving or use Update My Public Profile.';
+    }
     let nearbyPreferenceWarning='';
     try{
       const prefs=await client.from('nearby_alert_preferences').select('email_enabled').eq('user_id',user.id).maybeSingle();
@@ -263,12 +276,12 @@ form.addEventListener('submit',async event=>{
       // rule, while promotional email notifications remain OFF.
     }catch(error){nearbyPreferenceWarning=' Profile saved, but the nearby email choice could not be saved. Please retry it in Account settings.'}
     savedAvatarPath=companion?avatarPath:null;dirty=false;$('photo').value='';if(localPreviewUrl){URL.revokeObjectURL(localPreviewUrl);localPreviewUrl=null;}showSystemInfo(data);
-    if(preparedPhoto)message('Your profile is saved. Photo compressed '+formatBytes(preparedPhoto.originalBytes)+' → '+formatBytes(preparedPhoto.outputBytes)+'.'+nearbyPreferenceWarning,!!nearbyPreferenceWarning);
-    else message((companion?'Your companion profile is saved. Review it, then publish when you are ready.':'Your customer profile is saved. Taking you to Find a companion…')+nearbyPreferenceWarning,!!nearbyPreferenceWarning);
+    if(preparedPhoto)message('Your profile is saved. Photo compressed '+formatBytes(preparedPhoto.originalBytes)+' → '+formatBytes(preparedPhoto.outputBytes)+'.'+publicCardNote+nearbyPreferenceWarning,publicSyncFailed||!!nearbyPreferenceWarning);
+    else message((companion?'Your companion profile is saved. Review it, then publish other changes when you are ready.':'Your customer profile is saved. Taking you to Find a companion…')+publicCardNote+nearbyPreferenceWarning,publicSyncFailed||!!nearbyPreferenceWarning);
     if(companion&&avatarPath)await showPhoto(avatarPath);else{$('avatar').hidden=true;syncAvatarChoice();}
     updateCompleteness();
     if(companion)openPublishPrompt();
-     else if(!nearbyPreferenceWarning)window.setTimeout(()=>location.assign('companions.html'),450);
+     else if(!nearbyPreferenceWarning&&!publicSyncFailed)window.setTimeout(()=>location.assign('companions.html'),450);
   }catch(error){message(error.message||'Could not save your profile. Please try again.',true);}
   finally{$('fields').disabled=false;if(!$('publish-prompt').open)$('profile-status').focus();}
 });
