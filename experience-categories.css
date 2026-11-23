@@ -51,3 +51,34 @@
 /* Keep the announcement's category destination below Sathivo's sticky header. */
 #your-kind-of-company{scroll-margin-top:112px}
 #your-kind-of-company:focus-visible{outline:2px solid #9e396c;outline-offset:7px;border-radius:4px}
+
+/* Soft pastels shared by all 21 categories and 3 meeting modes. */
+[data-activity-tone="green"]{--activity-bg:#E7F7E8;--activity-text:#205C32;--activity-border:#A6DAAE;}
+[data-activity-tone="mint"]{--activity-bg:#E6F8EF;--activity-text:#1D644A;--activity-border:#ABDCCA;}
+[data-activity-tone="sky"]{--activity-bg:#E8F3FF;--activity-text:#224F81;--activity-border:#B8D5F6;}
+[data-activity-tone="blue"]{--activity-bg:#E8F1FF;--activity-text:#234F86;--activity-border:#AFC8F4;}
+[data-activity-tone="lilac"]{--activity-bg:#F2E8FF;--activity-text:#633A88;--activity-border:#D6BDEE;}
+[data-activity-tone="peach"]{--activity-bg:#FFF0E4;--activity-text:#82472C;--activity-border:#F3C6A9;}
+[data-activity-tone="rose"]{--activity-bg:#FCEAF2;--activity-text:#8A3A60;--activity-border:#EDBFD3;}
+[data-activity-tone="amber"]{--activity-bg:#FFF2D9;--activity-text:#795010;--activity-border:#E8CA90;}
+[data-activity-tone="yellow"]{--activity-bg:#FFF7DB;--activity-text:#77551A;--activity-border:#E6D495;}
+[data-activity-tone="teal"]{--activity-bg:#E5F6F6;--activity-text:#1B6369;--activity-border:#A3D5D9;}
+.profile-card #categories .category-group-choices label[data-activity-tone]{
+ background:var(--activity-bg);color:var(--activity-text);
+ border-color:var(--activity-border);font-weight:700;
+ box-shadow:0 1px 3px rgba(58,37,53,.05);transition:border-color .15s ease,box-shadow .15s ease;
+}
+.profile-card #categories .category-group-choices label[data-activity-tone]:has(input:checked){
+ background:var(--activity-bg);color:var(--activity-text);border-color:var(--activity-text);
+ box-shadow:0 0 0 1px var(--activity-border),0 2px 6px rgba(58,37,53,.06);
+}
+.profile-card #categories .category-group-choices label[data-activity-tone]:focus-within{
+ outline:2px solid var(--activity-text);outline-offset:2px;
+}
+.profile-card #categories .category-group-choices label[data-activity-tone] input{accent-color:var(--activity-text)}
+.profile-card #categories .category-group-choices .category-choice-icon{
+ font-style:normal;font-size:1em;line-height:1;flex:0 0 auto;
+}
+@media(prefers-reduced-motion:reduce){
+ .profile-card #categories .category-group-choices label[data-activity-tone]{transition:none}
+}
