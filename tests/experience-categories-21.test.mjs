@@ -60,3 +60,13 @@ test('database constraints accept 21 canonical categories without rewriting old 
  for(const value of experienceCategories) assert.ok(sql.includes("'"+value+"'::text"),value);
  assert.doesNotMatch(sql,/\b(?:UPDATE|DELETE|TRUNCATE)\s+(?:public\.)?(?:booking_requests|booking_messages|member_profiles|companion_listings)\b/i);
 });
+
+test('Explore card activity chips keep consistent rounded sizing on desktop and mobile',async()=>{
+ const html=await read('companions.html');
+ const css=await read('companions.css');
+ assert.match(html,/companions\.css\?v=20261123-activity-pills-1/);
+ assert.match(css,/\.directory #results \.companion-card \.tags\s*\{\s*align-items:flex-start/);
+ assert.match(css,/\.directory #results \.companion-card \.tags > span\s*\{/);
+ for(const rule of ['align-self:flex-start','min-height:32px','max-width:100%','border-radius:999px','overflow-wrap:normal'])assert.ok(css.includes(rule),rule);
+ assert.match(css,/@media\(max-width:540px\)/);
+});

@@ -64,3 +64,40 @@
 .public-review strong{color:#b07508}.public-review time{font-size:.75rem;color:#927387;margin-left:10px}
 .public-review p{margin:8px 0 0;white-space:pre-wrap;line-height:1.6}
 .public-review-empty{font-size:.88rem;color:#7d6571}
+
+
+/* Consistent compact activity pills on Explore companion cards.
+   Prevent one short item (e.g. Movies) from stretching into a tall oval. */
+.directory #results .companion-card .tags{
+  align-items:flex-start;
+  align-content:flex-start;
+}
+.directory #results .companion-card .tags > span{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  align-self:flex-start;
+  flex:0 0 auto;
+  box-sizing:border-box;
+  width:fit-content;
+  max-width:100%;
+  min-height:32px;
+  padding:6px 11px;
+  border:1.5px solid #d9b5c5;
+  border-radius:999px;
+  line-height:1.3;
+  white-space:normal;
+  overflow-wrap:normal;
+  word-break:normal;
+  text-align:center;
+}
+.directory #results .companion-card .tags > span.more-experiences{
+  background:#f7eef2;
+  color:#68435a;
+}
+@media(max-width:540px){
+  .directory #results .companion-card .tags > span{
+    min-height:32px;
+    padding:5px 10px;
+  }
+}
