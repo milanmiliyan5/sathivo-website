@@ -126,3 +126,13 @@ body.sathivo-2d .directory #results .companion-card .companion-card-rate{
 body.sathivo-2d .directory #results .companion-card .companion-rate-unit{
  color:#806a79;font-size:.77rem;font-weight:600;
 }
+
+/* Consistent pastel activity chips on Explore cards and public profiles. */
+body.sathivo-2d .directory .companion-activity-tags > .companion-activity-chip[data-activity-tone]{
+ gap:6px;justify-content:flex-start;text-align:left;font-weight:750;line-height:1.35;
+ background:var(--activity-bg)!important;color:var(--activity-text)!important;
+ border-color:var(--activity-border)!important;box-shadow:0 1px 3px rgba(58,37,53,.05)!important;
+}
+body.sathivo-2d .directory .companion-activity-tags > .companion-activity-chip .companion-activity-icon{
+ flex:0 0 auto;font-style:normal;display:inline-block;font-size:1em;line-height:1.15;white-space:nowrap;
+}
