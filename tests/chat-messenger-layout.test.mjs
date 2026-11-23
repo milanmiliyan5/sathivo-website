@@ -49,7 +49,7 @@ test('mobile bottom tabs are omitted only from individual conversation and compo
  const html=await read('chat.html'),css=await read('chat-premium.css');
  assert.doesNotMatch(html,/js\/mobile-nav\.js/);
  assert.match(html,/<a class="chat-back" href="chats\.html"/);
- assert.match(html,/chat-premium\.css\?v=20261123-chat-hint-cleanup-1/);
+ assert.match(html,/chat-premium\.css\?v=20261123-avatar-square-1/);
  assert.match(css,/body\.sathivo-2d\.chat-premium \.mobile-bottom-nav\{display:none!important\}/);
  assert.match(css,/\.chat-workspace\{\s*height:max\(330px,calc\(100dvh - 96px\)\)/);
  assert.match(css,/body\.sathivo-2d\.chat-premium\.chat-input-focused \.chat-workspace\{/);
