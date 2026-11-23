@@ -93,12 +93,11 @@ export async function setupPublishing({client,user,isDirty}) {
    );}catch{}
   }
   $('publish-consent').checked=false;await refresh();
-  // Matching and in-app notices are created atomically by the database.
-  // Nearby emails are opt-in, at most one per recipient per day, and never
-  // block an otherwise successful companion publication.
+  // In-app nearby notices are committed by the DB. Push is opt-in and idempotent.
+  // Never block an otherwise successful publication if browser push fails.
   if(saved.data?.public_id){
-   void client.functions.invoke('send-nearby-email',{body:{public_id:saved.data.public_id}})
-    .catch(()=>{ /* Email is optional; publication already succeeded. */ });
+   void client.functions.invoke('send-nearby-push',{body:{public_id:saved.data.public_id}})
+    .catch(()=>{ /* Nearby browser push is optional. */ });
   }
  });}
  publish.addEventListener('click',()=>void publishSavedProfile());

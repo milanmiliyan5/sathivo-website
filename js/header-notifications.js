@@ -40,6 +40,8 @@ async function init(){
   const u=await client.auth.getUser();
   const user=u.data.user;
   if(!user)return;
+  // Delayed, once-per-new-listing popup for signed-in users with a saved location.
+  void import('./nearby-discovery.js?v=20261123-flip-1').catch(()=>{});
   mobileNotificationShortcut();
   const notificationLinks=[...document.querySelectorAll('a[href="notifications.html"]')]
    .filter(a=>!a.closest('.mobile-bottom-nav'));

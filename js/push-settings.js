@@ -79,6 +79,33 @@ async function disable(){
   setUI('Device notifications are off on this browser.','info',false);
  }catch(error){setUI(error.message||'Could not turn off notifications.','error',true)}
 }
+
+export async function enableNearbyDevicePush(){
+ if(!('Notification' in window)||!('serviceWorker' in navigator)||!('PushManager' in window))
+  throw Error('Chrome push notifications are not supported on this device.');
+ // Permission must be requested directly from the user click, before other async work.
+ const permission=Notification.permission==='default'?await Notification.requestPermission():Notification.permission;
+ if(permission!=='granted')throw Error('Allow notifications in Chrome site settings to enable nearby alerts.');
+ const api=await getSathivoClient();
+ const {data,error:authError}=await api.auth.getUser();
+ if(authError||!data?.user)throw Error('Please sign in to enable nearby alerts.');
+ const reg=await registration();
+ let subscription=await reg.pushManager.getSubscription();
+ if(subscription&&!subscriptionUsesCurrentKey(subscription)){
+  await api.functions.invoke('push-subscription',{body:{action:'unregister',endpoint:subscription.endpoint}});
+  await subscription.unsubscribe();subscription=null;
+ }
+ if(!subscription)subscription=await reg.pushManager.subscribe({
+  userVisibleOnly:true,applicationServerKey:base64UrlToUint8Array(VAPID_PUBLIC_KEY)
+ });
+ const {error}=await api.functions.invoke('push-subscription',{
+  body:{action:'register',subscription:subscription.toJSON(),user_agent:navigator.userAgent}
+ });
+ if(error)throw Error('Could not register this browser for notifications.');
+ if(boxes.length){client=api;currentUser=data.user;setUI('Device notifications are enabled for this browser.','success',true)}
+ return true;
+}
+
 async function init(){
  if(!boxes.length)return;
  try{client=await getSathivoClient()}catch{setUI('Notification services could not load.','error',false);return}
