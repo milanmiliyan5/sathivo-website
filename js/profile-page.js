@@ -1,5 +1,5 @@
 import {experienceCategoryGroups,experienceCategories,experienceLabel,experienceSafetyNote} from './experience-categories.js?v=20261122-21-1';
-import { setupPublishing,syncPublishedCardPhoto } from './listing-publish.js?v=20261123-public-avatar-sync-1';
+import { setupPublishing,syncPublishedCardPhoto } from './listing-publish.js?v=20261123-nearby-1';
 import {districtsByState,statesAndUTs} from './india-districts.js?v=20261015-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { getSathivoClient } from './supabase-client.js?v=20261025-polish-1';
