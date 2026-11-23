@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
 import {experienceCategoryGroups,experienceCategories,experienceLabel,experienceSafetyNote} from '../js/experience-categories.js';
 
@@ -66,19 +67,49 @@ test('all public companion chips use isolated, non-stretching pill styling acros
  const css=await read('companions.css');
  for(const page of ['companions.html','companion.html']){
   const html=await read(page);
-  assert.match(html,/companions\.css\?v=20261123-activity-pills-2/);
-  assert.match(html,/js\/companions-page\.js\?v=20261123-activity-pills-2/);
+  assert.match(html,/companions\.css\?v=20261123-all-activities-borderless-rate-1/);
+  assert.match(html,/js\/companions-page\.js\?v=20261123-all-activities-borderless-rate-1/);
  }
  // Card and full-profile rendering must share one properly scoped component.
  assert.match(js,/tags companion-activity-tags/);
- assert.match(js,/visible\.forEach\(v=>n\.append\(el\('span',v,'companion-activity-chip'\)\)\)/);
- assert.match(js,/companion-activity-chip companion-activity-more/);
+ assert.match(js,/values\.forEach\(v=>n\.append\(el\('span',v,'companion-activity-chip'\)\)\)/);
+ assert.doesNotMatch(js,/companion-activity-more|values\.slice\(0,4\)/);
  assert.doesNotMatch(js,/'more-experiences'/,'never reuse the homepage flex class on activity chips');
  const pillRule=css.match(/body\.sathivo-2d \.directory \.companion-activity-tags > \.companion-activity-chip\s*\{([^}]+)\}/)?.[1];
  const groupRule=css.match(/body\.sathivo-2d \.directory \.companion-activity-tags\s*\{([^}]+)\}/)?.[1];
  assert.ok(pillRule,'shared pill rule is present');
  assert.ok(groupRule,'shared tag wrapper is present');
- for(const rule of ['align-self:flex-start','flex:0 0 auto','height:auto','min-height:32px','max-width:100%','margin:0','border-radius:999px'])assert.ok(pillRule.includes(rule),rule);
+ for(const rule of ['align-self:flex-start','flex:0 0 auto','height:auto','min-height:26px','max-width:100%','margin:0','border-radius:999px'])assert.ok(pillRule.includes(rule),rule);
  for(const rule of ['align-items:flex-start','align-content:flex-start','flex-wrap:wrap'])assert.ok(groupRule.includes(rule),rule);
  assert.match(css,/@media\(max-width:540px\)/);
+});
+
+test('Explore shows every published activity, including 17 selected tags, without +more',async()=>{
+ const script=await read('js/companions-page.js');
+ const fragment=script.slice(script.indexOf('function tags(row){'),script.indexOf('function portrait(row){'));
+ assert.ok(fragment.startsWith('function tags(row){'));
+ const el=(tag,text='',cls='')=>({tag,text,cls,children:[],append(...kids){this.children.push(...kids)}});
+ const context=vm.createContext({el,experienceLabel});
+ vm.runInContext(fragment,context);
+ for(const count of [0,4,15,17,21]){
+  const selected=experienceCategories.slice(0,count);
+  const element=vm.runInContext('tags({meeting_mode:"in-person",categories:'+JSON.stringify(selected)+'})',context);
+  assert.equal(element.children.length,count+1);
+  assert.equal(element.children[0].text,'In person');
+  assert.deepEqual(element.children.slice(1).map(x=>x.text),selected.map(experienceLabel));
+  assert.ok(element.children.every(x=>!String(x.text).includes(' more')),'No hidden activities');
+ }
+ const oldProfile=vm.runInContext('tags({meeting_mode:"online",categories:null})',context);
+ assert.equal(oldProfile.children.length,1,'Older listings with absent categories still render');
+});
+test('Explore hourly amount has no rectangular outline while activity pills stay compact',async()=>{
+ const js=await read('js/companions-page.js'),css=await read('companions.css');
+ assert.match(js,/function cardRate\(rate\)/);
+ assert.match(js,/cardRate\(row\.hourly_rate\)/);
+ assert.match(js,/companion-rate-amount/);
+ assert.match(css,/#results \.companion-card \.companion-card-rate\{/);
+ assert.match(css,/border:0!important/);
+ assert.match(css,/box-shadow:none!important/);
+ assert.match(css,/min-height:26px/);
+ assert.match(css,/flex-wrap:wrap/);
 });
