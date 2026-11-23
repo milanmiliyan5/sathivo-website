@@ -954,3 +954,14 @@ body.sathivo-2d.chat-premium .chat-workspace #send-message svg{
  }
  body.sathivo-2d.chat-premium .chat-workspace .chat-context{margin-inline:-7px!important}
 }
+
+
+/* No visible right-edge scrollbar strip on touch-size conversation screens. */
+@media(max-width:640px){
+ body.sathivo-2d.chat-premium .chat-workspace .messages{
+  scrollbar-width:none;-ms-overflow-style:none
+ }
+ body.sathivo-2d.chat-premium .chat-workspace .messages::-webkit-scrollbar{
+  width:0;height:0;display:none
+ }
+}
