@@ -34,6 +34,7 @@ test('all audited website Edge Function sources are tracked and use the pinned S
     'delete-my-account',
     'track-site-visit',
     'send-nearby-email',
+    'send-nearby-push',
     'send-booking-email',
     'admin-users-list',
     'admin-maintenance',
@@ -42,7 +43,13 @@ test('all audited website Edge Function sources are tracked and use the pinned S
     const file=path.join(root,'supabase','functions',slug,'index.ts');
     await stat(file);
     const source=await readFile(file,'utf8');
-    assert.match(source,/npm:@supabase\/supabase-js@2\.116\.0/,slug+' must use the project-pinned Supabase JS version');
+    if(slug==='send-nearby-email') {
+      // Deliberately disabled endpoint: no Supabase SDK or email provider is needed.
+      assert.match(source,/nearby_email_disabled/);
+      assert.doesNotMatch(source,/api\.resend\.com/);
+    } else {
+      assert.match(source,/npm:@supabase\/supabase-js@2\.116\.0/,slug+' must use the project-pinned Supabase JS version');
+    }
   }
 });
 
@@ -180,6 +187,7 @@ test('sensitive Edge Functions never restore wildcard CORS', async()=>{
     'delete-my-account',
     'track-site-visit',
     'send-nearby-email',
+    'send-nearby-push',
     'send-booking-email',
     'admin-users-list',
     'admin-maintenance',
@@ -187,7 +195,7 @@ test('sensitive Edge Functions never restore wildcard CORS', async()=>{
   for(const slug of slugs){
     const source=await read('supabase/functions/'+slug+'/index.ts');
     assert.doesNotMatch(source,/Access-Control-Allow-Origin["']?\s*:\s*["']\*["']/,slug+' must not allow every browser origin');
-    assert.match(source,/(?:(?:originAllowed|isAllowed|allowed)\(|ORIGINS\.has\(origin\))/,slug+' must keep an explicit trusted-origin check');
+    assert.match(source,/(?:(?:originAllowed|isAllowed|allowed)\(|(?:ORIGINS|origins)\.has\(origin\))/,slug+' must keep an explicit trusted-origin check');
   }
 });
 

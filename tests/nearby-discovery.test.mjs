@@ -14,7 +14,7 @@ test('nearby emails are disabled without touching booking or security email',asy
 });
 test('nearby discovery only shows live listings after delay and keeps it per-user',async()=>{
  const code=await read('js/nearby-discovery.js');
- assert.match(code,/20\d{3}-(performance\.now\(\)-started)/);
+ assert.match(code,/20000-\(performance\.now\(\)-started\)/);
  assert.match(code,/previouslySeen\(user\.id\)/);
  assert.match(code,/rememberSeen\(user\.id/);
  assert.match(code,/\.eq\('kind','nearby'\)/);

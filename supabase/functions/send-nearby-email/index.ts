@@ -1,6 +1,7 @@
 // Nearby discovery is now in-app + browser push only.
 // Do not send nearby email; preserve booking, security and OTP email services.
 const allowed=new Set(["https://sathivo.co","https://www.sathivo.co","https://app.sathivo.co","https://milanmiliyan5.github.io"]);
+function originAllowed(origin:string){return allowed.has(origin)||/^http:\/\/(localhost|127\\.0\\.0\\.1)(:\\d+)?$/.test(origin)}
 Deno.serve(async(req:Request)=>{
   const origin=req.headers.get("origin")||"";
   const headers={
@@ -10,6 +11,7 @@ Deno.serve(async(req:Request)=>{
     "Access-Control-Allow-Headers":"authorization,apikey,x-client-info,content-type",
     "Content-Type":"application/json"
   };
+  if(origin&&!originAllowed(origin))return Response.json({error:"Origin not allowed"},{status:403,headers});
   if(req.method==="OPTIONS")return new Response("ok",{headers});
   if(req.method!=="POST")return Response.json({error:"Method not allowed"},{status:405,headers});
   return Response.json({ok:true,sent:0,reason:"nearby_email_disabled"},{headers});
