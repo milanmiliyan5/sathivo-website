@@ -74,14 +74,13 @@ function scopeName(){
  if($('state').value)return $('state').value;
  return 'All India';
 }
-function tags(row,compact=false){
- // Use component-specific classes so homepage "more-experiences" styles cannot
- // stretch chips on Explore cards or public companion profiles.
+function tags(row){
+ // Always show the actual published selections on Explore and profile pages.
+ // No "+N more" truncation: compact wrapping is entirely handled by CSS.
  const n=el('div',undefined,'tags companion-activity-tags');
- const values=[{'online':'Online','in-person':'In person','both':'Online & in person'}[row.meeting_mode],...row.categories.map(experienceLabel)].filter(Boolean);
- const visible=compact?values.slice(0,4):values;
- visible.forEach(v=>n.append(el('span',v,'companion-activity-chip')));
- if(compact&&visible.length<values.length)n.append(el('span','+'+(values.length-visible.length)+' more','companion-activity-chip companion-activity-more'));
+ const selected=Array.isArray(row.categories)?row.categories:[];
+ const values=[{'online':'Online','in-person':'In person','both':'Online & in person'}[row.meeting_mode],...selected.map(experienceLabel)].filter(Boolean);
+ values.forEach(v=>n.append(el('span',v,'companion-activity-chip')));
  return n;
 }
 function portrait(row){
@@ -94,6 +93,14 @@ function portrait(row){
 }
 function trustChips(row,compact=false){const n=el('div',undefined,'trust-chips'+(compact?' compact':''));if(row.email_verified_at)n.append(el('span','✓ Email verified'));if(row.adult_confirmed)n.append(el('span','18+ self-declared'));if(row.boundaries_accepted)n.append(el('span','Platonic boundaries'));return n;}
 function rateText(rate){return Number(rate)>0?'₹'+Number(rate).toLocaleString('en-IN')+' / hour':'Rate not set'}
+function cardRate(rate){
+ const n=el('strong',undefined,'rate-chip companion-card-rate');
+ const amount=Number(rate);
+ if(Number.isFinite(amount)&&amount>0){
+  n.append(el('span','₹'+amount.toLocaleString('en-IN'),'companion-rate-amount'),el('span','/ hour','companion-rate-unit'));
+ }else n.textContent='Rate not set';
+ return n;
+}
 function totalFor(rate,minutes){return Number(rate)>0?Math.round(Number(rate)*Number(minutes)/60):null}
 function ratingText(row){const n=Number(row.review_count||0);return n>0?'★ '+Number(row.average_rating||0).toFixed(1)+' · '+n+' review'+(n===1?'':'s'):'☆ No reviews yet';}
 function completedBookingBadge(row){
@@ -206,7 +213,7 @@ function card(row){
  head.append(name,favoriteButton(row));
  copy.append(head);
  copy.append(experienceAndRating(row));
- copy.append(el('p',locationName(row.location_id,row.city_name)),el('strong',rateText(row.hourly_rate),'rate-chip'),trustChips(row,true),tags(row,true),el('p',row.bio.length>150?row.bio.slice(0,147)+'…':row.bio));
+ copy.append(el('p',locationName(row.location_id,row.city_name)),cardRate(row.hourly_rate),trustChips(row,true),tags(row),el('p',row.bio.length>150?row.bio.slice(0,147)+'…':row.bio));
  const actions=el('div',undefined,'card-actions'),link=el('a','Get to know '+row.display_name+' ↗','text-link companion-profile-link'),share=el('button','Share ↗','text-link share-link');
  const profileHref='companion.html?id='+encodeURIComponent(row.public_id);
  link.href=profileHref;share.type='button';share.onclick=()=>void shareProfile(row,share);
