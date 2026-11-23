@@ -1,5 +1,5 @@
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
-import {enableNearbyDevicePush} from './push-settings.js?v=20261025-polish-1';
+import {enableNearbyDevicePush} from './push-settings.js?v=20261123-push-1';
 const boxes=[...document.querySelectorAll('[data-nearby-alert-settings]')];
 let client,user;
 function feedback(box,text,problem=false){

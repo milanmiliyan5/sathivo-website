@@ -1,6 +1,6 @@
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {avatarAsset} from './avatar-utils.js?v=20261121-avatars-1';
-import {enableNearbyDevicePush} from './push-settings.js?v=20261025-polish-1';
+import {enableNearbyDevicePush} from './push-settings.js?v=20261123-push-1';
 
 // One pop-up only for real, newly published nearby profiles, never mock entries.
 const started=performance.now();
