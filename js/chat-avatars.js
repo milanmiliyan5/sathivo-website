@@ -37,7 +37,10 @@ export async function showChatAvatars(client, contacts) {
         }
         const image=new Image();
         image.alt='';
-        image.style.cssText='display:block;width:100%;height:100%;object-fit:cover;border-radius:50%';
+        // Position the photo inside a constrained avatar frame. The parent's grid
+        // layout must never stretch to the uploaded image's intrinsic ratio.
+        image.className='chat-contact-photo';
+        image.decoding='async';
         image.onload=()=>{
           if(current()&&element.isConnected)element.replaceChildren(image);
         };
