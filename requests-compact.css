@@ -1,92 +1,153 @@
 
-/* Sathivo Incoming Requests: compact, request-first page without redundant
-   marketing/payment banners. Scoped to this page only. */
-body.sathivo-2d .incoming-compact-page{
- padding-top:22px;
- padding-bottom:calc(108px + env(safe-area-inset-bottom));
+/* Requests hub: seven full-width, chat-list-style cards and a separate
+   in-page booking detail view. Never changes booking status or database. */
+body.sathivo-2d .incoming-compact-page {
+  padding-top:18px;
+  padding-bottom:calc(125px + env(safe-area-inset-bottom));
 }
-body.sathivo-2d .incoming-compact-page .incoming-compact-title{
- font-size:clamp(1.4rem,3vw,1.9rem)!important;
- line-height:1.25!important;letter-spacing:-.02em;
- font-weight:800;margin:0 0 14px!important;
- color:#45283B;
+body.sathivo-2d .incoming-compact-page .incoming-compact-title {
+  margin:0 0 15px!important;
+  color:#45283B;
+  font-size:clamp(1.42rem,3vw,1.9rem)!important;
+  line-height:1.22!important;
+  letter-spacing:-.025em;
+  font-weight:800;
 }
-body.sathivo-2d .incoming-compact-page #status{
- margin:0 0 10px;line-height:1.45;font-size:.82rem;color:#73556A;
+body.sathivo-2d .incoming-compact-page #status {
+  margin:0 0 12px;color:#775466;
+  font-size:.83rem;line-height:1.45;
 }
-body.sathivo-2d .incoming-compact-page #status:empty{display:none}
-body.sathivo-2d .incoming-compact-page #request-filters.booking-tabs{
- margin:0 0 18px;padding:0;display:flex;flex-wrap:wrap;align-items:center;
- gap:9px;overflow:visible;
+body.sathivo-2d .incoming-compact-page #status:empty,
+body.sathivo-2d .incoming-compact-page [hidden] { display:none!important; }
+body.sathivo-2d .incoming-compact-page .request-hub {
+  box-sizing:border-box;display:grid;gap:11px;
+  max-width:780px;margin:0;
 }
-body.sathivo-2d .incoming-compact-page #request-filters[hidden]{display:none!important}
-body.sathivo-2d .incoming-compact-page #request-filters button{
- box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;
- flex:0 0 auto;gap:7px;white-space:nowrap;min-width:0;
- min-height:44px;margin:0;padding:9px 13px;
- border:1px solid #C6A0B5;border-radius:999px;
- background:#FFF;color:#65314C;cursor:pointer;
- box-shadow:0 2px 3px rgba(90,37,67,.045);
- font:600 .83rem/1.25 system-ui,-apple-system,sans-serif;
- transition:background-color .15s ease,border-color .15s ease;
+body.sathivo-2d .incoming-compact-page .request-hub-card {
+  box-sizing:border-box;position:relative;
+  display:flex;align-items:center;gap:13px;width:100%;min-width:0;
+  padding:15px 16px;text-align:left;cursor:pointer;
+  background:#fff;border:1.6px solid #723E59;border-radius:17px;
+  color:#432C3B;box-shadow:4px 4px 0 rgba(94,46,74,.105);
+  font-family:inherit;min-height:83px;
+  transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;
 }
-body.sathivo-2d .incoming-compact-page #request-filters button.active{
- background:#6B2146!important;border-color:#6B2146!important;color:#FFF!important;
- box-shadow:0 3px 7px rgba(107,33,70,.14);
+body.sathivo-2d .incoming-compact-page .request-hub-card:hover {
+  border-color:#6B2146;transform:translateY(-1px);
+  box-shadow:5px 6px 0 rgba(94,46,74,.13);
 }
-body.sathivo-2d .incoming-compact-page #request-filters button:focus-visible{
- outline:2px solid #6B2146;outline-offset:3px;
+body.sathivo-2d .incoming-compact-page .request-hub-card:focus-visible {
+  outline:3px solid #995D7A;outline-offset:3px;
 }
-body.sathivo-2d .incoming-compact-page #request-filters .request-tab-count{
- display:inline-flex;justify-content:center;align-items:center;
- box-sizing:border-box;border-radius:999px;min-width:23px;height:23px;
- padding:0 5px;background:#F5E6ED;color:#6B2146;
- font-size:.74rem;line-height:1;font-weight:800;font-variant-numeric:tabular-nums;
+body.sathivo-2d .incoming-compact-page .request-hub-icon {
+  display:grid;place-items:center;flex:0 0 45px;
+  width:45px;height:45px;border-radius:13px;
+  background:#F7E6EF;color:#6B2146;
 }
-body.sathivo-2d .incoming-compact-page #request-filters button.active .request-tab-count{
- background:#FFF;color:#6B2146;
+body.sathivo-2d .incoming-compact-page .request-hub-icon svg {
+  width:22px;height:22px;
+  fill:none;stroke:currentColor;stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round;
 }
-body.sathivo-2d .incoming-compact-page .booking-list{
- margin:0;min-width:0;
+body.sathivo-2d .incoming-compact-page .request-hub-card[data-view="sent"] .request-hub-icon {background:#EBF2FF;color:#285984}
+body.sathivo-2d .incoming-compact-page .request-hub-card[data-view="received"] .request-hub-icon {background:#E7F6ED;color:#276247}
+body.sathivo-2d .incoming-compact-page .request-hub-card[data-view="pending"] .request-hub-icon {background:#FFF2DD;color:#8C5B18}
+body.sathivo-2d .incoming-compact-page .request-hub-card[data-view="accepted"] .request-hub-icon {background:#EAF7EE;color:#26704B}
+body.sathivo-2d .incoming-compact-page .request-hub-card[data-view="completed"] .request-hub-icon {background:#E8F2FC;color:#265E83}
+body.sathivo-2d .incoming-compact-page .request-hub-card[data-view="cancelled"] .request-hub-icon {background:#FBE9EF;color:#843950}
+body.sathivo-2d .incoming-compact-page .request-hub-card[data-view="all"] .request-hub-icon {background:#F0E9F9;color:#68478A}
+body.sathivo-2d .incoming-compact-page .request-hub-copy {
+  display:flex;flex:1 1 auto;flex-direction:column;gap:3px;min-width:0;
 }
-body.sathivo-2d .incoming-compact-page .booking-card{
- min-width:0;
+body.sathivo-2d .incoming-compact-page .request-hub-name {
+  color:#43283A;font-size:1.02rem;font-weight:750;line-height:1.28;
 }
-@media(max-width:600px){
- body.sathivo-2d .incoming-compact-page{
-  padding-top:15px;padding-bottom:calc(137px + env(safe-area-inset-bottom));
- }
- body.sathivo-2d .incoming-compact-page .incoming-compact-title{
-  font-size:1.42rem!important;margin:0 0 12px!important;
- }
- body.sathivo-2d .incoming-compact-page #request-filters.booking-tabs{
-  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
-  gap:5px;margin-bottom:14px;
- }
- body.sathivo-2d .incoming-compact-page #request-filters button{
-  flex-direction:row;flex-wrap:nowrap;gap:3px;min-width:0;width:100%;
-  padding:7px 3px;min-height:44px;font-size:clamp(.64rem,2.65vw,.76rem);
-  line-height:1.15;white-space:nowrap;
- }
- body.sathivo-2d .incoming-compact-page #request-filters .request-tab-count{
-  flex:0 0 auto;min-width:17px;height:19px;padding:0 3px;font-size:.65rem;
- }
+body.sathivo-2d .incoming-compact-page .request-hub-desc {
+  color:#806C78;font-size:.76rem;line-height:1.4;font-weight:450;
 }
-@media(prefers-reduced-motion:reduce){
- body.sathivo-2d .incoming-compact-page #request-filters button{transition:none}
+body.sathivo-2d .incoming-compact-page .request-hub-count {
+  display:grid;place-items:center;flex:none;
+  min-width:32px;min-height:30px;padding:0 7px;
+  background:#F8EAF1;border-radius:999px;
+  color:#6B2146;font-size:.8rem;font-weight:800;font-variant-numeric:tabular-nums;
 }
-
-
-/* Keep number first and label alongside it at every mobile width. */
-body.sathivo-2d .incoming-compact-page #request-filters .request-tab-label{
- display:inline-block;white-space:nowrap;min-width:0;
+body.sathivo-2d .incoming-compact-page .request-hub-chevron {
+  flex:none;width:17px;height:17px;fill:none;
+  stroke:#805C6F;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;
 }
-@media(max-width:360px){
- body.sathivo-2d .incoming-compact-page #request-filters.booking-tabs{gap:4px}
- body.sathivo-2d .incoming-compact-page #request-filters button{
-  font-size:.62rem;gap:2px;padding:6px 2px;
- }
- body.sathivo-2d .incoming-compact-page #request-filters .request-tab-count{
-  min-width:15px;height:18px;padding:0 2px;font-size:.62rem;
- }
+body.sathivo-2d .incoming-compact-page .request-detail {
+  max-width:780px;min-width:0;
+}
+body.sathivo-2d .incoming-compact-page .request-detail-top {
+  display:flex;flex-direction:column;gap:9px;
+  margin:0 0 17px;
+}
+body.sathivo-2d .incoming-compact-page .request-back {
+  display:inline-flex;align-items:center;gap:8px;
+  align-self:flex-start;border:0;background:transparent;
+  color:#6B2146;cursor:pointer;
+  font:650 .84rem/1.3 inherit;padding:8px 4px;min-height:40px;
+}
+body.sathivo-2d .incoming-compact-page .request-back:focus-visible {
+  outline:2px solid #6B2146;outline-offset:2px;border-radius:7px;
+}
+body.sathivo-2d .incoming-compact-page .request-back svg {
+  width:19px;height:19px;fill:none;stroke:currentColor;
+  stroke-width:2;stroke-linecap:round;stroke-linejoin:round;
+}
+body.sathivo-2d .incoming-compact-page .request-detail-title {
+  display:flex;align-items:center;gap:9px;margin:0!important;
+  font:750 clamp(1.18rem,3vw,1.48rem)/1.3 system-ui,-apple-system,sans-serif;
+  color:#43283A;
+}
+body.sathivo-2d .incoming-compact-page .request-detail-count {
+  display:inline-grid;place-items:center;min-width:26px;min-height:25px;
+  padding:0 7px;background:#F6E7EF;border-radius:999px;
+  color:#6B2146;font-size:.75rem;font-weight:800;
+}
+body.sathivo-2d .incoming-compact-page .booking-list {margin:0;min-width:0;gap:13px}
+body.sathivo-2d .incoming-compact-page .booking-card {min-width:0}
+body.sathivo-2d .incoming-compact-page .request-direction {
+  font-size:.76rem;color:#724D63;font-weight:700;
+}
+body.sathivo-2d .incoming-compact-page .request-detail #empty {
+  margin-top:6px;
+}
+body.sathivo-2d .incoming-compact-page .request-detail #empty h2 {
+  font-family:system-ui,-apple-system,sans-serif!important;
+  font-size:1.12rem!important;line-height:1.4!important;
+}
+@media(max-width:640px) {
+  body.sathivo-2d .incoming-compact-page{
+    padding-top:13px;
+    padding-bottom:calc(140px + env(safe-area-inset-bottom));
+  }
+  body.sathivo-2d .incoming-compact-page .incoming-compact-title{
+    font-size:1.42rem!important;margin:0 0 13px!important;
+  }
+  body.sathivo-2d .incoming-compact-page .request-hub {gap:11px}
+  body.sathivo-2d .incoming-compact-page .request-hub-card {
+    min-height:77px;padding:13px 12px;gap:11px;
+  }
+  body.sathivo-2d .incoming-compact-page .request-hub-icon {
+    width:42px;height:42px;flex-basis:42px;
+  }
+  body.sathivo-2d .incoming-compact-page .request-hub-name {font-size:.94rem}
+  body.sathivo-2d .incoming-compact-page .request-hub-desc {font-size:.71rem}
+  body.sathivo-2d .incoming-compact-page .request-hub-count {
+    min-width:28px;min-height:28px;padding:0 6px;
+  }
+  body.sathivo-2d .incoming-compact-page .request-hub-chevron {
+    width:15px;height:15px;
+  }
+  body.sathivo-2d .incoming-compact-page .request-detail-top {margin-bottom:12px}
+}
+@media(max-width:350px) {
+  body.sathivo-2d .incoming-compact-page .request-hub-card {gap:8px;padding:11px 9px}
+  body.sathivo-2d .incoming-compact-page .request-hub-icon {flex-basis:37px;width:37px;height:37px}
+  body.sathivo-2d .incoming-compact-page .request-hub-name {font-size:.87rem}
+  body.sathivo-2d .incoming-compact-page .request-hub-desc {font-size:.67rem}
+}
+@media(prefers-reduced-motion:reduce) {
+  body.sathivo-2d .incoming-compact-page .request-hub-card {transition:none}
 }
