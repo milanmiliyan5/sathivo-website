@@ -61,15 +61,24 @@ test('database constraints accept 21 canonical categories without rewriting old 
  assert.doesNotMatch(sql,/\b(?:UPDATE|DELETE|TRUNCATE)\s+(?:public\.)?(?:booking_requests|booking_messages|member_profiles|companion_listings)\b/i);
 });
 
-test('Explore card activity chips keep consistent rounded sizing on desktop and mobile',async()=>{
- const html=await read('companions.html');
+test('all public companion chips use isolated, non-stretching pill styling across pages',async()=>{
+ const js=await read('js/companions-page.js');
  const css=await read('companions.css');
- assert.match(html,/companions\.css\?v=20261123-activity-pills-1/);
- assert.match(css,/\.directory #results \.companion-card \.tags\s*\{\s*align-items:flex-start/);
- assert.match(css,/\.directory #results \.companion-card \.tags > span\s*\{/);
- for(const rule of ['align-self:flex-start','min-height:32px','max-width:100%','border-radius:999px','overflow-wrap:normal'])assert.ok(css.includes(rule),rule);
- const moreRule=css.match(/\.directory #results \.companion-card \.tags > span\.more-experiences\s*\{([^}]+)\}/)?.[1];
- assert.ok(moreRule,'Explore more-count pill override should exist');
- assert.match(moreRule,/margin:0;/,'the homepage .more-experiences margin must not affect card rows');
- assert.match(css,/@media\(max-width:540px\)/);
+ for(const page of ['companions.html','companion.html']){
+  const html=await read(page);
+  assert.match(html,/companions\\.css\\?v=20261123-activity-pills-2/);
+  assert.match(html,/js\\/companions-page\\.js\\?v=20261123-activity-pills-2/);
+ }
+ // Card and full-profile rendering must share one properly scoped component.
+ assert.match(js,/tags companion-activity-tags/);
+ assert.match(js,/visible\\.forEach\\(v=>n\\.append\\(el\\('span',v,'companion-activity-chip'\\)\\)\\)/);
+ assert.match(js,/companion-activity-chip companion-activity-more/);
+ assert.doesNotMatch(js,/'more-experiences'/,'never reuse the homepage flex class on activity chips');
+ const pillRule=css.match(/body\\.sathivo-2d \\.directory \\.companion-activity-tags > \\.companion-activity-chip\\s*\\{([^}]+)\\}/)?.[1];
+ const groupRule=css.match(/body\\.sathivo-2d \\.directory \\.companion-activity-tags\\s*\\{([^}]+)\\}/)?.[1];
+ assert.ok(pillRule,'shared pill rule is present');
+ assert.ok(groupRule,'shared tag wrapper is present');
+ for(const rule of ['align-self:flex-start','flex:0 0 auto','height:auto','min-height:32px','max-width:100%','margin:0','border-radius:999px'])assert.ok(pillRule.includes(rule),rule);
+ for(const rule of ['align-items:flex-start','align-content:flex-start','flex-wrap:wrap'])assert.ok(groupRule.includes(rule),rule);
+ assert.match(css,/@media\\(max-width:540px\\)/);
 });

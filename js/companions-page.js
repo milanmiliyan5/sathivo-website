@@ -75,11 +75,13 @@ function scopeName(){
  return 'All India';
 }
 function tags(row,compact=false){
- const n=el('div',undefined,'tags');
+ // Use component-specific classes so homepage "more-experiences" styles cannot
+ // stretch chips on Explore cards or public companion profiles.
+ const n=el('div',undefined,'tags companion-activity-tags');
  const values=[{'online':'Online','in-person':'In person','both':'Online & in person'}[row.meeting_mode],...row.categories.map(experienceLabel)].filter(Boolean);
  const visible=compact?values.slice(0,4):values;
- visible.forEach(v=>n.append(el('span',v)));
- if(compact&&visible.length<values.length)n.append(el('span','+'+(values.length-visible.length)+' more','more-experiences'));
+ visible.forEach(v=>n.append(el('span',v,'companion-activity-chip')));
+ if(compact&&visible.length<values.length)n.append(el('span','+'+(values.length-visible.length)+' more','companion-activity-chip companion-activity-more'));
  return n;
 }
 function portrait(row){
