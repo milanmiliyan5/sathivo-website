@@ -364,6 +364,49 @@ async function init(){try{
  desktopLayout.addEventListener('change',event=>{if(event.matches)void loadDesktopInbox()});
  const blockState=await client.from('user_blocks').select('blocker_id').or('and(blocker_id.eq.'+user.id+',blocked_id.eq.'+otherId+'),and(blocker_id.eq.'+otherId+',blocked_id.eq.'+user.id+')');if(!blockState.error){blockedByMe=(blockState.data||[]).some(b=>b.blocker_id===user.id);blockedByOther=(blockState.data||[]).some(b=>b.blocker_id===otherId);if(blockedByMe){$('block-user').disabled=true;$('block-user').textContent='User blocked'}if(blockedByMe||blockedByOther)syncComposer()}applySafetyWatermark();
  const safetyMenu=$('chat-safety-menu');
+ const safetyActions=$('safety-actions');
+ const safetySummary=safetyMenu.querySelector('summary');
+ // Browser top-layer popovers escape the clipped, scrollable messenger.
+ // Preserve the existing details toggle, report/block actions and Escape key.
+ const supportsSafetyPopover=typeof safetyActions.showPopover==='function'&&
+  typeof safetyActions.hidePopover==='function';
+ function placeSafetyActions(){
+  if(!supportsSafetyPopover||!safetyMenu.open)return;
+  const rect=safetySummary.getBoundingClientRect();
+  const vw=window.visualViewport?.width||window.innerWidth;
+  const vh=window.visualViewport?.height||window.innerHeight;
+  const offsetX=window.visualViewport?.offsetLeft||0;
+  const offsetY=window.visualViewport?.offsetTop||0;
+  const width=Math.min(310,Math.max(200,vw-24));
+  const height=Math.min(safetyActions.scrollHeight||310,340,Math.max(150,vh-24));
+  const below=vh-rect.bottom-16;
+  const above=rect.top-16;
+  const upwards=below<Math.min(230,height)&&above>below;
+  const top=upwards?Math.max(12,rect.top-height-8)
+   :Math.min(rect.bottom+8,Math.max(12,vh-100));
+  const left=Math.max(12,Math.min(rect.right-width,vw-width-12));
+  safetyActions.style.setProperty('--safety-overlay-top',(top+offsetY)+'px');
+  safetyActions.style.setProperty('--safety-overlay-left',(left+offsetX)+'px');
+  safetyActions.style.setProperty('--safety-overlay-width',width+'px');
+  safetyActions.style.setProperty('--safety-overlay-height',
+   Math.max(70,(upwards?Math.min(height,rect.top-top-4):vh-top-12))+'px');
+ }
+ safetyMenu.addEventListener('toggle',()=>{
+  if(!supportsSafetyPopover)return;
+  if(safetyMenu.open){
+   try{
+    if(!safetyActions.matches(':popover-open'))safetyActions.showPopover();
+    placeSafetyActions();
+   }catch(_){/* Older browsers use the in-header fallback. */}
+  }else if(safetyActions.matches(':popover-open'))safetyActions.hidePopover();
+ });
+ safetyActions.addEventListener('toggle',()=>{
+  if(supportsSafetyPopover&&!safetyActions.matches(':popover-open')&&safetyMenu.open)
+   safetyMenu.open=false;
+ });
+ window.addEventListener('resize',placeSafetyActions,{passive:true});
+ window.addEventListener('scroll',placeSafetyActions,{passive:true,capture:true});
+ window.visualViewport?.addEventListener('resize',placeSafetyActions,{passive:true});
  safetyMenu.hidden=false;
  document.addEventListener('click',event=>{
   if(safetyMenu.open&&!safetyMenu.contains(event.target))safetyMenu.open=false;
