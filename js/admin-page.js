@@ -6,6 +6,7 @@ import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {todayAccounts} from './admin-account-date.js?v=20261115-1';
 const $=id=>document.getElementById(id);
 let client,user,profiles=[],bookings=[],supports=[],reports=[],listings=[],presenceChannel;
+let policyWarnings=[];
 let registeredUsersAvailable=false,accountRequest=null;
 const nf=new Intl.NumberFormat('en-IN');
 const fmt=d=>d?new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeZone:'Asia/Kolkata'}).format(new Date(d)):'—';
@@ -249,6 +250,9 @@ function renderFeedback(){
 function reportRow(r){
   const tr=node('tr'),details=node('div',undefined,'primary-cell');
   details.append(node('strong',String(r.details||'No extra details.').slice(0,100)),node('small',r.booking_id?'Booking '+String(r.booking_id).slice(0,8):'No booking linked'));
+  const warning=policyWarnings.find(w=>w.source_report_id===r.id);
+  if(warning)details.append(node('small',warning.acknowledged_at?'⚑ Policy warning: Acknowledged '+fmtDateTime(warning.acknowledged_at):'⚠ Policy warning: Pending acknowledgment'));
+
   const actions=node('div',undefined,'action-group');
   for(const s of ['reviewed','actioned','dismissed']){const b=node('button',s,'admin-btn');b.type='button';b.onclick=()=>void setReport(r.id,s);actions.append(b)}
   tr.append(td('Reason',r.reason||'—'),td('Details',details),td('Date',fmtDateTime(r.created_at)),td('Status',pill(r.status)),td('Action',actions));
@@ -320,6 +324,8 @@ async function load(){
     users=(fallback.data||[]).map(p=>({...p,has_profile:true}));
     setStatus('Some new signups may be missing. Account list is temporarily using saved profiles.');
   }else setStatus('');
+  const warnings=await client.from('account_policy_warnings').select('source_report_id,acknowledged_at,issued_at').order('issued_at',{ascending:false}).limit(250);
+  policyWarnings=warnings.error?[]:warnings.data||[];
   reports=rr.data||[];listings=ll.data||[];profiles=users;supports=ss.data||[];bookings=bb.data||[];
   renderAll();$('admin-content').hidden=false;
 }
