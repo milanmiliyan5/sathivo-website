@@ -228,6 +228,7 @@ async function messageNode(r){
  n.dataset.messageId=r.id;
  if(r.message_type==='image'&&r.photo_path){
   if(r.view_once){
+   n.classList.add('view-once-message');
    const card=el('div',undefined,'view-once-card');card.append(el('span','①','view-once-icon'));
    const copy=el('div');copy.append(el('strong','View once photo'));
    if(mine){
@@ -248,6 +249,23 @@ async function messageNode(r){
  const options=el('button','⋮','message-options-trigger');options.type='button';
  options.setAttribute('aria-label',mine?'Options for your message':'Message options');
  options.title='Message options';options.onclick=()=>openMessageDeleteOptions(r);
+ // Touch users can tap or long press the bubble to reveal the existing
+ // accessible options button. Moving/scrolling cancels the long press.
+ let pressTimer=null,holdX=0,holdY=0;
+ const cancelHold=()=>{if(pressTimer!==null){clearTimeout(pressTimer);pressTimer=null}};
+ n.addEventListener('pointerdown',event=>{
+  if(event.pointerType!=='touch'||event.target.closest('button,a,input'))return;
+  holdX=event.clientX;holdY=event.clientY;cancelHold();
+  pressTimer=setTimeout(()=>{n.classList.add('show-message-options');pressTimer=null},480);
+ },{passive:true});
+ n.addEventListener('pointermove',event=>{
+  if(Math.abs(event.clientX-holdX)>14||Math.abs(event.clientY-holdY)>14)cancelHold();
+ },{passive:true});
+ for(const evt of ['pointerup','pointercancel','pointerleave'])n.addEventListener(evt,cancelHold,{passive:true});
+ n.addEventListener('click',event=>{
+  if(!window.matchMedia('(hover:none)').matches||event.target.closest('button,a,input'))return;
+  n.classList.add('show-message-options');
+ });
  n.append(options);return n;
 }
 async function renderMessages(rows,initial=false){
@@ -312,6 +330,7 @@ async function loadBooking(){
 }
 function presenceText(){
  const p=$('presence-status');if(!p)return;
+ $('chat-avatar')?.classList.toggle('is-online',otherOnline);
  if(p.dataset.typing==='true'){p.textContent='Typing…';p.className='presence-status typing';return}
  if(otherOnline){p.textContent='Online';p.className='presence-status online';return}
  p.textContent=lastOtherActive?'Active recently':'Private booking chat';p.className='presence-status';
