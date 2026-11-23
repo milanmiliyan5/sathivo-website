@@ -49,7 +49,7 @@ test('mobile bottom tabs are omitted only from individual conversation and compo
  const html=await read('chat.html'),css=await read('chat-premium.css');
  assert.doesNotMatch(html,/js\/mobile-nav\.js/);
  assert.match(html,/<a class="chat-back" href="chats\.html"/);
- assert.match(html,/chat-premium\.css\?v=20261123-keyboard-composer-1/);
+ assert.match(html,/chat-premium\.css\?v=20261123-premium-chat-2/);
  assert.match(css,/body\.sathivo-2d\.chat-premium \.mobile-bottom-nav\{display:none!important\}/);
  assert.match(css,/\.chat-workspace\{\s*height:max\(330px,calc\(100dvh - 96px\)\)/);
  assert.match(css,/body\.sathivo-2d\.chat-premium\.chat-input-focused \.chat-workspace\{/);
@@ -70,4 +70,28 @@ test('keyboard-safe mobile composer and paperclip preserve real photo attachment
  assert.match(js,/requestAnimationFrame\(syncChatKeyboard\)/);
  assert.match(js,/addEventListener\('blur',resetChatKeyboard\)/);
  assert.match(js,/\$\('attach-photo'\)\.onclick=\(\)=>\$\('photo-input'\)\.click\(\)/);
+});
+
+test('approved mobile chat 2.0 retains native chat features and visual accessibility',async()=>{
+ const html=await read('chat.html'),css=await read('chat-premium.css'),js=await read('js/chat-page.js');
+ assert.match(html,/class="chat-back-icon"/);
+ assert.match(html,/class="chat-safety-icon"/);
+ assert.match(html,/class="chat-mobile-subtitle">Private booking chat/);
+ assert.match(html,/<div class="chat-compose-input"><button id="attach-photo"/);
+ assert.match(html,/id="send-message"[^>]*><span class="chat-send-label">Send<\/span><svg/);
+ assert.match(html,/id="view-once" type="checkbox"/);
+ assert.match(css,/\.chat-head-top,[\s\S]*?\.chat-person-row\{display:contents!important\}/);
+ assert.match(css,/\.site-header,[\s\S]*?\.directory-footer\{display:none!important\}/);
+ assert.match(css,/\.chat-workspace \.messages \.message\.view-once-message\{/);
+ assert.match(css,/\.chat-workspace \.chat-compose-input:focus-within/);
+ assert.match(css,/overflow-x:hidden!important;overflow-y:auto!important/);
+ assert.match(js,/classList\.toggle\('is-online',otherOnline\)/);
+ assert.match(js,/n\.classList\.add\('view-once-message'\)/);
+ assert.match(js,/show-message-options/);
+ assert.match(js,/pointerdown/);
+ assert.match(js,/openMessageDeleteOptions\(r\)/);
+ assert.match(js,/openViewOnce\(r\)/);
+ assert.match(js,/sendStagedPhoto\(\)/);
+ assert.match(js,/setupPresence\(\)/);
+ assert.match(js,/\.from\('booking_messages'\)\.insert\(/);
 });
