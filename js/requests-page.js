@@ -11,12 +11,32 @@ const linkedRequestId=(()=>{try{const id=new URL(location.href).searchParams.get
 let linkedRequestChecked=false,linkedRequestFocused=false;
 function selectFilter(next){
  filter=next;
- document.querySelectorAll('[data-filter]').forEach(b=>b.classList.toggle('active',b.dataset.filter===next));
+ document.querySelectorAll('[data-filter]').forEach(b=>{
+  const active=b.dataset.filter===next;
+  b.classList.toggle('active',active);
+  b.setAttribute('aria-pressed',String(active));
+ });
 }
 
 const fmt=d=>new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d));
 const el=(t,x,c)=>{const n=document.createElement(t);if(x!==undefined)n.textContent=x;if(c)n.className=c;return n};
-function visible(r){if(filter==='all')return true;if(filter==='closed')return ['declined','cancelled','completed'].includes(r.status);return r.status===filter}
+const closedStatuses=new Set(['declined','cancelled','completed']);
+function visible(r){if(filter==='all')return true;if(filter==='closed')return closedStatuses.has(r.status);return r.status===filter}
+function requestCounts(items){
+ const counts={pending:0,accepted:0,closed:0,all:items.length};
+ for(const item of items){
+  if(item.status==='pending')counts.pending++;
+  else if(item.status==='accepted')counts.accepted++;
+  else if(closedStatuses.has(item.status))counts.closed++;
+ }
+ return counts;
+}
+function syncRequestCounts(){
+ const counts=requestCounts(rows);
+ document.querySelectorAll('[data-count-for]').forEach(node=>{
+  node.textContent=String(counts[node.dataset.countFor]??0);
+ });
+}
 function card(r){
  const n=el('article',undefined,'booking-card request-card');n.id='request-'+r.id;
  const top=el('div',undefined,'booking-top'),identity=el('div',undefined,'request-identity'),avatar=el('span',(r.customer_display_name||'S').trim().slice(0,1).toUpperCase(),'request-avatar'),left=el('div');
@@ -34,10 +54,13 @@ function card(r){
  appendRecoveryControls(a,r,user.id,recoverBooking);if(a.childNodes.length)n.append(a);if(r.status==='cancelled'&&r.cancel_reason)n.append(el('p','Cancelled · '+cancellationLabel(r.cancel_reason)+(r.cancel_note?' — '+r.cancel_note:''),'cancellation-note'));if(r.status==='accepted'&&r.agreed_hourly_rate)n.append(el('p','Deal recorded at ₹'+Number(r.agreed_hourly_rate).toLocaleString('en-IN')+'/hour. Coordinate details in chat. Payment stays outside Sathivo.','payment-note'));return n;
 }
 function render(){
+ syncRequestCounts();
  const list=rows.filter(visible);
  $('requests').replaceChildren(...list.map(card));
  $('empty').hidden=list.length>0;
- $('status').textContent=list.length?(String(list.length)+' request'+(list.length===1?'':'s')+' here.'):'';
+ // Counts live inside the four filter pills. Preserve #status for errors,
+ // loading and deep-linked request feedback, not duplicate tally text.
+ $('status').textContent='';
  if(!linkedRequestId)return;
  const target=document.getElementById('request-'+linkedRequestId);
  if(target){
