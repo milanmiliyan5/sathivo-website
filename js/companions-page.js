@@ -1,4 +1,4 @@
-import {experienceCategoryGroups,experienceLabel,experienceSafetyNote} from './experience-categories.js?v=20261122-21-1';
+import {experienceCategoryGroups,experienceLabel,experienceSafetyNote,experienceVisual,meetingModeVisual} from './experience-categories.js?v=20261123-pastels-1';
 import {getSathivoClient,getSathivoPublicClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
 import {sendBookingEmail} from './booking-email-events.js?v=20261017-1';
@@ -79,8 +79,17 @@ function tags(row){
  // No "+N more" truncation: compact wrapping is entirely handled by CSS.
  const n=el('div',undefined,'tags companion-activity-tags');
  const selected=Array.isArray(row.categories)?row.categories:[];
- const values=[{'online':'Online','in-person':'In person','both':'Online & in person'}[row.meeting_mode],...selected.map(experienceLabel)].filter(Boolean);
- values.forEach(v=>n.append(el('span',v,'companion-activity-chip')));
+ const modeLabel={'online':'Online','in-person':'In person','both':'Online & in person'}[row.meeting_mode];
+ const values=[...(modeLabel?[{label:modeLabel,visual:meetingModeVisual(row.meeting_mode)}]:[]),
+   ...selected.map(value=>({label:experienceLabel(value),visual:experienceVisual(value)}))];
+ for(const {label,visual} of values){
+  const chip=el('span',undefined,'companion-activity-chip');
+  chip.dataset.activityTone=visual.tone;
+  const icon=el('i',visual.icon,'companion-activity-icon');
+  icon.setAttribute('aria-hidden','true');
+  chip.append(icon,document.createTextNode(label));
+  n.append(chip);
+ }
  return n;
 }
 function portrait(row){
