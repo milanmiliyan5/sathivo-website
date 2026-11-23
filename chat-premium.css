@@ -957,3 +957,39 @@ body.sathivo-2d.chat-premium .chat-workspace #send-message svg{
   width:0;height:0;display:none
  }
 }
+
+
+/* Keep profile photo inside the fixed circular header avatar without clipping
+   the independently positioned online-status dot (::after). */
+body.sathivo-2d.chat-premium .chat-workspace .chat-avatar{
+ box-sizing:border-box;display:grid;place-items:center;
+ position:relative!important;aspect-ratio:1/1!important;
+ padding:0!important;flex-shrink:0!important;
+ border-radius:50%!important;overflow:visible!important;
+}
+body.sathivo-2d.chat-premium .chat-workspace .chat-avatar>.chat-contact-photo,
+body.sathivo-2d.chat-premium .chat-inbox-avatar>.chat-contact-photo{
+ position:absolute!important;inset:0!important;display:block!important;
+ box-sizing:border-box;width:100%!important;height:100%!important;
+ min-width:0!important;min-height:0!important;max-width:100%!important;
+ max-height:100%!important;object-fit:cover!important;object-position:center!important;
+ border-radius:50%!important;clip-path:circle(50% at 50%);
+}
+body.sathivo-2d.chat-premium .chat-inbox-avatar{
+ position:relative;aspect-ratio:1/1;min-width:46px;max-width:46px;
+ min-height:46px;max-height:46px;overflow:hidden;border-radius:50%;
+}
+@media(max-width:640px){
+ body.sathivo-2d.chat-premium .chat-workspace .chat-avatar{
+  box-sizing:border-box;width:38px!important;height:38px!important;
+  min-width:38px!important;min-height:38px!important;
+  max-width:38px!important;max-height:38px!important;
+ }
+}
+@media(max-width:350px){
+ body.sathivo-2d.chat-premium .chat-workspace .chat-avatar{
+  width:34px!important;height:34px!important;
+  min-width:34px!important;min-height:34px!important;
+  max-width:34px!important;max-height:34px!important;
+ }
+}
