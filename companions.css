@@ -55,7 +55,7 @@
 
 .experience-rating-row{display:flex;flex-wrap:wrap;align-items:center;gap:7px;margin:4px 0 8px}
 .experience-rating-row .completed-booking-badge{margin:0}
-.public-rating-link{font-size:.76rem;font-weight:800;display:inline-flex;align-items:center;color:#9d5b06;background:#fff7e7;border:1px solid #e5c88c;border-radius:999px;padding:7px 11px;text-decoration:none;min-height:32px}
+.public-rating-link{font-size:.74rem;font-weight:800;line-height:1.25;white-space:nowrap;display:inline-flex;align-items:center;align-self:flex-start;gap:6px;color:#9d5b06;background:#fff7e7;border:1px solid #e5c88c;border-radius:999px;padding:7px 12px;text-decoration:none;min-height:0}
 .public-rating-link:hover,.public-rating-link:focus-visible{background:#ffe8b5;outline-offset:2px}
 .public-reviews{scroll-margin-top:96px;margin:24px 0;border:1px solid #eacdd8;border-radius:18px;background:#fff9fc;padding:20px}
 .public-reviews-summary{color:#96630c;font-weight:750;margin:10px 0 16px}
@@ -109,3 +109,6 @@ body.sathivo-2d .directory .companion-activity-tags > .companion-activity-more {
     min-height:32px;
   }
 }
+
+/* Match the reviews pill to Newly Joined on narrow mobile cards as well. */
+@media(max-width:420px){.public-rating-link{font-size:.7rem;padding:6px 10px}}
