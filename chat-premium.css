@@ -607,3 +607,23 @@ body.sathivo-2d.chat-premium .message-delete-cancel:focus-visible{
 @media(prefers-reduced-motion:reduce){
  body.sathivo-2d.chat-premium .message-delete-dialog{animation:none}
 }
+
+/* Safety actions use the browser top layer; messenger overflow can never clip it. */
+@supports selector(:popover-open){
+ body.sathivo-2d.chat-premium .chat-safety-menu #safety-actions[popover]:not(:popover-open){display:none!important}
+ body.sathivo-2d.chat-premium .chat-safety-menu #safety-actions:popover-open{
+  position:fixed!important;inset:auto!important;
+  top:var(--safety-overlay-top,70px)!important;
+  left:var(--safety-overlay-left,12px)!important;
+  right:auto!important;bottom:auto!important;
+  width:var(--safety-overlay-width,310px)!important;
+  max-width:calc(100vw - 24px)!important;
+  max-height:var(--safety-overlay-height,calc(100dvh - 24px))!important;
+  box-sizing:border-box;overflow-y:auto;overscroll-behavior:contain;
+  z-index:2147483647;scrollbar-width:thin;
+ }
+}
+@supports not selector(:popover-open){
+ body.sathivo-2d.chat-premium .chat-workspace:has(.chat-safety-menu[open]){overflow:visible}
+ body.sathivo-2d.chat-premium .chat-workspace .chat-head:has(.chat-safety-menu[open]){z-index:50}
+}
