@@ -67,7 +67,7 @@ test('all public companion chips use isolated, non-stretching pill styling acros
  const css=await read('companions.css');
  for(const page of ['companions.html','companion.html']){
   const html=await read(page);
-  assert.match(html,/companions\.css\?v=20261123-pastels-1/);
+  assert.match(html,/companions\.css\?v=20261123-explore-first-1/);
   assert.match(html,/js\/companions-page\.js\?v=20261123-pastels-1/);
  }
  // Card and full-profile rendering must share one properly scoped component.
@@ -134,4 +134,25 @@ test('all 21 categories and every meeting mode have light colours and accessible
  assert.match(publicPage,/chip\.dataset\.activityTone=visual\.tone/);
  assert.match(publicCss,/\.companion-activity-chip\[data-activity-tone\]/);
  assert.match(css,/label\[data-activity-tone\]:has\(input:checked\)/);
+});
+
+test('Explore begins with a short heading, compact closed filter and real profiles',async()=>{
+ const html=await read('companions.html');
+ const css=await read('companions.css');
+ const main=html.split('<main id="main" class="container directory directory-explore-first">')[1];
+ assert.ok(main,'Explore-first main wrapper');
+ const headingAt=main.indexOf('<h1 id="explore-title">Explore Companions</h1>');
+ const filtersAt=main.indexOf('<details class="directory-filter-disclosure" id="directory-filters">');
+ const resultsAt=main.indexOf('<section id="results"');
+ assert.ok(headingAt>=0&&filtersAt>headingAt&&resultsAt>filtersAt);
+ assert.match(main,/Find company for your favourite activities\./);
+ assert.match(main,/<summary><span class="directory-filter-copy"><strong>Filter companions<\/strong>/);
+ assert.doesNotMatch(main.slice(0,filtersAt),/A LITTLE COMPANY|New to Sathivo|Want to earn as a companion/);
+ assert.match(main,/<form id="filters" class="filters">/);
+ for(const field of ['state','district','category','mode','gender-filter','sort','saved-only'])assert.match(main,new RegExp('id="'+field+'"'));
+ assert.match(main,/id="results" tabindex="-1" class="companion-grid"/);
+ assert.ok(main.indexOf('directory-explainer')>resultsAt,'Useful SEO and safety guides remain below results');
+ assert.match(css,/#directory-filters>summary\{[\s\S]*?display:flex/);
+ assert.match(css,/directory-explore-first #status/);
+ assert.match(css,/directory-explore-first #results/);
 });
