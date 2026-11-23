@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="styles.css?v=20261119-brand-co">
   <link rel="stylesheet" href="account.css?v=20261118-mobile-gap-1">
   <script type="module" src="js/account-page.js?v=20261119-feedback-1"></script>
-<link rel="stylesheet" href="responsive.css?v=20261025-polish-1"><script type="module" src="js/mobile-nav.js?v=20261119-tabs"></script><script type="module" src="js/header-requests.js?v=20261119-tabs"></script><script type="module" src="js/header-notifications.js?v=20261123-nearby-flip-1"></script><script type="module" src="js/push-settings.js?v=20261025-polish-1"></script><script type="module" src="js/site-presence.js?v=20261122-rate-safe-1"></script><link rel="stylesheet" href="site-2d.css?v=20261018-alerts-1"><script src="js/site-motion.js?v=20261006-1" defer></script><link rel="stylesheet" href="nearby-alert-settings.css?v=20261027-1"><script type="module" src="js/nearby-alert-settings.js?v=20261027-defaultsite-1"></script><link rel="stylesheet" href="gender-prompt.css?v=20261116-1"><script type="module" src="js/gender-prompt.js?v=20261116-1"></script><link rel="stylesheet" href="mobile-header.css?v=20261118-hamburger-1"><link rel="stylesheet" href="feedback-prompt.css?v=20261119-feedback-1"><link rel="stylesheet" href="contribution.css?v=20261119-1"><link rel="stylesheet" href="launch-splash.css?v=20261122-fade-1"><link rel="stylesheet" href="activity-update-announcement.css?v=20261122-1"><script type="module" src="js/activity-update-announcement.js?v=20261122-1"></script></head>
+<link rel="stylesheet" href="responsive.css?v=20261025-polish-1"><script type="module" src="js/mobile-nav.js?v=20261119-tabs"></script><script type="module" src="js/header-requests.js?v=20261119-tabs"></script><script type="module" src="js/header-notifications.js?v=20261123-nearby-flip-1"></script><script type="module" src="js/push-settings.js?v=20261123-push-1"></script><script type="module" src="js/site-presence.js?v=20261122-rate-safe-1"></script><link rel="stylesheet" href="site-2d.css?v=20261018-alerts-1"><script src="js/site-motion.js?v=20261006-1" defer></script><link rel="stylesheet" href="nearby-alert-settings.css?v=20261027-1"><script type="module" src="js/nearby-alert-settings.js?v=20261123-push-1"></script><link rel="stylesheet" href="gender-prompt.css?v=20261116-1"><script type="module" src="js/gender-prompt.js?v=20261116-1"></script><link rel="stylesheet" href="mobile-header.css?v=20261118-hamburger-1"><link rel="stylesheet" href="feedback-prompt.css?v=20261119-feedback-1"><link rel="stylesheet" href="contribution.css?v=20261119-1"><link rel="stylesheet" href="launch-splash.css?v=20261122-fade-1"><link rel="stylesheet" href="activity-update-announcement.css?v=20261122-1"><script type="module" src="js/activity-update-announcement.js?v=20261122-1"></script></head>
 <body class="account-page sathivo-2d auth-pending"><script src="js/launch-splash.js?v=20261122-fade-1"></script>
   <a class="skip-link" href="#account-main">Skip to account</a>
   <header class="site-header"><div class="container account-nav compact-header">
@@ -142,18 +142,18 @@
 
         
 <div class="nearby-alert-card" id="nearby-alerts" data-nearby-alert-settings aria-label="Nearby Connect settings">
-  <h2>💌 Sathivo Nearby Connect</h2>
+  <h2>📍 Sathivo Nearby Discovery</h2>
   <p>Get optional updates when a <strong>new public companion profile</strong> is published in your saved city. Customer profiles stay private.</p>
   <p class="nearby-location" data-nearby-location></p>
   <form data-nearby-form hidden>
     <label class="nearby-choice"><input type="checkbox" name="in_app_enabled"><span><strong>Website notifications (ON by default)</strong><small>See newly published local companion profiles in Sathivo. Untick and save to stop.</small></span></label>
-    <label class="nearby-choice"><input type="checkbox" name="email_enabled"><span><strong>Email updates (max 1 per day)</strong><small>Get an email when a new local public companion joins. You can turn this off any time.</small></span></label>
+    <label class="nearby-choice"><input type="checkbox" name="push_enabled"><span><strong>Chrome browser nearby alerts (opt in)</strong><small>Allow browser notifications when a new companion joins your area. Requires your permission; no nearby emails.</small></span></label>
     <button type="submit" class="button button-primary">Save nearby alert settings</button>
   </form>
   <p data-nearby-status role="status" aria-live="polite">Checking settings…</p>
   <a data-nearby-profile href="profile.html" hidden>Set your location in My Profile ↗</a>
   <a data-nearby-signin href="account.html#login" hidden>Sign in ↗</a>
-  <p class="nearby-footnote">Website alerts ON by default · Email alerts require opt-in · Same city, district and state · 18+ · Strictly platonic · Not a confirmed booking.</p>
+  <p class="nearby-footnote">Website nearby alerts ON by default · Chrome push alerts require permission · Nearby emails OFF · Same city, district and state · 18+ · Strictly platonic · Not a confirmed booking.</p>
 </div>
         <a class="account-choice account-choice-secondary contribution-account" href="contribute.html"><span class="account-choice-icon" aria-hidden="true">♡</span><span><strong>Support Sathivo</strong><small>Learn about optional contributions.</small></span><b aria-hidden="true">↗</b></a>
         <button class="form-link signout" id="signout" type="button">Sign out on this device</button>
