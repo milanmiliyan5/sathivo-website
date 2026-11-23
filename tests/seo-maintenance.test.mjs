@@ -15,8 +15,9 @@ test('public navigation and new guide are reachable and consistent with sitemap'
 });
 test('directory is accessible on mobile and does not wait for user login',async()=>{
  const html=await read('companions.html'),source=await read('js/companions-page.js'),css=await read('companions.css');
- assert.match(html,/id="directory-filters" open/);
- assert.match(html,/<summary>Filter companions/);
+ assert.match(html,/id="directory-filters"/);
+ assert.doesNotMatch(html,/id="directory-filters" open/,'Explore-first filters should start collapsed');
+ assert.match(html,/<summary>\s*<span[^>]*>\s*<strong>Filter companions/);
  assert.match(html,/<noscript>/);
  assert.match(css,/@media\(max-width:640px\)/);
  assert.ok(source.indexOf('if(directory)await list()')<source.lastIndexOf('client=await getSathivoClient()'));

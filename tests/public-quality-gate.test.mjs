@@ -52,7 +52,8 @@ test('booking and optional contribution remain clearly distinct',async()=>{
 
 test('directory gives guests an understandable loading and error state',async()=>{
  const html=await read('companions.html');
- assert.match(html,/id="directory-filters" open/);
+ assert.match(html,/id="directory-filters"/);
+ assert.doesNotMatch(html,/id="directory-filters" open/,'Explore-first filters should start collapsed');
  assert.match(html,/id="status"[^>]+aria-live="polite"/);
  assert.match(html,/id="retry"[^>]+type="button"/);
  assert.match(html,/id="directory-recovery"/);
