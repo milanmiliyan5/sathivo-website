@@ -32,7 +32,7 @@ async function load(){
  const rows=await withCurrentBookingNames(client,data||[]);const cards=rows.map(card);
  $('chats').replaceChildren(...cards);
  void showChatAvatars(client,rows.map((row,i)=>({userId:row.other_user_id,element:cards[i].querySelector('.chat-list-avatar')})));
- $('empty').hidden=rows.length>0;$('status').textContent=rows.length?rows.length+' chat'+(rows.length===1?'':'s'):'';
+ $('empty').hidden=rows.length>0;$('status').textContent='';
 }
 async function init(){try{
  
