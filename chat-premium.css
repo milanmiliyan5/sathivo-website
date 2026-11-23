@@ -645,3 +645,40 @@ body.sathivo-2d.chat-premium .message-delete-cancel:focus-visible{
   padding-bottom:calc(18px + env(safe-area-inset-bottom))!important;
  }
 }
+
+/* Keyboard-safe fullscreen conversation: fixed to the visual viewport. */
+@media(max-width:640px){
+ body.sathivo-2d.chat-premium.chat-input-focused{padding:0!important}
+ body.sathivo-2d.chat-premium.chat-input-focused .site-header,
+ body.sathivo-2d.chat-premium.chat-input-focused .directory-footer{display:none!important}
+ body.sathivo-2d.chat-premium.chat-input-focused .chat-workspace,
+ body.sathivo-2d.chat-premium.chat-input-focused .chat-workspace:has(.chat-context[open],.chat-photo-tips[open],.photo-draft:not([hidden])){
+  position:fixed!important;top:var(--chat-visible-top,0px)!important;left:0!important;right:0!important;bottom:auto!important;
+  width:100%!important;max-width:none!important;
+  height:var(--chat-visible-vh,100dvh)!important;max-height:var(--chat-visible-vh,100dvh)!important;min-height:0!important;
+  margin:0!important;padding:0!important;border:0!important;border-radius:0!important;overflow:hidden!important;box-shadow:none!important;z-index:9800
+ }
+ body.sathivo-2d.chat-premium.chat-input-focused .chat-workspace .chat-shell,
+ body.sathivo-2d.chat-premium.chat-input-focused .chat-workspace:has(.chat-context[open],.chat-photo-tips[open],.photo-draft:not([hidden])) .chat-shell{
+  height:100%!important;max-height:100%!important;min-height:0!important;overflow:hidden!important;margin:0!important;padding:0!important
+ }
+ body.sathivo-2d.chat-premium.chat-input-focused .chat-workspace .messages,
+ body.sathivo-2d.chat-premium.chat-input-focused .chat-workspace:has(.chat-context[open],.chat-photo-tips[open],.photo-draft:not([hidden])) .messages{
+  flex:1 1 0px!important;min-height:0!important;max-height:none!important;overflow-y:auto!important;overscroll-behavior:contain
+ }
+ body.sathivo-2d.chat-premium.chat-input-focused .chat-workspace .chat-head{padding:6px 12px!important;flex-shrink:0!important}
+ body.sathivo-2d.chat-premium.chat-input-focused .chat-context{display:none!important}
+ body.sathivo-2d.chat-premium.chat-input-focused .chat-workspace .message-form{
+  flex:0 0 auto!important;min-width:0;max-height:48dvh;overflow-y:auto;box-sizing:border-box;
+  padding:7px 9px 6px!important;padding-bottom:max(6px,env(safe-area-inset-bottom))!important;background:#fffafc
+ }
+ body.sathivo-2d.chat-premium.chat-input-focused .chat-compose-hint{display:none!important}
+ body.sathivo-2d.chat-premium.chat-input-focused .photo-draft:not([hidden]){max-height:80px;overflow-y:auto;margin-bottom:6px}
+ body.sathivo-2d.chat-premium.chat-input-focused .chat-compose-row{width:100%;min-width:0;align-items:center;gap:7px}
+ body.sathivo-2d.chat-premium.chat-input-focused .chat-compose-input{flex:1 1 0;min-width:0;max-width:100%}
+ body.sathivo-2d.chat-premium.chat-input-focused #message{
+  display:block;width:100%!important;min-width:0;max-width:100%;box-sizing:border-box;min-height:44px!important;font-size:16px!important
+ }
+ body.sathivo-2d.chat-premium.chat-input-focused #send-message{flex:0 0 auto}
+}
+body.sathivo-2d.chat-premium .chat-attach-button svg{display:block;width:22px;height:22px;fill:none;stroke:currentColor}
