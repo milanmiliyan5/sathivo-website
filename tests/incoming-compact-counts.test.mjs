@@ -18,7 +18,7 @@ test('Incoming Requests opens directly at compact heading and four counted filte
  }
  assert.match(html,/aria-controls="requests"/);
  assert.match(html,/id="requests" class="booking-list"/);
- assert.match(html,/requests-compact\.css\?v=20261123-incoming-counts-1/);
+ assert.match(html,/requests-compact\.css\?v=20261123-count-first-inline-1/);
  assert.match(html,/js\/requests-page\.js\?v=20261123-incoming-counts-1/);
 });
 test('Counts follow the existing pending, accepted and closed status definitions',async()=>{
@@ -70,4 +70,18 @@ test('Scoped styles keep tabs above requests, accessible and responsive',async()
  assert.match(css,/grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
  assert.match(css,/padding-bottom:calc\(137px \+ env\(safe-area-inset-bottom\)\)/);
  assert.equal((css.match(/\{/g)||[]).length,(css.match(/\}/g)||[]).length);
+});
+
+test('Status count appears before label and four pills stay on one row',async()=>{
+ const html=await read('requests.html');
+ const css=await read('requests-compact.css');
+ for(const [key,label] of [['pending','Pending'],['accepted','Accepted'],['closed','Closed'],['all','All']]){
+  const badge=html.indexOf('data-count-for="'+key+'"');
+  const name=html.indexOf('class="request-tab-label">'+label+'</span>');
+  assert.ok(badge>=0&&name>badge,key+' number must precede its label');
+ }
+ assert.match(css,/grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
+ assert.match(css,/flex-direction:row;flex-wrap:nowrap/);
+ assert.match(css,/white-space:nowrap;min-width:0/);
+ assert.doesNotMatch(css,/flex-direction:column;gap:4px;min-width:0;width:100%/);
 });
