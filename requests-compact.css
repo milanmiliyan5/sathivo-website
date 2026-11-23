@@ -1,0 +1,77 @@
+
+/* Sathivo Incoming Requests: compact, request-first page without redundant
+   marketing/payment banners. Scoped to this page only. */
+body.sathivo-2d .incoming-compact-page{
+ padding-top:22px;
+ padding-bottom:calc(108px + env(safe-area-inset-bottom));
+}
+body.sathivo-2d .incoming-compact-page .incoming-compact-title{
+ font-size:clamp(1.4rem,3vw,1.9rem)!important;
+ line-height:1.25!important;letter-spacing:-.02em;
+ font-weight:800;margin:0 0 14px!important;
+ color:#45283B;
+}
+body.sathivo-2d .incoming-compact-page #status{
+ margin:0 0 10px;line-height:1.45;font-size:.82rem;color:#73556A;
+}
+body.sathivo-2d .incoming-compact-page #status:empty{display:none}
+body.sathivo-2d .incoming-compact-page #request-filters.booking-tabs{
+ margin:0 0 18px;padding:0;display:flex;flex-wrap:wrap;align-items:center;
+ gap:9px;overflow:visible;
+}
+body.sathivo-2d .incoming-compact-page #request-filters[hidden]{display:none!important}
+body.sathivo-2d .incoming-compact-page #request-filters button{
+ box-sizing:border-box;display:inline-flex;align-items:center;justify-content:center;
+ flex:0 0 auto;gap:7px;white-space:nowrap;min-width:0;
+ min-height:44px;margin:0;padding:9px 13px;
+ border:1px solid #C6A0B5;border-radius:999px;
+ background:#FFF;color:#65314C;cursor:pointer;
+ box-shadow:0 2px 3px rgba(90,37,67,.045);
+ font:600 .83rem/1.25 system-ui,-apple-system,sans-serif;
+ transition:background-color .15s ease,border-color .15s ease;
+}
+body.sathivo-2d .incoming-compact-page #request-filters button.active{
+ background:#6B2146!important;border-color:#6B2146!important;color:#FFF!important;
+ box-shadow:0 3px 7px rgba(107,33,70,.14);
+}
+body.sathivo-2d .incoming-compact-page #request-filters button:focus-visible{
+ outline:2px solid #6B2146;outline-offset:3px;
+}
+body.sathivo-2d .incoming-compact-page #request-filters .request-tab-count{
+ display:inline-flex;justify-content:center;align-items:center;
+ box-sizing:border-box;border-radius:999px;min-width:23px;height:23px;
+ padding:0 5px;background:#F5E6ED;color:#6B2146;
+ font-size:.74rem;line-height:1;font-weight:800;font-variant-numeric:tabular-nums;
+}
+body.sathivo-2d .incoming-compact-page #request-filters button.active .request-tab-count{
+ background:#FFF;color:#6B2146;
+}
+body.sathivo-2d .incoming-compact-page .booking-list{
+ margin:0;min-width:0;
+}
+body.sathivo-2d .incoming-compact-page .booking-card{
+ min-width:0;
+}
+@media(max-width:600px){
+ body.sathivo-2d .incoming-compact-page{
+  padding-top:15px;padding-bottom:calc(137px + env(safe-area-inset-bottom));
+ }
+ body.sathivo-2d .incoming-compact-page .incoming-compact-title{
+  font-size:1.42rem!important;margin:0 0 12px!important;
+ }
+ body.sathivo-2d .incoming-compact-page #request-filters.booking-tabs{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  gap:5px;margin-bottom:14px;
+ }
+ body.sathivo-2d .incoming-compact-page #request-filters button{
+  flex-direction:column;gap:4px;min-width:0;width:100%;
+  padding:8px 2px;min-height:58px;font-size:clamp(.65rem,2.7vw,.76rem);
+  line-height:1.12;
+ }
+ body.sathivo-2d .incoming-compact-page #request-filters .request-tab-count{
+  min-width:19px;height:19px;padding:0 4px;font-size:.69rem;
+ }
+}
+@media(prefers-reduced-motion:reduce){
+ body.sathivo-2d .incoming-compact-page #request-filters button{transition:none}
+}
