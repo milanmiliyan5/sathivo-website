@@ -20,6 +20,6 @@ test('all main app pages include the incoming popup through notification boot',a
  assert.match(header,/incoming-booking-popup\.js/);
  for(const path of ['index','account','companions','companion','bookings','requests','chats','chat','notifications','profile']){
   const html=await read(path+'.html');
-  assert.match(html,/header-notifications\.js\?v=20261122-incoming-4sec/);
+  assert.match(html,/header-notifications\.js\?v=20261123-nearby-flip-1/);
  }
 });

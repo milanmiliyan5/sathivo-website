@@ -8,7 +8,7 @@ test('only one compact safety menu exists in chat header; safety actions remain 
  assert.match(html,/<div class="chat-head-top">/);
  assert.match(html,/<details id="chat-safety-menu" class="chat-safety-menu" hidden>/);
  assert.match(html,/<summary aria-label="Chat safety and support options">/);
- assert.match(html,/<section id="safety-actions" class="safety-actions" aria-label="Chat safety and help">/);
+ assert.match(html,/<section id="safety-actions" class="safety-actions" aria-label="Chat safety and help" popover="manual">/);
  for(const id of ['safety-actions','report-user','block-user','chat-safety-menu']){
   assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1,id);
  }
