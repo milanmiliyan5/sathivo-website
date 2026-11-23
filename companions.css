@@ -92,6 +92,10 @@
   text-align:center;
 }
 .directory #results .companion-card .tags > span.more-experiences{
+  /* Avoid the homepage .more-experiences margin-top:24px causing tall rows. */
+  margin:0;
+  gap:0;
+  flex-wrap:nowrap;
   background:#f7eef2;
   color:#68435a;
 }
