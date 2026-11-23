@@ -42,5 +42,5 @@ test('both pagination buttons opt in and directory scroll targets are focusable'
  const html=await read('companions.html');
  assert.match(html,/id="results" tabindex="-1"/);
  assert.match(html,/id="status" tabindex="-1"/);
- for(const page of ['companions.html','companion.html'])assert.match(await read(page),/companions-page\.js\?v=20261123-activity-pills-2/);
+ for(const page of ['companions.html','companion.html'])assert.match(await read(page),/companions-page\.js\?v=20261123-all-activities-borderless-rate-1/);
 });
