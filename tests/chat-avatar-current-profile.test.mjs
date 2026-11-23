@@ -15,11 +15,11 @@ test('Chat avatar reads current account DP via booking-scoped RPC, not stale Exp
 });
 
 test('Both chat routes import cache-busted current-DP code',async()=>{
-  const avatarImport='chat-avatars.js?v=20261122-current-account-dp-1';
+  const avatarImport='chat-avatars.js?v=20261123-avatar-square-1';
   assert.ok((await read('js/chat-page.js')).includes(avatarImport));
   assert.ok((await read('js/chats-page.js')).includes(avatarImport));
-  assert.ok((await read('chat.html')).includes('js/chat-page.js?v=20261123-premium-chat-2'));
-  assert.ok((await read('chats.html')).includes('js/chats-page.js?v=20261122-current-account-dp-1'));
+  assert.ok((await read('chat.html')).includes('js/chat-page.js?v=20261123-avatar-square-1'));
+  assert.ok((await read('chats.html')).includes('js/chats-page.js?v=20261123-avatar-square-1'));
 });
 
 test('Chat-avatar DB access remains restricted to booking partners and private storage',async()=>{
@@ -30,4 +30,20 @@ test('Chat-avatar DB access remains restricted to booking partners and private s
   assert.match(sql,/grant execute on function public\.sathivo_chat_contact_avatars\(uuid\[\]\) to authenticated/);
   assert.match(sql,/bucket_id = 'profile-photos'/);
   assert.doesNotMatch(sql,/grant .* to anon/i);
+});
+
+test('all booking chat DPs crop inside fixed circular frames without stretching',async()=>{
+ const avatar=await read('js/chat-avatars.js');
+ const listCss=await read('marketplace.css');
+ const chatCss=await read('chat-premium.css');
+ assert.match(avatar,/image\.className='chat-contact-photo'/);
+ assert.doesNotMatch(avatar,/image\.style\.cssText='display:block;width:100%;height:100%/);
+ assert.match(listCss,/\.chat-list-card \.chat-list-avatar\{/);
+ assert.match(listCss,/aspect-ratio:1\/1!important;overflow:hidden!important/);
+ assert.match(listCss,/\.chat-list-card \.chat-list-avatar>\.chat-contact-photo\{/);
+ assert.match(chatCss,/\.chat-workspace \.chat-avatar>\.chat-contact-photo/);
+ assert.match(chatCss,/position:absolute!important;inset:0!important;display:block!important/);
+ assert.match(chatCss,/object-fit:cover!important;object-position:center!important/);
+ assert.match(chatCss,/clip-path:circle\(50% at 50%\)/);
+ assert.match(chatCss,/\.chat-avatar\.is-online::after/);
 });
