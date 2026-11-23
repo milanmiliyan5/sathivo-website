@@ -5,83 +5,90 @@ import {readFile} from 'node:fs/promises';
 
 const read=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
 
-test('Requests opens directly at compact heading and four counted filters',async()=>{
- const html=await read('requests.html');
- assert.match(html,/class="container marketplace-shell incoming-compact-page"/);
- assert.match(html,/<h1 class="incoming-compact-title">Requests<\/h1>/);
- assert.doesNotMatch(html,/<section class="page-head">/);
- assert.doesNotMatch(html,/Sathivo does not collect payment\. Any cash or UPI payment/);
- assert.doesNotMatch(html,/As a companion, review requests customers have sent you/);
- for(const name of ['pending','accepted','closed','all']){
-  assert.match(html,new RegExp('data-filter="'+name+'"'));
-  assert.match(html,new RegExp('data-count-for="'+name+'"'));
- }
- assert.match(html,/aria-controls="requests"/);
- assert.match(html,/id="requests" class="booking-list"/);
- assert.match(html,/requests-compact\.css\?v=20261123-count-first-inline-1/);
- assert.match(html,/js\/requests-page\.js\?v=20261123-incoming-counts-1/);
-});
-test('Counts follow the existing pending, accepted and closed status definitions',async()=>{
- const js=await read('js/requests-page.js');
- const start=js.indexOf('const closedStatuses=new Set(');
- const end=js.indexOf('function card(r){',start);
- assert.ok(start>0&&end>start,'Pure count and filter functions are present');
- const nodes=['pending','accepted','closed','all'].map(name=>({
-  dataset:{countFor:name},textContent:''
- }));
- const context=vm.createContext({
-  rows:[],filter:'pending',document:{querySelectorAll:()=>nodes}
- });
- vm.runInContext(js.slice(start,end),context);
- const entries=[
-  {status:'pending'},{status:'pending'},{status:'accepted'},
-  {status:'declined'},{status:'cancelled'},{status:'completed'}
- ];
- context.rows=entries;
- const count=vm.runInContext('requestCounts(rows)',context);
- assert.deepEqual({...count},{pending:2,accepted:1,closed:3,all:6});
- vm.runInContext('syncRequestCounts()',context);
- assert.deepEqual(nodes.map(n=>n.textContent),['2','1','3','6']);
- const first=vm.runInContext('visible(rows[0])',context);
- assert.equal(first,true);
- context.filter='closed';
- assert.equal(vm.runInContext('rows.filter(visible).length',context),3);
- context.filter='all';
- assert.equal(vm.runInContext('rows.filter(visible).length',context),6);
- context.rows=[{status:'accepted'}];
- vm.runInContext('syncRequestCounts()',context);
- assert.deepEqual(nodes.map(n=>n.textContent),['0','1','0','1']);
-});
-test('Request count update is driven by render/realtime and booking actions are preserved',async()=>{
- const js=await read('js/requests-page.js');
- assert.match(js,/function render\(\)\{\s*syncRequestCounts\(\);/);
- assert.doesNotMatch(js,/String\(list\.length\)\+' request'/);
- assert.match(js,/\.on\('postgres_changes'/);
- assert.match(js,/await load\(\)/);
- for(const token of ['async function update(','async function cancelBooking(','async function recoverBooking(','sendBookingPush','sendBookingEmail','confirmCompletion','runRecovery','withCurrentBookingNames'])assert.ok(js.includes(token),token);
- assert.match(js,/aria-pressed/);
-});
-test('Scoped styles keep tabs above requests, accessible and responsive',async()=>{
- const css=await read('requests-compact.css');
- assert.match(css,/#request-filters\[hidden\]\{display:none!important\}/);
- assert.match(css,/#request-filters \.request-tab-count/);
- assert.match(css,/#request-filters button\.active/);
- assert.match(css,/#request-filters button:focus-visible/);
- assert.match(css,/grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
- assert.match(css,/padding-bottom:calc\(137px \+ env\(safe-area-inset-bottom\)\)/);
- assert.equal((css.match(/\{/g)||[]).length,(css.match(/\}/g)||[]).length);
-});
+const types=['sent','received','pending','accepted','completed','cancelled','all'];
+const labels=['My Requests','Received','Pending','Accepted','Completed','Cancelled','All'];
 
-test('Status count appears before label and four pills stay on one row',async()=>{
+test('Requests is a vertically stacked seven-card hub with a same-page Back view',async()=>{
  const html=await read('requests.html');
- const css=await read('requests-compact.css');
- for(const [key,label] of [['pending','Pending'],['accepted','Accepted'],['closed','Closed'],['all','All']]){
-  const badge=html.indexOf('data-count-for="'+key+'"');
-  const name=html.indexOf('class="request-tab-label">'+label+'</span>');
-  assert.ok(badge>=0&&name>badge,key+' number must precede its label');
+ assert.match(html,/<h1 class="incoming-compact-title">Requests<\/h1>/);
+ assert.doesNotMatch(html,/<section class="page-head">|PRIVATE CONVERSATIONS|Sathivo does not collect payment\. Any cash/);
+ assert.match(html,/<nav id="request-menu" class="request-hub"[^>]* hidden>/);
+ assert.match(html,/<section id="request-detail" class="request-detail"[^>]* hidden>/);
+ assert.match(html,/id="request-back"[^>]*type="button"|id="request-back" class="request-back" type="button"/);
+ assert.match(html,/id="requests" class="booking-list"/);
+ assert.match(html,/id="empty" class="empty-state" hidden/);
+ assert.doesNotMatch(html,/id="request-filters"/);
+ const positions=types.map(type=>html.indexOf('data-view="'+type+'"'));
+ assert.ok(positions.every(x=>x>=0));
+ assert.ok(positions.every((x,i)=>i===0||x>positions[i-1]),'Seven cards must follow the approved order');
+ for(let i=0;i<types.length;i++){
+  assert.match(html,new RegExp('data-count-for="'+types[i]+'"'));
+  assert.ok(html.includes('class="request-hub-name">'+labels[i]+'</span>'));
  }
- assert.match(css,/grid-template-columns:repeat\(4,minmax\(0,1fr\)\)/);
- assert.match(css,/flex-direction:row;flex-wrap:nowrap/);
- assert.match(css,/white-space:nowrap;min-width:0/);
- assert.doesNotMatch(css,/flex-direction:column;gap:4px;min-width:0;width:100%/);
+ assert.match(html,/requests-compact\.css\?v=20261124-vertical-hub-1/);
+ assert.match(html,/requests-page\.js\?v=20261124-vertical-hub-1/);
+});
+test('My Requests and Received count separate directions; completed is not cancelled',async()=>{
+ const js=await read('js/requests-page.js');
+ const start=js.indexOf("const cancelledStatuses=new Set(");
+ const end=js.indexOf('function receivedCard(r){',start);
+ assert.ok(start>=0&&end>start);
+ const user={id:'u1'},rows=[
+  {id:'s1',customer_id:'u1',companion_id:'u2',status:'pending'},
+  {id:'s2',customer_id:'u1',companion_id:'u3',status:'accepted'},
+  {id:'s3',customer_id:'u1',companion_id:'u3',status:'completed'},
+  {id:'r1',customer_id:'u4',companion_id:'u1',status:'pending'},
+  {id:'r2',customer_id:'u5',companion_id:'u1',status:'accepted'},
+  {id:'r3',customer_id:'u5',companion_id:'u1',status:'declined'},
+  {id:'r4',customer_id:'u4',companion_id:'u1',status:'cancelled'}
+ ];
+ const nodes=types.map(type=>({dataset:{countFor:type},textContent:''}));
+ const ids={'request-view-count':{textContent:''}};
+ const document={querySelectorAll:()=>nodes,getElementById:id=>ids[id]};
+ const context=vm.createContext({user,rows,view:'sent',document});
+ vm.runInContext('const $=id=>document.getElementById(id);'+js.slice(start,end),context);
+ const counts=vm.runInContext('requestCounts(rows)',context);
+ assert.deepEqual({...counts},{sent:3,received:4,pending:2,accepted:2,completed:1,cancelled:2,all:7});
+ vm.runInContext('syncRequestCounts()',context);
+ assert.deepEqual(nodes.map(n=>n.textContent),['3','4','2','2','1','2','7']);
+ assert.equal(ids['request-view-count'].textContent,'3');
+ for(const [type,expected]of [['sent',3],['received',4],['pending',2],['accepted',2],['completed',1],['cancelled',2],['all',7]]){
+  context.view=type;
+  assert.equal(vm.runInContext('rows.filter(visible).length',context),expected,type);
+ }
+ context.rows=[{customer_id:'u1',companion_id:'u2',status:'completed'}];
+ vm.runInContext('syncRequestCounts()',context);
+ assert.equal(nodes.find(n=>n.dataset.countFor==='cancelled').textContent,'0');
+ assert.equal(nodes.find(n=>n.dataset.countFor==='completed').textContent,'1');
+});
+test('Sent and received bookings keep their distinct actions and secured access',async()=>{
+ const js=await read('js/requests-page.js');
+ assert.match(js,/function receivedCard\(r\)/);
+ assert.match(js,/function sentCard\(r\)/);
+ assert.match(js,/r\.companion_id===user\.id\?receivedCard\(r\):sentCard\(r\)/);
+ assert.match(js,/client\.from\('booking_requests'\)\.select\('\*'\)\.order/);
+ assert.match(js,/\.filter\(r=>r\.customer_id===user\.id\|\|r\.companion_id===user\.id\)/);
+ for(const action of [
+  "update(r.id,'accepted')","update(r.id,'declined')","update(r.id,'completed')",
+  "Cancel request","Open chat & photos","cancelBooking(r)","renderBookingProgress(r)",
+  "showCompletedBookingRating({client,user,booking:r})","appendRecoveryControls",
+  "sendBookingPush","sendBookingEmail","withCurrentBookingNames"
+ ])assert.ok(js.includes(action),'Missing action '+action);
+ assert.match(js,/function render\(\)\{\s*syncRequestCounts\(\);/);
+ assert.match(js,/\[data-view\]/);
+ assert.match(js,/\$\('request-back'\)\.addEventListener\('click'/);
+ assert.match(js,/client\.channel\('incoming-requests:'/);
+ assert.match(js,/if\(requested\?\.status==='accepted'&&requested\.companion_id===user\.id\)/);
+});
+test('Requests cards have vertical mobile layout, keyboard and safe-area accessibility',async()=>{
+ const css=await read('requests-compact.css');
+ assert.match(css,/\.request-hub\s*\{[\s\S]*?display:grid;gap:11px/);
+ assert.match(css,/\.request-hub-card\s*\{[\s\S]*?width:100%/);
+ assert.match(css,/\.request-hub-card:focus-visible/);
+ assert.match(css,/\.request-hub-count/);
+ assert.match(css,/\.request-back:focus-visible/);
+ assert.match(css,/\.incoming-compact-page \[hidden\] \{ display:none!important; \}/);
+ assert.match(css,/padding-bottom:calc\(140px \+ env\(safe-area-inset-bottom\)\)/);
+ assert.doesNotMatch(css,/grid-template-columns:repeat\(4/);
+ assert.equal((css.match(/\{/g)||[]).length,(css.match(/\}/g)||[]).length);
 });
