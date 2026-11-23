@@ -1,0 +1,25 @@
+/* Chats list opens directly below the site header.
+   Scoped to this screen: conversations, navigation and privacy remain unchanged. */
+body.sathivo-2d .marketplace-shell.chats-list-compact{
+ padding-top:18px;
+ padding-bottom:calc(112px + env(safe-area-inset-bottom));
+}
+body.sathivo-2d .chats-list-compact .chat-list{
+ margin-top:0;
+}
+body.sathivo-2d .chats-list-compact #status{
+ margin:0 0 12px;color:#765c6b;font-size:.85rem;line-height:1.5;
+}
+body.sathivo-2d .chats-list-compact #status:empty{
+ display:none;
+}
+body.sathivo-2d .chats-list-compact #empty{
+ margin-top:12px;
+}
+@media(max-width:640px){
+ body.sathivo-2d .marketplace-shell.chats-list-compact{
+  padding-top:12px;
+  padding-bottom:calc(130px + env(safe-area-inset-bottom));
+ }
+ body.sathivo-2d .chats-list-compact #status{font-size:.78rem}
+}
