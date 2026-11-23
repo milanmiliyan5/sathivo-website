@@ -19,7 +19,7 @@ test('Both chat routes import cache-busted current-DP code',async()=>{
   assert.ok((await read('js/chat-page.js')).includes(avatarImport));
   assert.ok((await read('js/chats-page.js')).includes(avatarImport));
   assert.ok((await read('chat.html')).includes('js/chat-page.js?v=20261123-avatar-square-1'));
-  assert.ok((await read('chats.html')).includes('js/chats-page.js?v=20261123-avatar-square-1'));
+  assert.ok((await read('chats.html')).includes('js/chats-page.js?v=20261124-chat-list-first-1'));
 });
 
 test('Chat-avatar DB access remains restricted to booking partners and private storage',async()=>{
