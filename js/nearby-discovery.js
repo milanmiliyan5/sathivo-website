@@ -1,12 +1,13 @@
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {avatarAsset} from './avatar-utils.js?v=20261121-avatars-1';
+import {experienceLabel} from './experience-categories.js?v=20261122-21-1';
 import {enableNearbyDevicePush} from './push-settings.js?v=20261123-push-1';
 
 // One pop-up only for real, newly published nearby profiles, never mock entries.
 const started=performance.now();
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const normal=v=>String(v||'').trim().replace(/\s+/g,' ').toLowerCase();
-const seenKey=id=>'sathivo.nearby.seen.v1.'+id;
+const seenKey=id=>'sathivo.nearby.seen.v2.'+id;
 function previouslySeen(userId){
  try{const a=JSON.parse(localStorage.getItem(seenKey(userId))||'[]');return new Set(Array.isArray(a)?a.slice(-300):[])}
  catch{return new Set()}
@@ -27,7 +28,7 @@ function renderPopup(client,user,prefs,items){
  modal.innerHTML='<div class="nearby-discovery-head"><span class="nearby-discovery-pill">📍 NEARBY DISCOVERY</span><button type="button" class="nearby-discovery-close" aria-label="Close popup">×</button></div>'+
  '<h2 class="nearby-discovery-title"></h2><p class="nearby-discovery-desc"></p>'+
  '<div class="nearby-discovery-pages"><article class="nearby-discovery-page" aria-live="polite">'+
- '<div class="nearby-discovery-person"><img class="nearby-discovery-photo" alt="Companion profile photo"><div><h3 class="nearby-discovery-name"></h3><p class="nearby-discovery-city"></p><span class="nearby-discovery-new">Newly joined</span></div></div>'+
+ '<div class="nearby-discovery-person"><div class="nearby-discovery-image"><span class="nearby-discovery-initial" aria-hidden="true">♡</span><img class="nearby-discovery-photo" alt="Companion profile photo" hidden></div><div class="nearby-discovery-identity"><h3 class="nearby-discovery-name"></h3><p class="nearby-discovery-gender" hidden></p><p class="nearby-discovery-city"></p><span class="nearby-discovery-new">Newly joined</span></div></div>'+
  '<div class="nearby-discovery-activities"></div><a class="nearby-discovery-open" href="companions.html">View Profile & Send Request ↗</a></article></div>'+
  '<div class="nearby-discovery-nav"><button type="button" class="nearby-discovery-arrow" data-dir="-1" aria-label="Previous companion">‹</button><span class="nearby-discovery-pagecount"></span><button type="button" class="nearby-discovery-arrow" data-dir="1" aria-label="Next companion">›</button></div>'+
  '<div class="nearby-discovery-footer"><button type="button" class="nearby-discovery-enable">🔔 Enable Chrome nearby alerts</button><span class="nearby-discovery-status" role="status"></span><p class="nearby-discovery-note">18+ · Strictly platonic · No booking confirmed · Swipe to turn pages</p></div>';
@@ -35,8 +36,8 @@ function renderPopup(client,user,prefs,items){
  title.textContent=items.length+' New Companion'+(items.length===1?'':'s')+' in Your Area 🎉';
  desc.textContent='New public profiles have joined your area today. Flip through and explore!';
  const sheet=modal.querySelector('.nearby-discovery-pages');
- const photo=modal.querySelector('.nearby-discovery-photo');
- const name=modal.querySelector('.nearby-discovery-name'),city=modal.querySelector('.nearby-discovery-city');
+ const photo=modal.querySelector('.nearby-discovery-photo'),initial=modal.querySelector('.nearby-discovery-initial');
+ const name=modal.querySelector('.nearby-discovery-name'),gender=modal.querySelector('.nearby-discovery-gender'),city=modal.querySelector('.nearby-discovery-city');
  const chips=modal.querySelector('.nearby-discovery-activities'),open=modal.querySelector('.nearby-discovery-open');
  const count=modal.querySelector('.nearby-discovery-pagecount');
  const enable=modal.querySelector('.nearby-discovery-enable'),feedback=modal.querySelector('.nearby-discovery-status');
@@ -44,14 +45,24 @@ function renderPopup(client,user,prefs,items){
  let index=0,flipping=false;
  function paint(){
   const r=items[index],p=r.listing;
-  photo.src=r.photo||'assets/favicon.svg';
+  // Keep a readable initial until the saved public listing photo or chosen avatar loads.
+  initial.textContent=(p.display_name||'Sathivo').trim().charAt(0).toUpperCase()||'♡';
+  initial.hidden=false;photo.hidden=true;photo.removeAttribute('src');
   photo.alt=(p.display_name||'Sathivo companion')+' profile photo';
-  photo.onerror=()=>{photo.onerror=null;photo.src='assets/favicon.svg'};
+  if(r.photo){
+   const profileId=p.public_id;
+   photo.onload=()=>{if(items[index]?.listing.public_id===profileId){photo.hidden=false;initial.hidden=true}};
+   photo.onerror=()=>{if(items[index]?.listing.public_id===profileId){photo.hidden=true;initial.hidden=false}};
+   photo.src=r.photo;
+  }
   name.textContent=p.display_name||'Sathivo Companion';
+  // Only show the gender the companion chose to publish publicly.
+  const genderLabel={male:'Male',female:'Female',other:'Other'}[p.public_gender];
+  gender.textContent=genderLabel||'';gender.hidden=!genderLabel;
   city.textContent=[p.city_name,r.district,r.state].filter(Boolean).join(', ');
   chips.replaceChildren();
-  (Array.isArray(p.categories)?p.categories.slice(0,4):[]).forEach(c=>chips.append(pageElement('span','nearby-discovery-chip',c)));
-  if(!chips.childElementCount)chips.append(pageElement('span','nearby-discovery-chip','Coffee • Conversation • Outings'));
+  // Show every category the companion actually selected; no 4-item cap or fake defaults.
+  (Array.isArray(p.categories)?p.categories:[]).forEach(c=>chips.append(pageElement('span','nearby-discovery-chip',experienceLabel(c)||String(c))));
   open.href='companion.html?id='+encodeURIComponent(p.public_id);
   count.textContent=(index+1)+' / '+items.length;
   modal.querySelector('[data-dir="-1"]').disabled=index===0;
@@ -89,7 +100,7 @@ function renderPopup(client,user,prefs,items){
   finally{enable.disabled=false}
  });
  paint();document.body.append(modal);
- const link=document.createElement('link');link.rel='stylesheet';link.href='nearby-discovery.css?v=20261123-flip-1';document.head.append(link);
+ const link=document.createElement('link');link.rel='stylesheet';link.href='nearby-discovery.css?v=20261123-photo-gender-1';document.head.append(link);
  let tries=0;
  const show=()=>{
   if(!modal.isConnected||document.hidden)return;
@@ -126,7 +137,7 @@ async function init(){
  if(!firstById.size)return;
  const [listingRes,selfRegion,blockRes]=await Promise.all([
   client.from('companion_listings')
-   .select('user_id,public_id,display_name,photo_path,categories,city_name,location_id,adult_confirmed,boundaries_accepted,published,moderation_status')
+   .select('user_id,public_id,display_name,photo_path,categories,public_gender,city_name,location_id,adult_confirmed,boundaries_accepted,published,moderation_status')
    .in('public_id',[...firstById.keys()]).eq('published',true).eq('moderation_status','active'),
   client.from('profile_locations').select('state,district').eq('id',profile.location_id).maybeSingle(),
   client.from('user_blocks').select('blocker_id,blocked_id')
@@ -142,16 +153,24 @@ async function init(){
   .select('id,state,district').in('id',locIds);
  if(locErr)return;
  const locations=new Map((locs||[]).map(r=>[r.id,r]));
- const items=listings.filter(p=>{
+ const matching=listings.filter(p=>{
   const loc=locations.get(p.location_id);
   return loc?.state===selfRegion.data.state&&loc?.district===selfRegion.data.district;
- }).map(p=>{
+ }).sort((a,b)=>Date.parse(firstById.get(b.public_id).created_at)-Date.parse(firstById.get(a.public_id).created_at)).slice(0,12);
+ const items=await Promise.all(matching.map(async p=>{
   const loc=locations.get(p.location_id);
-  const asset=avatarAsset(p.photo_path);
-  const photo=asset||(p.photo_path?client.storage.from('listing-photos').getPublicUrl(p.photo_path).data.publicUrl:'');
+  let photo=avatarAsset(p.photo_path)||'';
+  if(!photo&&p.photo_path){
+   // listing-photos is a PRIVATE Supabase Storage bucket, so public URLs fail.
+   // Use the same signed URL strategy as the Explore companion cards.
+   try{
+    const {data,error}=await client.storage.from('listing-photos').createSignedUrl(p.photo_path,600);
+    if(!error)photo=data?.signedUrl||'';
+   }catch{/* Keep initials if the image cannot be loaded. */}
+  }
   return {listing:p,notification_id:firstById.get(p.public_id).id,photo,state:loc.state,district:loc.district,
    created_at:firstById.get(p.public_id).created_at};
- }).sort((a,b)=>Date.parse(b.created_at)-Date.parse(a.created_at)).slice(0,12);
+ }));
  if(!items.length)return;
  renderPopup(client,user,prefs,items);
 }

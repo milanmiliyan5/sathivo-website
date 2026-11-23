@@ -38,3 +38,22 @@ test('nearby browser push requires explicit opt in, credentials and delivery ded
  assert.match(settings,/email_enabled:false/);
  assert.match(permissions,/Notification\.requestPermission\(\)/);
 });
+
+test('popup reveals only voluntarily published gender, real listing photo, and every saved activity',async()=>{
+ const code=await read('js/nearby-discovery.js');
+ const css=await read('nearby-discovery.css');
+ assert.match(code,/photo_path,categories,public_gender,city_name/);
+ assert.match(code,/p\.public_gender/);
+ assert.match(code,/gender\.hidden=!genderLabel/);
+ assert.doesNotMatch(code,/\.select\([^)]*\bgender\b/);
+ assert.match(code,/storage\.from\('listing-photos'\)\.createSignedUrl\(p\.photo_path,600\)/);
+ assert.doesNotMatch(code,/getPublicUrl\(p\.photo_path\)/);
+ assert.match(code,/avatarAsset\(p\.photo_path\)/);
+ assert.match(code,/photo\.onload/);
+ assert.match(code,/initial\.hidden=false/);
+ assert.match(code,/Array\.isArray\(p\.categories\)\?p\.categories:\[\]/);
+ assert.doesNotMatch(code,/categories\.slice\(0,4\)/);
+ assert.doesNotMatch(code,/Coffee • Conversation • Outings/);
+ assert.match(code,/experienceLabel\(c\)/);
+ assert.match(css,/\.nearby-discovery-activities\{[^}]*flex-wrap:wrap/);
+});
