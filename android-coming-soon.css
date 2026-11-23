@@ -1,0 +1,45 @@
+
+/* Sathivo for Android: pre-launch website announcement, no fake store CTA. */
+.home-2d .android-coming-soon{
+ display:grid;grid-template-columns:minmax(0,1.35fr) minmax(200px,.65fr);align-items:center;gap:24px;
+ position:relative;isolation:isolate;overflow:hidden;margin:42px auto 52px;
+ padding:38px clamp(22px,5vw,58px);border:2px solid #70415b;border-radius:30px;
+ background:linear-gradient(120deg,#fff2f7 0%,#fff9f3 60%,#f5eeff 100%);
+ box-shadow:9px 9px 0 rgba(93,48,72,.11)
+}
+.home-2d .android-coming-soon-copy{position:relative;z-index:1;max-width:630px}
+.home-2d .android-coming-soon-eyebrow{display:inline-block;padding:7px 12px;background:#fff;border:1px solid #deb0c6;
+ border-radius:999px;font-size:.71rem;letter-spacing:.07em;font-weight:800;color:#953c67}
+.home-2d .android-coming-soon h2{margin:18px 0 11px;font:700 clamp(1.65rem,3.4vw,2.85rem)/1.15 Georgia,serif;
+ letter-spacing:-.025em;color:#4f2a3e}
+.home-2d .android-coming-soon h2 span{color:#b64373}
+.home-2d .android-coming-soon-status{display:inline-block;padding:8px 14px;margin:0 0 7px;background:#f7dbe7;
+ border:1px solid #e1aec4;border-radius:12px;color:#91365f;font-size:.81rem;font-weight:800;letter-spacing:.045em}
+.home-2d .android-coming-soon-description{margin:10px 0 8px;color:#604b58;font-size:1rem;line-height:1.72}
+.home-2d .android-coming-soon-note{margin:8px 0 15px;color:#766270;font-size:.82rem;line-height:1.65}
+.home-2d .android-coming-soon-link{display:inline-flex;align-items:center;gap:8px;padding:7px 0;min-height:40px;
+ color:#8c3058;font-size:.9rem;font-weight:800;text-underline-offset:4px}
+.home-2d .android-coming-soon-link:focus-visible{outline:3px solid #a33d6c;outline-offset:4px}
+.home-2d .android-coming-soon-art{display:grid;place-items:center;min-height:270px;position:relative}
+.home-2d .android-coming-soon-orbit{position:absolute;width:250px;height:250px;border:2px solid #dfbed1;
+ border-radius:50%;background:#f7dce9;opacity:.9;transform:translate(22px,5px)}
+.home-2d .android-coming-soon-phone{position:relative;width:157px;height:270px;display:flex;flex-direction:column;
+ z-index:1;box-sizing:border-box;padding:10px;background:#4b283e;border:2px solid #381b2f;
+ border-radius:27px;box-shadow:9px 12px 0 #d9b3c5;transform:rotate(7deg)}
+.home-2d .android-coming-soon-speaker{width:51px;height:7px;background:#2a1727;border-radius:12px;margin:1px auto 8px}
+.home-2d .android-coming-soon-screen{flex:1;display:flex;flex-direction:column;justify-content:center;
+ align-items:center;border-radius:15px;background:linear-gradient(150deg,#fff8f5,#ffe6ed);
+ text-align:center;color:#562b42}
+.home-2d .android-coming-soon-heart{font:normal 70px/1 Georgia,serif;color:#a54372}
+.home-2d .android-coming-soon-screen strong{font:700 25px/1.25 Georgia,serif}
+.home-2d .android-coming-soon-screen>span:not(.android-coming-soon-heart){font-size:11px;line-height:1.45;margin-top:9px}
+.home-2d .android-coming-soon-screen small{margin-top:27px;color:#934466;font-size:9px;font-weight:800;letter-spacing:.13em}
+.home-2d .android-coming-soon-home{width:34px;height:4px;background:#9b748e;border-radius:20px;margin:8px auto 0}
+@media(max-width:700px){
+ .home-2d .android-coming-soon{grid-template-columns:1fr;gap:0;padding:27px 19px;
+  border-radius:23px;margin:26px auto 38px;box-shadow:6px 6px 0 rgba(93,48,72,.11)}
+ .home-2d .android-coming-soon h2{font-size:clamp(1.7rem,7vw,2.2rem)}
+ .home-2d .android-coming-soon-art{min-height:226px}
+ .home-2d .android-coming-soon-phone{transform:rotate(6deg) scale(.82);margin:-20px 0}
+ .home-2d .android-coming-soon-orbit{width:206px;height:206px}
+}

@@ -18,9 +18,13 @@ test('every indexed public page has working links to all six essential trust pag
    assert.doesNotMatch(footer,/href="#"/,name+' empty footer link');
  }
 });
-test('outdated Android coming-soon teaser removed and guides header links directly to pages',async()=>{
+test('Android coming-soon teaser has no download links and guide links remain',async()=>{
  const html=await read('index.html');
- assert.doesNotMatch(html,/Sathivo for Android is coming soon/i);
+ assert.match(html,/id="android-coming-soon"/);
+ assert.match(html,/Sathivo for Android/);
+ assert.match(html,/Not yet available on Google Play/);
+ assert.doesNotMatch(html,/href="[^"]*(?:play\\.google\\.com|\\.apk)"/i);
+ assert.match(html,/href="#android-coming-soon"/);
  assert.match(html,/<nav id="navigation"/);
  assert.match(html,/href="guides\.html">Guides<\/a>/);
  assert.match(html,/href="how-it-works\.html">How it works<\/a>/);
