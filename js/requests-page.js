@@ -138,7 +138,7 @@ function render(){
 }
 async function load(){
  const [bookings,reviews]=await Promise.all([
-  client.from('booking_requests').select('*').order('created_at',{ascending:false}),
+  client.from('booking_requests').select('*').or('customer_id.eq.'+user.id+',companion_id.eq.'+user.id).order('created_at',{ascending:false}),
   client.from('booking_reviews').select('booking_id').eq('reviewer_id',user.id)
  ]);
  if(bookings.error)throw bookings.error;
