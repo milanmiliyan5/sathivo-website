@@ -627,3 +627,21 @@ body.sathivo-2d.chat-premium .message-delete-cancel:focus-visible{
  body.sathivo-2d.chat-premium .chat-workspace:has(.chat-safety-menu[open]){overflow:visible}
  body.sathivo-2d.chat-premium .chat-workspace .chat-head:has(.chat-safety-menu[open]){z-index:50}
 }
+
+/* Conversation focus mode: hide the five-tab mobile dock ONLY on chat.html.
+   Every other page keeps the standard navigation; the All chats link stays. */
+@media(max-width:640px){
+ body.sathivo-2d.chat-premium{
+  padding-bottom:calc(12px + env(safe-area-inset-bottom));
+ }
+ body.sathivo-2d.chat-premium .mobile-bottom-nav{display:none!important}
+ body.sathivo-2d.chat-premium .chat-workspace{
+  height:max(330px,calc(100dvh - 96px));
+ }
+ body.sathivo-2d.chat-premium.chat-input-focused .chat-workspace{
+  height:max(270px,calc(var(--chat-visible-vh,100dvh) - 96px));
+ }
+ body.sathivo-2d.chat-premium .directory-footer{
+  padding-bottom:calc(18px + env(safe-area-inset-bottom))!important;
+ }
+}
