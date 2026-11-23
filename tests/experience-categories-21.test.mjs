@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
-import {experienceCategoryGroups,experienceCategories,experienceLabel,experienceSafetyNote} from '../js/experience-categories.js';
+import {experienceCategoryGroups,experienceCategories,experienceLabel,experienceSafetyNote,experienceVisual,meetingModeVisual} from '../js/experience-categories.js';
 
 const read=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
 const legacy=['Conversation','Coffee','Movies','Shopping','Events','Walking','Online chat','Phone conversation'];
@@ -67,12 +67,13 @@ test('all public companion chips use isolated, non-stretching pill styling acros
  const css=await read('companions.css');
  for(const page of ['companions.html','companion.html']){
   const html=await read(page);
-  assert.match(html,/companions\.css\?v=20261123-all-activities-borderless-rate-1/);
-  assert.match(html,/js\/companions-page\.js\?v=20261123-all-activities-borderless-rate-1/);
+  assert.match(html,/companions\.css\?v=20261123-pastels-1/);
+  assert.match(html,/js\/companions-page\.js\?v=20261123-pastels-1/);
  }
  // Card and full-profile rendering must share one properly scoped component.
  assert.match(js,/tags companion-activity-tags/);
- assert.match(js,/values\.forEach\(v=>n\.append\(el\('span',v,'companion-activity-chip'\)\)\)/);
+ assert.match(js,/const chip=el\('span',undefined,'companion-activity-chip'\)/);
+ assert.match(js,/chip\.dataset\.activityTone=visual\.tone/);
  assert.doesNotMatch(js,/companion-activity-more|values\.slice\(0,4\)/);
  assert.doesNotMatch(js,/'more-experiences'/,'never reuse the homepage flex class on activity chips');
  const pillRule=css.match(/body\.sathivo-2d \.directory \.companion-activity-tags > \.companion-activity-chip\s*\{([^}]+)\}/)?.[1];
@@ -88,16 +89,17 @@ test('Explore shows every published activity, including 17 selected tags, withou
  const script=await read('js/companions-page.js');
  const fragment=script.slice(script.indexOf('function tags(row){'),script.indexOf('function portrait(row){'));
  assert.ok(fragment.startsWith('function tags(row){'));
- const el=(tag,text='',cls='')=>({tag,text,cls,children:[],append(...kids){this.children.push(...kids)}});
- const context=vm.createContext({el,experienceLabel});
+ const el=(tag,text='',cls='')=>({tag,text,cls,dataset:{},attrs:{},children:[],setAttribute(k,v){this.attrs[k]=v},append(...kids){this.children.push(...kids)}});
+ const document={createTextNode:text=>({type:'text',text})};
+ const context=vm.createContext({el,document,experienceLabel,experienceVisual,meetingModeVisual});
  vm.runInContext(fragment,context);
  for(const count of [0,4,15,17,21]){
   const selected=experienceCategories.slice(0,count);
   const element=vm.runInContext('tags({meeting_mode:"in-person",categories:'+JSON.stringify(selected)+'})',context);
   assert.equal(element.children.length,count+1);
-  assert.equal(element.children[0].text,'In person');
-  assert.deepEqual(element.children.slice(1).map(x=>x.text),selected.map(experienceLabel));
-  assert.ok(element.children.every(x=>!String(x.text).includes(' more')),'No hidden activities');
+  assert.equal(element.children[0].children[1].text,'In person');
+  assert.deepEqual(element.children.slice(1).map(x=>x.children[1].text),selected.map(experienceLabel));
+  assert.ok(element.children.every(x=>!String(x.children[1].text).includes(' more')),'No hidden activities');
  }
  const oldProfile=vm.runInContext('tags({meeting_mode:"online",categories:null})',context);
  assert.equal(oldProfile.children.length,1,'Older listings with absent categories still render');
@@ -112,4 +114,24 @@ test('Explore hourly amount has no rectangular outline while activity pills stay
  assert.match(css,/box-shadow:none!important/);
  assert.match(css,/min-height:26px/);
  assert.match(css,/flex-wrap:wrap/);
+});
+
+test('all 21 categories and every meeting mode have light colours and accessible icons',async()=>{
+ const css=await read('experience-categories.css');
+ const publicCss=await read('companions.css');
+ for(const value of experienceCategories){
+  const visual=experienceVisual(value);
+  assert.ok(visual?.tone && visual?.icon,'Missing activity styling: '+value);
+  assert.ok(css.includes('[data-activity-tone="'+visual.tone+'"]'),'Missing palette: '+visual.tone);
+ }
+ for(const mode of ['online','in-person','both']){
+  const visual=meetingModeVisual(mode);
+  assert.ok(visual?.tone&&visual?.icon,'Missing meeting mode styling: '+mode);
+ }
+ const profile=await read('js/profile-page.js'),publicPage=await read('js/companions-page.js');
+ assert.match(profile,/label\.dataset\.activityTone=visual\.tone/);
+ assert.match(profile,/input\.name='categories';input\.value=value/);
+ assert.match(publicPage,/chip\.dataset\.activityTone=visual\.tone/);
+ assert.match(publicCss,/\.companion-activity-chip\[data-activity-tone\]/);
+ assert.match(css,/label\[data-activity-tone\]:has\(input:checked\)/);
 });
