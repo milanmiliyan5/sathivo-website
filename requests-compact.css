@@ -113,7 +113,7 @@ body.sathivo-2d .incoming-compact-page .request-direction {
 body.sathivo-2d .incoming-compact-page .request-detail #empty {
   margin-top:6px;
 }
-body.sathivo-2d .incoming-compact-page .request-detail #empty h2 {
+body.sathivo-2d .incoming-compact-page .request-detail #empty h3 {
   font-family:system-ui,-apple-system,sans-serif!important;
   font-size:1.12rem!important;line-height:1.4!important;
 }
