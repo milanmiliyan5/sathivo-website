@@ -18,7 +18,7 @@ test('Both chat routes import cache-busted current-DP code',async()=>{
   const avatarImport='chat-avatars.js?v=20261122-current-account-dp-1';
   assert.ok((await read('js/chat-page.js')).includes(avatarImport));
   assert.ok((await read('js/chats-page.js')).includes(avatarImport));
-  assert.ok((await read('chat.html')).includes('js/chat-page.js?v=20261123-keyboard-composer-1'));
+  assert.ok((await read('chat.html')).includes('js/chat-page.js?v=20261123-premium-chat-2'));
   assert.ok((await read('chats.html')).includes('js/chats-page.js?v=20261122-current-account-dp-1'));
 });
 
