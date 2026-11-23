@@ -74,7 +74,7 @@ body.sathivo-2d .directory .companion-activity-tags {
   flex-wrap:wrap;
   align-items:flex-start;
   align-content:flex-start;
-  gap:8px;
+  gap:6px;
   min-width:0;
 }
 body.sathivo-2d .directory .companion-activity-tags > .companion-activity-chip {
@@ -86,29 +86,43 @@ body.sathivo-2d .directory .companion-activity-tags > .companion-activity-chip {
   box-sizing:border-box;
   width:fit-content;
   max-width:100%;
-  min-height:32px;
+  min-height:26px;
   height:auto;
   margin:0;
-  padding:6px 11px;
-  border:1.5px solid #d9b5c5;
+  padding:4px 9px;
+  border:1px solid #d9b5c5;
   border-radius:999px;
   background:#f9edf2;
-  line-height:1.35;
+  box-shadow:none;
+  font-size:.7rem;
+  font-weight:600;
+  line-height:1.3;
   white-space:normal;
   overflow-wrap:break-word;
   word-break:normal;
   text-align:center;
 }
-body.sathivo-2d .directory .companion-activity-tags > .companion-activity-more {
-  background:#f7eef2;
-  color:#68435a;
-}
 @media(max-width:540px){
   body.sathivo-2d .directory .companion-activity-tags > .companion-activity-chip{
-    padding:5px 10px;
-    min-height:32px;
+    padding:4px 8px;
+    min-height:26px;
+    font-size:.68rem;
   }
 }
 
 /* Match the reviews pill to Newly Joined on narrow mobile cards as well. */
 @media(max-width:420px){.public-rating-link{font-size:.7rem;padding:6px 10px}}
+
+/* Public Explore cards: rate is text, NOT an outlined rectangular chip.
+   Outranks legacy site-2d.css and marketplace.css .rate-chip styling. */
+body.sathivo-2d .directory #results .companion-card .companion-card-rate{
+ display:inline-flex;align-items:baseline;gap:5px;align-self:flex-start;
+ flex:0 0 auto;width:fit-content;max-width:100%;min-height:0;
+ margin:0;padding:0;border:0!important;border-radius:0;
+ background:transparent!important;box-shadow:none!important;
+ color:#42283a;font-size:1.15rem;line-height:1.3;font-weight:800;
+ white-space:nowrap;
+}
+body.sathivo-2d .directory #results .companion-card .companion-rate-unit{
+ color:#806a79;font-size:.77rem;font-weight:600;
+}
