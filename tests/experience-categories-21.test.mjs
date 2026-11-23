@@ -68,5 +68,8 @@ test('Explore card activity chips keep consistent rounded sizing on desktop and 
  assert.match(css,/\.directory #results \.companion-card \.tags\s*\{\s*align-items:flex-start/);
  assert.match(css,/\.directory #results \.companion-card \.tags > span\s*\{/);
  for(const rule of ['align-self:flex-start','min-height:32px','max-width:100%','border-radius:999px','overflow-wrap:normal'])assert.ok(css.includes(rule),rule);
+ const moreRule=css.match(/\.directory #results \.companion-card \.tags > span\.more-experiences\s*\{([^}]+)\}/)?.[1];
+ assert.ok(moreRule,'Explore more-count pill override should exist');
+ assert.match(moreRule,/margin:0;/,'the homepage .more-experiences margin must not affect card rows');
  assert.match(css,/@media\(max-width:540px\)/);
 });
