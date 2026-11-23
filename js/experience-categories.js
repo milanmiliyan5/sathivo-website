@@ -25,3 +25,31 @@ export const experienceSafetyNotes=Object.freeze({
  'New City Buddy':'Plan meetings in public places. Do not share your exact home address.',
 });
 export const experienceSafetyNote=value=>experienceSafetyNotes[value]||'18+ · Strictly platonic · Agree on a safe plan and respect boundaries.';
+
+/* Presentation metadata only; canonical categories and stored values stay intact. */
+export const experienceVisuals=Object.freeze({
+ "Conversation":Object.freeze({tone:"sky",icon:"💬"}),
+ "Coffee":Object.freeze({tone:"peach",icon:"☕"}),
+ "Movies":Object.freeze({tone:"lilac",icon:"🎬"}),
+ "Shopping":Object.freeze({tone:"rose",icon:"🛍️"}),
+ "Events":Object.freeze({tone:"amber",icon:"🎟️"}),
+ "Walking":Object.freeze({tone:"blue",icon:"🚶"}),
+ "City Exploration":Object.freeze({tone:"yellow",icon:"📍"}),
+ "College Projects Help":Object.freeze({tone:"mint",icon:"📚"}),
+ "Study Partner":Object.freeze({tone:"lilac",icon:"📖"}),
+ "Language Practice":Object.freeze({tone:"teal",icon:"🗣️"}),
+ "Interview Practice":Object.freeze({tone:"peach",icon:"🎤"}),
+ "Digital Help":Object.freeze({tone:"sky",icon:"💻"}),
+ "New City Buddy":Object.freeze({tone:"teal",icon:"🧭"}),
+ "Hospital Visit Companion":Object.freeze({tone:"mint",icon:"🏥"}),
+ "Appointment Companion":Object.freeze({tone:"yellow",icon:"📅"}),
+ "Senior Social Companion":Object.freeze({tone:"rose",icon:"🤝"}),
+ "Sports & Fitness Partner":Object.freeze({tone:"green",icon:"🏃"}),
+ "Gaming Partner":Object.freeze({tone:"lilac",icon:"🎮"}),
+ "Photography & Creative Partner":Object.freeze({tone:"rose",icon:"📸"}),
+ "Online chat":Object.freeze({tone:"sky",icon:"💬"}),
+ "Phone conversation":Object.freeze({tone:"amber",icon:"📞"}),
+});
+export const experienceVisual=value=>experienceVisuals[value]||{tone:'rose',icon:'✦'};
+export const meetingModeVisuals=Object.freeze({online:{tone:'sky',icon:'💻'},'in-person':{tone:'mint',icon:'🤝'},both:{tone:'green',icon:'🌿'}});
+export const meetingModeVisual=value=>meetingModeVisuals[value]||{tone:'rose',icon:'✦'};
