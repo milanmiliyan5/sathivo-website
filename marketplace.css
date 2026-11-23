@@ -43,3 +43,30 @@
 
 .cancellation-note{margin:0;padding:10px 12px;border:1px solid #e4c6d2;border-radius:11px;background:#fff3f7;color:#6e4053;font-size:.8rem}.cancel-dialog{border:0;padding:0;background:transparent;max-width:min(92vw,470px);width:100%}.cancel-dialog::backdrop{background:rgba(26,14,20,.58);backdrop-filter:blur(2px)}.cancel-dialog-card{display:grid;gap:14px;padding:24px;border:2px solid var(--plum);border-radius:20px;background:#fffaf8;box-shadow:7px 7px 0 rgba(93,48,72,.22)}.cancel-dialog-card h2{margin:0}.cancel-dialog-card p{margin:0;color:var(--muted);font-size:.86rem}.cancel-dialog-card select,.cancel-dialog-card textarea{width:100%;box-sizing:border-box;padding:12px 13px;border:1px solid var(--line);border-radius:10px;background:#fff;font:inherit;color:var(--ink)}.cancel-dialog-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}.cancel-dialog-actions .button{margin:0}
 @media(max-width:540px){.cancel-dialog{max-width:calc(100vw - 24px)}.cancel-dialog-card{padding:20px}.cancel-dialog-actions{display:grid;grid-template-columns:1fr}.cancel-dialog-actions .button{width:100%}}
+
+
+/* Shared conversation DP frame: protect against portrait/landscape stretching.
+   The image is out of the grid sizing flow, so any aspect ratio stays circular. */
+.chat-list-card .chat-list-avatar{
+ position:relative!important;display:grid;place-items:center;
+ box-sizing:border-box;width:48px!important;height:48px!important;
+ min-width:48px!important;min-height:48px!important;
+ max-width:48px!important;max-height:48px!important;
+ aspect-ratio:1/1!important;overflow:hidden!important;
+ border-radius:50%!important;flex:0 0 48px!important;
+}
+.chat-list-card .chat-list-avatar>.chat-contact-photo{
+ position:absolute!important;inset:0!important;display:block!important;
+ box-sizing:border-box;width:100%!important;height:100%!important;
+ min-width:0!important;min-height:0!important;max-width:100%!important;
+ max-height:100%!important;object-fit:cover!important;object-position:center!important;
+ border-radius:50%!important;clip-path:circle(50% at 50%);
+}
+@media(max-width:640px){
+ .chat-list-card .chat-list-avatar{
+  width:44px!important;height:44px!important;
+  min-width:44px!important;min-height:44px!important;
+  max-width:44px!important;max-height:44px!important;
+  flex-basis:44px!important;
+ }
+}
