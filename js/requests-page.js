@@ -143,10 +143,19 @@ function render(){
  const list=rows.filter(visible);
  $('requests').replaceChildren(...list.map(card));
  $('empty').hidden=list.length>0;
- $('request-empty-description').textContent=view==='sent'
-  ?'Your pending and accepted requests will appear here.'
-  :view==='received'?'Pending and accepted requests sent to you will appear here.'
-  :'No '+viewNames[view].toLowerCase()+' requests at the moment.';
+ const emptyCopy={
+  sent:['send','No requests yet','Your active sent requests will appear here.'],
+  received:['inbox','No received requests','New incoming requests will appear here.'],
+  pending:['clock','No pending requests','Requests awaiting a response will appear here.'],
+  accepted:['calendar','No accepted bookings','Your active bookings will appear here.'],
+  completed:['check','No completed bookings','Your completed bookings will appear here.'],
+  cancelled:['cancel','No cancelled bookings','Cancelled and declined requests will appear here.'],
+  all:['inbox','No requests yet','Your booking history will appear here.']
+ }[view];
+ $('empty').dataset.emptyKind=emptyCopy[0];
+ $('request-empty-title').textContent=emptyCopy[1];
+ $('request-empty-description').textContent=emptyCopy[2];
+ $('request-empty-explore').hidden=!['sent','all'].includes(view);
  $('status').textContent='';
  if(!linkedRequestId)return;
  const target=document.getElementById('request-'+linkedRequestId);
