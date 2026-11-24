@@ -25,8 +25,8 @@ test('Requests is a vertically stacked seven-card hub with a same-page Back view
   assert.match(html,new RegExp('data-count-for="'+types[i]+'"'));
   assert.ok(html.includes('class="request-hub-name">'+labels[i]+'</span>'));
  }
- assert.match(html,/requests-compact\.css\?v=20261124-stable-heading-1/);
- assert.match(html,/requests-page\.js\?v=20261124-reload-title-1/);
+ assert.match(html,/requests-compact\.css\?v=20261124-mobile-title-2/);
+ assert.match(html,/requests-page\.js\?v=20261124-mobile-title-2/);
 });
 test('My Requests and Received count separate directions; completed is not cancelled',async()=>{
  const js=await read('js/requests-page.js');
@@ -126,6 +126,16 @@ test('Ordinary Requests reload restores page top without overriding deep links',
  assert.match(js,/!linkedRequestId&&!location\.hash/);
  assert.match(js,/history\.scrollRestoration='manual'/);
  assert.match(js,/pendingReloadScrollReset=false/);
- assert.match(js,/requestAnimationFrame\(\(\)=>window\.scrollTo\(0,0\)\)/);
+ assert.match(js,/requestAnimationFrame\(\(\)=>window\.scrollTo\(\{top:0,left:0,behavior:'instant'\}\)\)/);
  assert.match(js,/if\(requested\?\.status==='accepted'&&requested\.companion_id===user\.id\)/);
+});
+
+test('Mobile Requests heading stays beneath the actual header and loading clears on success',async()=>{
+ const css=await read('requests-compact.css');
+ const js=await read('js/requests-page.js');
+ assert.match(css,/position:sticky!important;top:var\(--request-header-height,65px\)/);
+ assert.match(css,/overflow-anchor:none/);
+ assert.match(js,/header\.getBoundingClientRect\(\)\.height/);
+ assert.match(js,/new ResizeObserver\(sync\)/);
+ assert.match(js,/if\(!view\)\{\$\('status'\)\.textContent='';\$\('request-detail'\)\.hidden=true;\$\('request-menu'\)\.hidden=false;return\}/);
 });
