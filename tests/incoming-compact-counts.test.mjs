@@ -5,10 +5,10 @@ import {readFile} from 'node:fs/promises';
 
 const read=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
 
-const types=['sent','received','pending','accepted','completed','cancelled','all'];
-const labels=['My Requests','Received','Pending','Accepted','Completed','Cancelled','All'];
+const types=['sent','received','ongoing','completed','cancelled'];
+const labels=['Sent Requests','Received Requests','Ongoing','Completed','Cancelled'];
 
-test('Requests is a vertically stacked seven-card hub with a same-page Back view',async()=>{
+test('Requests is a vertically stacked five-card hub with a same-page Back view',async()=>{
  const html=await read('requests.html');
  assert.match(html,/<section class="request-page-intro" aria-labelledby="requests-title"><h1 id="requests-title" class="incoming-compact-title">Requests<\/h1><\/section>/);
  assert.doesNotMatch(html,/<section class="page-head">|PRIVATE CONVERSATIONS|Sathivo does not collect payment\. Any cash/);
@@ -16,19 +16,22 @@ test('Requests is a vertically stacked seven-card hub with a same-page Back view
  assert.match(html,/<section id="request-detail" class="request-detail"[^>]* hidden>/);
  assert.match(html,/id="request-back"[^>]*type="button"|id="request-back" class="request-back" type="button"/);
  assert.match(html,/id="requests" class="booking-list"/);
- assert.match(html,/id="empty" class="empty-state" hidden/);
+ assert.match(html,/id="empty" class="[^"]*empty-state[^"]*"[^>]*hidden/);
  assert.doesNotMatch(html,/id="request-filters"/);
  const positions=types.map(type=>html.indexOf('data-view="'+type+'"'));
  assert.ok(positions.every(x=>x>=0));
- assert.ok(positions.every((x,i)=>i===0||x>positions[i-1]),'Seven cards must follow the approved order');
+ assert.ok(positions.every((x,i)=>i===0||x>positions[i-1]),'Five cards must follow the approved order');
  for(let i=0;i<types.length;i++){
   assert.match(html,new RegExp('data-count-for="'+types[i]+'"'));
   assert.ok(html.includes('class="request-hub-name">'+labels[i]+'</span>'));
  }
- assert.match(html,/requests-compact\.css\?v=20261124-request-flow-4/);
- assert.match(html,/requests-page\.js\?v=20261124-back-history-2/);
+ assert.match(html,/requests-compact\.css\?v=20261124-five-sections-1/);
+ assert.match(html,/requests-page\.js\?v=20261124-five-sections-1/);
+ assert.equal((html.match(/class="request-hub-card" data-view=/g)||[]).length,5);
+ assert.match(html,/request-hub-group-title">Your requests/);
+ assert.match(html,/request-hub-group-divider">Booking status/);
 });
-test('My Requests and Received count separate directions; completed is not cancelled',async()=>{
+test('All five sections are mutually exclusive and preserve direction',async()=>{
  const js=await read('js/requests-page.js');
  const start=js.indexOf("const cancelledStatuses=new Set(");
  const end=js.indexOf('function receivedCard(r){',start);
@@ -48,11 +51,20 @@ test('My Requests and Received count separate directions; completed is not cance
  const context=vm.createContext({user,rows,view:'sent',document});
  vm.runInContext('const $=id=>document.getElementById(id);'+js.slice(start,end),context);
  const counts=vm.runInContext('requestCounts(rows)',context);
- assert.deepEqual({...counts},{sent:3,received:4,pending:2,accepted:2,completed:1,cancelled:2,all:7});
+ assert.deepEqual({...counts},{sent:1,received:1,ongoing:2,completed:1,cancelled:2});
+ assert.equal(Object.values(counts).reduce((a,b)=>a+b,0),rows.length);
+ for(const row of rows){
+  assert.equal(types.filter(type=>context.matchesRequestView(row,type,user.id)).length,1,row.id);
+  assert.equal(context.matchesRequestView(row,context.linkedRequestView(row,user.id),user.id),true);
+ }
+ assert.equal(context.linkedRequestView(rows[1],user.id),'ongoing');
+ assert.equal(context.linkedRequestView(rows[2],user.id),'completed');
+ assert.equal(context.linkedRequestView(rows[5],user.id),'cancelled');
+ assert.equal(context.linkedRequestView(rows[0],'outsider'),null);
  vm.runInContext('syncRequestCounts()',context);
- assert.deepEqual(nodes.map(n=>n.textContent),['3','4','2','2','1','2','7']);
- assert.equal(ids['request-view-count'].textContent,'3');
- for(const [type,expected]of [['sent',3],['received',4],['pending',2],['accepted',2],['completed',1],['cancelled',2],['all',7]]){
+ assert.deepEqual(nodes.map(n=>n.textContent),['1','1','2','1','2']);
+ assert.equal(ids['request-view-count'].textContent,'1');
+ for(const [type,expected]of [['sent',1],['received',1],['ongoing',2],['completed',1],['cancelled',2]]){
   context.view=type;
   assert.equal(vm.runInContext('rows.filter(visible).length',context),expected,type);
  }
@@ -69,8 +81,8 @@ test('Sent and received bookings keep their distinct actions and secured access'
  assert.match(js,/client\.from\('booking_requests'\)\.select\('\*'\)\.or/);
  assert.match(js,/\.filter\(r=>r\.customer_id===user\.id\|\|r\.companion_id===user\.id\)/);
  for(const action of [
-  "update(r.id,'accepted')","update(r.id,'declined')","update(r.id,'completed')",
-  "Cancel request","Open chat & photos","cancelBooking(r)","renderBookingProgress(r)",
+  "update(r.id,'accepted')","update(r.id,'declined')","submitCompletion(client,id)",
+  "Cancel Request","Open Chat ↗","cancelBooking(r)","renderBookingProgress(r,{compact:true})",
   "showCompletedBookingRating({client,user,booking:r})","appendRecoveryControls",
   "sendBookingPush","sendBookingEmail","withCurrentBookingNames"
  ])assert.ok(js.includes(action),'Missing action '+action);
@@ -78,7 +90,7 @@ test('Sent and received bookings keep their distinct actions and secured access'
  assert.match(js,/\[data-view\]/);
  assert.match(js,/\$\('request-back'\)\.addEventListener\('click'/);
  assert.match(js,/client\.channel\('incoming-requests:'/);
- assert.match(js,/if\(requested\?\.status==='accepted'&&requested\.companion_id===user\.id\)/);
+ assert.match(js,/if\(requested\?\.status==='accepted'&&requested\.companion_id===user\.id&&/);
 });
 test('Requests cards have vertical mobile layout, keyboard and safe-area accessibility',async()=>{
  const css=await read('requests-compact.css');
@@ -135,7 +147,7 @@ test('Request hub does not inherit the mobile hamburger nav absolute positioning
  assert.doesNotMatch(css,/position:sticky/);
  assert.doesNotMatch(js,/pendingReloadScrollReset|scrollRestoration|setupRequestTitleOffset/);
  assert.match(js,/if\(!view\)\{\$\('status'\)\.textContent='';\$\('request-detail'\)\.hidden=true;\$\('request-menu'\)\.hidden=false;return\}/);
- assert.match(js,/if\(requested\?\.status==='accepted'&&requested\.companion_id===user\.id\)/);
+ assert.match(js,/if\(requested\?\.status==='accepted'&&requested\.companion_id===user\.id&&/);
 });
 
 test('Request categories participate in browser history without replaying a deep link',async()=>{
@@ -146,4 +158,27 @@ test('Request categories participate in browser history without replaying a deep
  assert.match(js,/openView\(entry\.view,\{record:false\}\)/);
  assert.match(js,/if\(restored\)\{view=restored\.view;linkedRequestChecked=true;\}/);
  assert.match(js,/requestBackPending=true;history\.back\(\);return/);
+});
+
+test('booking transitions move rather than duplicate requests',async()=>{
+ const source=await read('js/requests-page.js');
+ const context=vm.createContext({user:{id:'u1'}});
+ vm.runInContext(source.slice(source.indexOf("const cancelledStatuses=new Set("),source.indexOf("function syncRequestCounts()")),context);
+ const row={customer_id:'u1',companion_id:'u2',status:'pending'};
+ for(const [status,expected] of [['pending','sent'],['accepted','ongoing'],['completed','completed'],['accepted','ongoing'],['cancelled','cancelled'],['declined','cancelled']]){
+  row.status=status;
+  assert.equal(context.linkedRequestView(row,'u1'),expected);
+  assert.equal(types.filter(type=>context.matchesRequestView(row,type,'u1')).length,1);
+  assert.equal(types.filter(type=>context.matchesRequestView(row,type,'u2')).length,1);
+ }
+ assert.match(source,/openView\(result==='accepted'\?'ongoing':'completed'/);
+ assert.doesNotMatch(source,/openView\('all'/);
+});
+test('legacy navigation history remains readable',async()=>{
+ const source=await read('js/requests-page.js');
+ const context=vm.createContext({});
+ vm.runInContext(source.slice(source.indexOf('const viewNames='),source.indexOf('let requestBackPending=')),context);
+ for(const [old,expected] of [['accepted','ongoing'],['pending',null],['all',null],['sent','sent'],['received','received']]){
+  assert.equal(context.requestHistory({sathivoRequests:{view:old,fromMenu:true}}).view,expected);
+ }
 });

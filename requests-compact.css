@@ -1,5 +1,5 @@
 
-/* Requests hub: seven full-width, chat-list-style cards and a separate
+/* Requests hub: five mutually exclusive full-width cards and a separate
    in-page booking detail view. Never changes booking status or database. */
 body.sathivo-2d .incoming-compact-page {
   padding-top:18px;
@@ -63,11 +63,9 @@ body.sathivo-2d .incoming-compact-page .request-hub-icon svg {
 }
 body.sathivo-2d .incoming-compact-page .request-hub-card[data-view="sent"] .request-hub-icon {background:#EBF2FF;color:#285984}
 body.sathivo-2d .incoming-compact-page .request-hub-card[data-view="received"] .request-hub-icon {background:#E7F6ED;color:#276247}
-body.sathivo-2d .incoming-compact-page .request-hub-card[data-view="pending"] .request-hub-icon {background:#FFF2DD;color:#8C5B18}
-body.sathivo-2d .incoming-compact-page .request-hub-card[data-view="accepted"] .request-hub-icon {background:#EAF7EE;color:#26704B}
-body.sathivo-2d .incoming-compact-page .request-hub-card[data-view="completed"] .request-hub-icon {background:#E8F2FC;color:#265E83}
+body.sathivo-2d .incoming-compact-page .request-hub-card[data-view="ongoing"] .request-hub-icon {background:#FFF2DD;color:#8C5B18}
+body.sathivo-2d .incoming-compact-page .request-hub-card[data-view="completed"] .request-hub-icon {background:#E7F6ED;color:#276247}
 body.sathivo-2d .incoming-compact-page .request-hub-card[data-view="cancelled"] .request-hub-icon {background:#FBE9EF;color:#843950}
-body.sathivo-2d .incoming-compact-page .request-hub-card[data-view="all"] .request-hub-icon {background:#F0E9F9;color:#68478A}
 body.sathivo-2d .incoming-compact-page .request-hub-copy {
   display:flex;flex:1 1 auto;flex-direction:column;gap:3px;min-width:0;
 }
@@ -250,4 +248,26 @@ body.sathivo-2d .booking-card-compact .compact-payment-note a{color:#723e59;text
  body.sathivo-2d .booking-card-compact .compact-deal-box{grid-template-columns:repeat(auto-fit,minmax(min(100%,68px),1fr))}
  body.sathivo-2d .booking-card-compact .compact-rate strong{font-size:.7rem}
  body.sathivo-2d:not(.home-2d) .booking-card-compact .booking-actions>.button{flex-basis:105px;font-size:.7rem}
+}
+
+/* Separate the two directions from booking history without repeating any booking. */
+body.sathivo-2d .incoming-compact-page .request-hub .request-hub-group-title{
+ margin:2px 0 0!important;padding:0 2px!important;
+ color:#806675;font:700 .73rem/1.4 system-ui,-apple-system,sans-serif!important;
+ letter-spacing:.075em;text-transform:uppercase;
+}
+body.sathivo-2d .incoming-compact-page .request-hub .request-hub-group-divider{
+ margin-top:8px!important;padding-top:15px!important;border-top:1px solid #ebdbe2;
+}
+body.sathivo-2d .incoming-compact-page .request-hub-card{
+ border:1px solid #e6c9d8;border-radius:17px;
+ box-shadow:0 3px 9px rgba(94,46,74,.06);
+}
+body.sathivo-2d .incoming-compact-page .request-hub-card:hover{
+ border-color:#bd8ba5;box-shadow:0 4px 13px rgba(94,46,74,.1);
+}
+@media(max-width:640px){
+ body.sathivo-2d .incoming-compact-page .request-hub{gap:9px}
+ body.sathivo-2d .incoming-compact-page .request-hub-card{min-height:70px;padding:11px 12px}
+ body.sathivo-2d .incoming-compact-page .request-hub .request-hub-group-divider{margin-top:6px!important;padding-top:12px!important}
 }

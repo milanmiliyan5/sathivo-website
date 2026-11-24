@@ -11,11 +11,14 @@ const $=id=>document.getElementById(id);let client,user,rows=[],view=null,channe
 const validBookingId=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const linkedRequestId=(()=>{try{const id=new URL(location.href).searchParams.get('id')||'';return validBookingId.test(id)?id:''}catch{return ''}})();
 let linkedRequestChecked=false,linkedRequestFocused=false;
-const viewNames={sent:'My Requests',received:'Received',pending:'Pending',accepted:'Accepted',completed:'Completed',cancelled:'Cancelled',all:'All'};
+const viewNames={sent:'Sent Requests',received:'Received Requests',ongoing:'Ongoing',completed:'Completed',cancelled:'Cancelled'};
 function requestHistory(state){
  const entry=state?.sathivoRequests;
- if(!entry||!(entry.view===null||Object.hasOwn(viewNames,entry.view)))return null;
- return {view:entry.view,fromMenu:entry.fromMenu===true};
+ if(!entry)return null;
+ // Normalize browser history created by the previous seven-card layout.
+ const next=entry.view==='accepted'?'ongoing':['pending','all'].includes(entry.view)?null:entry.view;
+ if(!(next===null||Object.hasOwn(viewNames,next)))return null;
+ return {view:next,fromMenu:next!==null&&entry.fromMenu===true};
 }
 let requestBackPending=false;
 function writeRequestHistory(mode='replaceState',fromMenu=false){
@@ -44,30 +47,26 @@ $('request-menu').hidden=true;$('request-detail').hidden=false;
 const fmt=d=>new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d));
 const el=(t,x,c)=>{const n=document.createElement(t);if(x!==undefined)n.textContent=x;if(c)n.className=c;return n};
 const cancelledStatuses=new Set(['cancelled','declined']);
-const activeStatuses=new Set(['pending','accepted']);
+// Each booking has exactly one destination, determined by its current status and direction.
+function linkedRequestView(r,uid){
+ if(!uid||(r.customer_id!==uid&&r.companion_id!==uid))return null;
+ if(r.status==='completed')return 'completed';
+ if(cancelledStatuses.has(r.status))return 'cancelled';
+ if(r.status==='accepted')return 'ongoing';
+ if(r.status==='pending')return r.customer_id===uid?'sent':'received';
+ return null;
+}
 function matchesRequestView(r,section,uid){
- if(!section||!uid||(r.customer_id!==uid&&r.companion_id!==uid))return false;
- if(section==='sent')return r.customer_id===uid&&activeStatuses.has(r.status);
- if(section==='received')return r.companion_id===uid&&activeStatuses.has(r.status);
- if(section==='cancelled')return cancelledStatuses.has(r.status);
- if(section==='all')return true;
- return r.status===section;
+ return !!section&&linkedRequestView(r,uid)===section;
 }
 function visible(r){return matchesRequestView(r,view,user?.id)}
 function requestCounts(items){
- const counts={sent:0,received:0,pending:0,accepted:0,completed:0,cancelled:0,all:0};
+ const counts={sent:0,received:0,ongoing:0,completed:0,cancelled:0};
  for(const r of items){
-  for(const section of Object.keys(counts)){
-   if(matchesRequestView(r,section,user?.id))counts[section]++;
-  }
+  const section=linkedRequestView(r,user?.id);
+  if(section)counts[section]++;
  }
  return counts;
-}
-// Old notification links must still find their booking after it closes.
-function linkedRequestView(r,uid){
- if(r.status==='completed')return 'completed';
- if(cancelledStatuses.has(r.status))return 'cancelled';
- return r.companion_id===uid?'received':'sent';
 }
 function syncRequestCounts(){
  const counts=requestCounts(rows);
@@ -144,18 +143,16 @@ function render(){
  $('requests').replaceChildren(...list.map(card));
  $('empty').hidden=list.length>0;
  const emptyCopy={
-  sent:['send','No requests yet','Your active sent requests will appear here.'],
-  received:['inbox','No received requests','New incoming requests will appear here.'],
-  pending:['clock','No pending requests','Requests awaiting a response will appear here.'],
-  accepted:['calendar','No accepted bookings','Your active bookings will appear here.'],
+  sent:['send','No sent requests','Requests you send will appear here while awaiting a response.'],
+  received:['inbox','No received requests','New incoming requests awaiting your response will appear here.'],
+  ongoing:['calendar','No ongoing bookings','Your accepted bookings will appear here.'],
   completed:['check','No completed bookings','Your completed bookings will appear here.'],
-  cancelled:['cancel','No cancelled bookings','Cancelled and declined requests will appear here.'],
-  all:['inbox','No requests yet','Your booking history will appear here.']
+  cancelled:['cancel','No cancelled bookings','Cancelled and declined requests will appear here.']
  }[view];
  $('empty').dataset.emptyKind=emptyCopy[0];
  $('request-empty-title').textContent=emptyCopy[1];
  $('request-empty-description').textContent=emptyCopy[2];
- $('request-empty-explore').hidden=!['sent','all'].includes(view);
+ $('request-empty-explore').hidden=view!=='sent';
  $('status').textContent='';
  if(!linkedRequestId)return;
  const target=document.getElementById('request-'+linkedRequestId);
@@ -194,7 +191,7 @@ async function load(){
  render();
 }
 async function cancelBooking(r){const answer=await askCancellationReason();if(!answer)return;await update(r.id,'cancelled',{cancel_reason:answer.reason,cancel_note:answer.note||null})}
-async function recoverBooking(id,action){try{const result=await runRecovery(client,id,action);openView('all',{focus:false});await load();$('status').textContent=result==='accepted'?'Booking reopened.':result==='pending'?'Reopen request sent.':'Reopen request declined.';}catch(e){$('status').textContent=e.message||'Could not update recovery request.';}}
+async function recoverBooking(id,action){try{const result=await runRecovery(client,id,action);openView(result==='accepted'?'ongoing':'completed',{focus:false});await load();$('status').textContent=result==='accepted'?'Booking reopened.':result==='pending'?'Reopen request sent.':'Reopen request declined.';}catch(e){$('status').textContent=e.message||'Could not update recovery request.';}}
 async function finishBooking(id){
  try{
   const result=await submitCompletion(client,id);
@@ -216,7 +213,7 @@ async function update(id,status,extra={}){
    await Promise.all([sendBookingPush(client,id,status),sendBookingEmail(client,id,'accepted')]);
    location.href='chat.html?booking='+encodeURIComponent(id);return;
   }
-  if(status==='completed'){offerCompletionFeedback(user);openView('completed',{focus:false});await load();void sendBookingPush(client,id,status).catch(()=>{});}else{await sendBookingPush(client,id,status);await load();}
+  if(status==='completed'){offerCompletionFeedback(user);openView('completed',{focus:false});await load();void sendBookingPush(client,id,status).catch(()=>{});}else{if(cancelledStatuses.has(status))openView('cancelled',{focus:false});await sendBookingPush(client,id,status);await load();}
  }catch{
   $('status').textContent='Could not update this request. Please try again.';
  }finally{
@@ -237,7 +234,7 @@ async function init(){try{
  client=await getSathivoClient();
  const u=await client.auth.getUser();user=u.data.user;if(!user){if(linkedRequestId){const signIn=new URL('account.html',location.href);signIn.searchParams.set('next','requests.html?id='+linkedRequestId);signIn.hash='login';location.replace(signIn.href)}else location.replace('account.html#login');return}
  const restored=requestHistory(history.state);
- if(restored){view=restored.view;}
+ if(restored){view=restored.view;linkedRequestChecked=true;}
  else writeRequestHistory('replaceState',false);
  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>openView(b.dataset.view)));
  $('request-back').addEventListener('click',()=>{
