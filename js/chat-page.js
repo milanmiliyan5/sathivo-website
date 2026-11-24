@@ -275,8 +275,10 @@ async function renderMessages(rows,initial=false){
  for(const url of messageBlobUrls)URL.revokeObjectURL(url);messageBlobUrls.clear();
  const nodes=[];let lastDay='';
  if(!rows.length){
-  const empty=el('div',undefined,'chat-empty');
-  empty.append(el('span','♡','chat-empty-icon'),el('h2','Say hello 👋'),el('p',booking?.status==='accepted'?'Start with a friendly message and plan your time together.':'No messages yet. Chat opens when the booking is accepted.'));
+  const empty=el('div',undefined,'chat-empty sathivo-empty');
+  empty.dataset.emptyKind='chat';
+  const active=booking?.status==='accepted';
+  empty.append(el('h2',active?'Say hello':'No messages yet'),el('p',active?'Send a friendly message to get started.':booking?.status==='completed'?'This booking is completed.':'Chat is available after acceptance.'));
   nodes.push(empty);
  }
  for(const r of rows){
