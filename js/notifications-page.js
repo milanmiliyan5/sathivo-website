@@ -11,7 +11,7 @@ import {notificationDate,notificationAge} from './notification-time.js?v=2026111
 const uuid='[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
 const linkPattern=new RegExp('^(?:requests\\.html\\?id=|bookings\\.html\\?id=|chat\\.html\\?booking=|companion\\.html\\?id=)'+uuid+'$','i');
 const simpleRoutes=new Set(['requests.html','bookings.html','chats.html']);
-let client,user,channel,rows=[],unreadTotal=0,filter='all',seq=0,busy=false;
+let client,user,channel,rows=[],unreadTotal=0,filter='all',seq=0,busy=false,notificationsLoaded=false,websiteNoticesAvailable=true;
 
 function safeLink(raw){
  if(typeof raw!=='string')return '';
@@ -132,16 +132,17 @@ function renderCard(r){
  return card;
 }
 function render(){
+ if(!notificationsLoaded)return;
  const visible=filter==='unread'?rows.filter(r=>!r.read_at):rows;
  $('notifications').replaceChildren(...visible.map(renderCard));
  const empty=$('empty');
- empty.hidden=visible.length>0;
+ empty.hidden=visible.length>0||!websiteNoticesAvailable;
  if(!visible.length){
   empty.dataset.emptyKind=filter==='unread'?'check':'bell';
   empty.querySelector('h2').textContent=filter==='unread'?'You’re all caught up':'No notifications yet';
   empty.querySelector('p').textContent=filter==='unread'?'No unread notifications.':'New updates will appear here.';
  }
- $('status').textContent=rows.length?rows.length+' recent notification'+(rows.length===1?'':'s')+'.':'';
+ $('status').textContent=!websiteNoticesAvailable?'Some notifications could not be loaded.':rows.length?rows.length+' recent notification'+(rows.length===1?'':'s')+'.':'';
  updateSummary();
 }
 async function load(){
@@ -157,6 +158,7 @@ async function load(){
  if(count.error)throw count.error;
  rows=[...(list.data||[]),...(webList.error?[]:(webList.data||[]).map(r=>({...r,source:'website_notifications'})))].sort((a,b)=>Date.parse(b.created_at)-Date.parse(a.created_at)).slice(0,100);
  unreadTotal=(count.count||0)+(webCount.error?0:webCount.count||0);
+ notificationsLoaded=true;websiteNoticesAvailable=!webList.error&&!webCount.error;
  render();
 }
 async function markAllRead(){
