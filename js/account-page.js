@@ -1,3 +1,4 @@
+import {avatarAsset} from './avatar-utils.js?v=20261121-avatars-1';
 import {startFeedbackPrompt,stopFeedbackPrompt} from './feedback-prompt.js?v=20261119-feedback-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { createAuthFlow } from './auth-flow.js?v=20261027-nearbyconsent-1';
@@ -15,6 +16,8 @@ let flow = null;
 let busy = false;
 let activePanel = 'login';
 let appClient = null;
+let accountEpoch=0, accountView='home', accountViewStack=[];
+let accountRecovery=false;
 // Only allow known relative booking email destinations, never external URLs.
 // Capture the query before the account page strips it for auth safety.
 const emailBookingReturnRoute=(()=>{
@@ -47,7 +50,11 @@ function clearSecrets() {
 function showPanel(name, { focus = true } = {}) {
   if (!panels.some(panel => panel.dataset.panel === name)) name = 'login';
   activePanel = name;
-  if (name !== 'account') stopFeedbackPrompt();
+  document.body.classList.toggle('account-hub-active',name==='account');
+  if(name==='account'){accountViewStack=[];showAccountView('home',{focus:false});}
+  else{accountEpoch++;delete document.body.dataset.accountView;stopFeedbackPrompt();}
+  const recoveryBack=document.querySelector('#account-recovery-back');
+  if(recoveryBack)recoveryBack.hidden=!(name==='forgot'&&accountRecovery);
   panels.forEach(panel => { panel.hidden = panel.dataset.panel !== name; });
   tabs.hidden = ['otp', 'new-password', 'account'].includes(name);
   tabs.querySelectorAll('a').forEach(link => {
@@ -94,39 +101,81 @@ function renderOtp(pending) {
   clearSecrets();
 }
 
-async function refreshAccountActions(user) {
-  const incoming = document.querySelector('#account-incoming-requests');
-  if (!incoming) return;
-  incoming.hidden = true;
-  if (!appClient || !user?.id) return;
-  try {
-    const { data, error } = await appClient
-      .from('member_profiles')
-      .select('profile_kind,display_name')
-      .eq('user_id', user.id)
-      .maybeSingle();
-    if (error) return;
-    // Read the canonical profile name, not potentially stale signup metadata.
-    // A profile edit from Android is now reflected on the website account page.
-    if (activePanel === 'account' && document.querySelector('#account-email').textContent === (user.email ?? '')) {
-      const latestName = typeof data?.display_name === 'string' ? data.display_name.trim() : '';
-      if (latestName) document.querySelector('#account-name').textContent = latestName;
-    }
-    if (['companion', 'both'].includes(data?.profile_kind)) incoming.hidden = false;
-  } catch {}
+function showAccountView(name,{focus=true}={}){
+  const screens=[...document.querySelectorAll('[data-account-screen]')];
+  if(!screens.some(screen=>screen.dataset.accountScreen===name))return;
+  accountView=name;
+  document.body.dataset.accountView=name;
+  screens.forEach(screen=>{screen.hidden=screen.dataset.accountScreen!==name;});
+  if(name==='privacy'){
+    const boundaries=document.querySelector('#account-boundaries');
+    if(boundaries)boundaries.open=false;
+  }
+  if(focus){
+    window.scrollTo({top:0,left:0,behavior:'instant'});
+    document.querySelector('[data-account-screen="'+name+'"] .account-hub-heading')?.focus({preventScroll:true});
+  }
 }
+document.querySelectorAll('[data-account-open]').forEach(button=>button.addEventListener('click',()=>{
+  if(activePanel!=='account'||busy)return;
+  accountViewStack.push(accountView);
+  showAccountView(button.dataset.accountOpen);
+}));
+document.querySelectorAll('[data-account-back]').forEach(button=>button.addEventListener('click',()=>{
+  if(activePanel!=='account'||busy)return;
+  showAccountView(accountViewStack.pop()||'home');
+}));
 
-function renderAccount(user) {
-  // User metadata is display-only. Never use it for roles or verification badges.
-  const name = typeof user.user_metadata?.display_name === 'string' ? user.user_metadata.display_name.trim().slice(0, 60) : 'friend';
-  document.querySelector('#account-name').textContent = name || 'friend';
-  document.querySelector('#account-email').textContent = user.email ?? '';
-  // Do not auto-focus the account heading on session restore. On phones that
-  // scrolls past the story/photo and also leaves a focus outline around Welcome.
-  showPanel('account', { focus: false });
+function resetAccountPhoto(name){
+  const image=document.querySelector('#account-avatar-photo');
+  const initial=document.querySelector('#account-avatar-initial');
+  if(initial)initial.textContent=(name||'S').trim().slice(0,1).toUpperCase()||'S';
+  if(image){image.hidden=true;image.removeAttribute('src');image.onload=image.onerror=null;}
+}
+async function refreshAccountActions(user,epoch){
+  if(!appClient||!user?.id)return;
+  const current=()=>epoch===accountEpoch&&activePanel==='account'&&document.querySelector('#account-email').textContent===(user.email??'');
+  try{
+    const {data,error}=await appClient.from('member_profiles')
+      .select('profile_kind,display_name,avatar_path').eq('user_id',user.id).maybeSingle();
+    if(error||!current())return;
+    const latestName=typeof data?.display_name==='string'?data.display_name.trim():'';
+    if(latestName){document.querySelector('#account-name').textContent=latestName;resetAccountPhoto(latestName);}
+    const link=document.querySelector('#account-companion-link');
+    if(link){
+      const isCompanion=['companion','both'].includes(data?.profile_kind);
+      link.querySelector('strong').textContent=isCompanion?'Companion Profile':'Become a Companion';
+      link.querySelector('small').textContent=isCompanion?'Manage your public profile':'Set your profile, rate and availability';
+    }
+    const path=data?.avatar_path;
+    let src=avatarAsset(path);
+    // Only request a private photo from the signed-in member's own folder.
+    if(!src&&typeof path==='string'&&path.startsWith(user.id+'/')){
+      const result=await appClient.storage.from('profile-photos').createSignedUrl(path,300);
+      if(!result.error)src=result.data?.signedUrl;
+    }
+    if(!src||!current())return;
+    const image=document.querySelector('#account-avatar-photo');
+    if(image){
+      image.onload=()=>{if(current())image.hidden=false;};
+      image.onerror=()=>{image.hidden=true;};
+      image.src=src;
+    }
+  }catch{/* Keep initials and the account navigation usable if the profile is unavailable. */}
+}
+function renderAccount(user){
+  // Metadata is display-only; access controls are unchanged.
+  const name=typeof user.user_metadata?.display_name==='string'?user.user_metadata.display_name.trim().slice(0,60):'friend';
+  document.querySelector('#account-name').textContent=name||'friend';
+  document.querySelector('#account-email').textContent=user.email??'';
+  const verification=document.querySelector('#account-email-verification');
+  if(verification)verification.textContent=user.email_confirmed_at?'Email verified ✓':'Email verification unavailable';
+  resetAccountPhoto(name);
+  accountRecovery=false;
+  showPanel('account',{focus:false});
   startFeedbackPrompt(user);
   clearSecrets();
-  void refreshAccountActions(user);
+  void refreshAccountActions(user,++accountEpoch);
 }
 
 async function run(task, loadingMessage) {
@@ -249,7 +298,9 @@ document.querySelectorAll('[data-route]').forEach(link => {
   link.addEventListener('click', event => {
     event.preventDefault();
     if (busy) return;
-    const pendingEmail = flow?.getChallenge()?.email
+    if(activePanel==='account'&&link.dataset.route==='forgot')accountRecovery=true;
+    const pendingEmail = (activePanel==='account'?document.querySelector('#account-email').textContent.trim():'')
+      || flow?.getChallenge()?.email
       || (activePanel === 'signup' ? document.querySelector('#signup-email').value.trim() : '')
       || (activePanel === 'login' ? document.querySelector('#login-email').value.trim() : '');
     if (pendingEmail && link.dataset.route === 'login') document.querySelector('#login-email').value = pendingEmail;
@@ -259,12 +310,14 @@ document.querySelectorAll('[data-route]').forEach(link => {
     // Immediately clear the recovery grant before changing screens.
     if (flow) void flow.cancelChallenge();
     showPanel(link.dataset.route);
+    if(accountRecovery&&link.dataset.route==='forgot')window.scrollTo({top:0,left:0,behavior:'instant'});
   });
 });
 
 window.addEventListener('hashchange', () => {
   const name = location.hash.slice(1);
   if (name === 'account-boundaries') {
+    if(activePanel==='account')showAccountView('privacy',{focus:false});
     document.querySelector('#account-boundaries').open = true;
     return;
   }
