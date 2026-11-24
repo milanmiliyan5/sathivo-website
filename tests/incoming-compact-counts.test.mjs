@@ -10,7 +10,7 @@ const labels=['My Requests','Received','Pending','Accepted','Completed','Cancell
 
 test('Requests is a vertically stacked seven-card hub with a same-page Back view',async()=>{
  const html=await read('requests.html');
- assert.match(html,/<h1 class="incoming-compact-title">Requests<\/h1>/);
+ assert.match(html,/<section class="request-page-intro" aria-labelledby="requests-title"><h1 id="requests-title" class="incoming-compact-title">Requests<\/h1><\/section>/);
  assert.doesNotMatch(html,/<section class="page-head">|PRIVATE CONVERSATIONS|Sathivo does not collect payment\. Any cash/);
  assert.match(html,/<nav id="request-menu" class="request-hub"[^>]* hidden>/);
  assert.match(html,/<section id="request-detail" class="request-detail"[^>]* hidden>/);
@@ -25,7 +25,7 @@ test('Requests is a vertically stacked seven-card hub with a same-page Back view
   assert.match(html,new RegExp('data-count-for="'+types[i]+'"'));
   assert.ok(html.includes('class="request-hub-name">'+labels[i]+'</span>'));
  }
- assert.match(html,/requests-compact\.css\?v=20261124-heading-left-1/);
+ assert.match(html,/requests-compact\.css\?v=20261124-stable-heading-1/);
  assert.match(html,/requests-page\.js\?v=20261124-vertical-hub-1/);
 });
 test('My Requests and Received count separate directions; completed is not cancelled',async()=>{
@@ -93,17 +93,29 @@ test('Requests cards have vertical mobile layout, keyboard and safe-area accessi
  assert.equal((css.match(/\{/g)||[]).length,(css.match(/\}/g)||[]).length);
 });
 
-test('Requests heading is left aligned above the cards without a decorative box',async()=>{
+
+test('Requests heading is static, left aligned and kept visible like Explore',async()=>{
  const html=await read('requests.html');
  const css=await read('requests-compact.css');
- const title=html.indexOf('<h1 class="incoming-compact-title">Requests</h1>');
- const cards=html.indexOf('id="request-menu"');
- assert.ok(title>=0&&cards>title);
- const style=css.match(/body\.sathivo-2d \.incoming-compact-page \.incoming-compact-title \{([^}]+)\}/);
- assert.ok(style,'Heading rule');
- assert.match(style[1],/text-align:left!important/);
- assert.match(style[1],/padding:0!important/);
- assert.match(style[1],/background:transparent!important/);
- assert.match(style[1],/border:0!important/);
- assert.match(style[1],/box-shadow:none!important/);
+ const js=await read('js/requests-page.js');
+ const title='<section class="request-page-intro" aria-labelledby="requests-title"><h1 id="requests-title" class="incoming-compact-title">Requests</h1></section>';
+ assert.ok(html.includes(title));
+ assert.ok(html.indexOf(title)<html.indexOf('id="request-menu"'));
+ assert.ok(html.indexOf('id="request-menu"')<html.indexOf('id="request-detail"'));
+ const match=css.match(/body\.sathivo-2d \.incoming-compact-page \.request-page-intro h1\{([^}]+)\}/);
+ assert.ok(match,'Scoped heading rule exists');
+ const style=match[1];
+ for(const declaration of [
+  'font-family:var(--serif)',
+  'font-size:clamp(1.45rem,3.3vw,2rem)!important',
+  'text-align:left!important',
+  'visibility:visible!important',
+  'opacity:1!important',
+  'transform:none!important',
+  'background:transparent!important',
+  'border:0!important',
+  'box-shadow:none!important'
+ ])assert.ok(style.includes(declaration),declaration);
+ assert.match(css,/\.request-page-intro h1\{\s*font-size:1\.45rem!important;line-height:1\.18/);
+ assert.doesNotMatch(js,/getElementById\('requests-title'\)/);
 });
