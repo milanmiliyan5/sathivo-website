@@ -1,7 +1,7 @@
 import {showCompletedBookingRating} from './booking-rating-dialog.js?v=20261122-1';
 import {renderBookingProgress} from './booking-progress.js?v=20261025-polish-1';
 import {offerCompletionFeedback} from './feedback-prompt.js?v=20261119-feedback-1';
-import {confirmCompletion,appendRecoveryControls,runRecovery} from './booking-recovery.js?v=20261116-1';
+import {confirmCompletion,appendRecoveryControls,runRecovery,completionState,completionLabel,submitCompletion} from './booking-recovery.js?v=20261124-mutual-completion-1';
 import {withCurrentBookingNames} from './booking-name-sync.js?v=20261030-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
@@ -83,7 +83,7 @@ function receivedCard(r){
   decline.onclick=()=>{if(confirm('Decline this booking request?')){accept.disabled=decline.disabled=true;void update(r.id,'declined')}};a.append(accept,decline);
  }else if(r.status==='accepted'){
   const chat=el('a','Open chat & photos ↗','button button-primary');chat.href='chat.html?booking='+encodeURIComponent(r.id);
-  const done=el('button','Mark completed','button button-outline');done.onclick=async()=>{if(await confirmCompletion()){done.disabled=true;await update(r.id,'completed');done.disabled=false}};const cancel=el('button','Cancel booking','button button-outline');cancel.onclick=()=>void cancelBooking(r);a.append(chat,done,cancel);
+  const done=el('button',completionLabel(r,user.id),'button button-outline');done.disabled=completionState(r,user.id)==='waiting';done.onclick=async()=>{if(await confirmCompletion()){done.disabled=true;await finishBooking(r.id);done.disabled=false}};const cancel=el('button','Cancel booking','button button-outline');cancel.onclick=()=>void cancelBooking(r);a.append(chat,done,cancel);
  }
  appendRecoveryControls(a,r,user.id,recoverBooking);if(a.childNodes.length)n.append(a);if(r.status==='cancelled'&&r.cancel_reason)n.append(el('p','Cancelled · '+cancellationLabel(r.cancel_reason)+(r.cancel_note?' — '+r.cancel_note:''),'cancellation-note'));if(r.status==='accepted'&&r.agreed_hourly_rate)n.append(el('p','Deal recorded at ₹'+Number(r.agreed_hourly_rate).toLocaleString('en-IN')+'/hour. Coordinate details in chat. Payment stays outside Sathivo.','payment-note'));return n;
 }
@@ -179,6 +179,14 @@ async function load(){
 }
 async function cancelBooking(r){const answer=await askCancellationReason();if(!answer)return;await update(r.id,'cancelled',{cancel_reason:answer.reason,cancel_note:answer.note||null})}
 async function recoverBooking(id,action){try{const result=await runRecovery(client,id,action);openView('all',{focus:false});await load();$('status').textContent=result==='accepted'?'Booking reopened.':result==='pending'?'Reopen request sent.':'Reopen request declined.';}catch(e){$('status').textContent=e.message||'Could not update recovery request.';}}
+async function finishBooking(id){
+ try{
+  const result=await submitCompletion(client,id);
+  if(result==='completed'){offerCompletionFeedback(user);openView('completed',{focus:false});void sendBookingPush(client,id,'completed');}
+  await load();
+  $('status').textContent=result==='completed'?'Booking completed.':'Waiting for the other member to confirm completion.';
+ }catch{$('status').textContent='Could not confirm completion. Please try again.';}
+}
 async function update(id,status,extra={}){
  const card=document.getElementById('request-'+id);
  if(card?.dataset.updating==='true')return;
