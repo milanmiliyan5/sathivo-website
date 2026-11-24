@@ -166,10 +166,11 @@ function activeMemberBadge(row){
  return badge;
 }
 
-async function loadFavorites(){
+async function loadFavorites({strict=false}={}){
  favoriteIds=new Set();
  if(!currentUser)return;
  const {data,error}=await client.from('companion_favorites').select('companion_public_id').eq('user_id',currentUser.id);
+ if(error&&strict)throw Error('Could not load saved companions. Please try again.');
  if(!error)(data||[]).forEach(r=>favoriteIds.add(r.companion_public_id));
 }
 function syncFavoriteButtons(publicId){
@@ -274,7 +275,7 @@ async function list({fromPagination=false}={}){
   const all=data||[],rows=await withCompletedCounts(all.slice(0,24));
   if(seq!==request)return;
   $('results').replaceChildren(...feedNodes(rows));$('empty').hidden=rows.length>0;
-  $('status').textContent=rows.length?'Explore companions · '+scopeName()+' · '+sortLabel()+'.':'No published companions match these filters yet.';
+  $('status').textContent=rows.length?(savedOnly?'Saved companions':'Explore companions')+' · '+scopeName()+' · '+sortLabel()+'.':(savedOnly?'No saved public companions match these filters.':'No published companions match these filters yet.');
   $('previous').disabled=page===0;$('next').disabled=all.length<=24;$('page-label').textContent='';
   if(fromPagination)scrollToDirectoryResults(rows.length>0);
  }catch(error){if(seq!==request)return;$('results').replaceChildren();$('status').textContent='Could not load companions. Please try again.';$('retry').hidden=false;if(fromPagination)scrollToDirectoryResults(false);}
@@ -505,7 +506,19 @@ async function init(){
    locationsLoaded=false;
    console.warn('Sathivo location index temporarily unavailable:',error?.code||error?.message||'network error');
   }
-  if(directory)await list();
+  if(directory&&new URLSearchParams(location.search).get('saved')==='1'){
+   // Saved profiles are private account data. Authenticate before applying
+   // the existing saved-only filter; ordinary Explore remains public-first.
+   client=await getSathivoClient();
+   const auth=await client.auth.getUser();
+   if(auth.error)throw Error('Could not restore your account. Please sign in and retry.');
+   currentUser=auth.data?.user||null;
+   if(!currentUser){location.href='account.html#login';return;}
+   await loadFavorites({strict:true});
+   authStarted=true;
+   $('saved-only').checked=true;
+   await list();
+  }else if(directory)await list();
   else await detail();
   // Restore optional logged-in features only after public content is visible.
   try{
