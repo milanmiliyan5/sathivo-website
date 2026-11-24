@@ -5,20 +5,22 @@ body.sathivo-2d .incoming-compact-page {
   padding-top:18px;
   padding-bottom:calc(125px + env(safe-area-inset-bottom));
 }
-body.sathivo-2d .incoming-compact-page .incoming-compact-title {
-  display:block!important;
-  width:100%;
-  margin:0 0 15px!important;
-  padding:0!important;
-  text-align:left!important;
-  background:transparent!important;
-  border:0!important;
-  box-shadow:none!important;
-  color:#45283B;
-  font-size:clamp(1.42rem,3vw,1.9rem)!important;
-  line-height:1.22!important;
-  letter-spacing:-.025em;
-  font-weight:800;
+/* Match the static Explore Companions heading. These nodes sit outside
+   the JS-rendered request menu/detail, so refreshes never replace the title. */
+body.sathivo-2d .incoming-compact-page .request-page-intro{
+ display:block!important;position:relative;flex:none;width:100%;
+ margin:0 0 14px;padding:0;max-width:100%;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ opacity:1!important;visibility:visible!important;transform:none!important;
+}
+body.sathivo-2d .incoming-compact-page .request-page-intro h1{
+ display:block!important;position:static!important;width:auto;max-width:none;
+ margin:0!important;padding:0!important;text-align:left!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ opacity:1!important;visibility:visible!important;transform:none!important;
+ color:#43283A;font-family:var(--serif);
+ font-size:clamp(1.45rem,3.3vw,2rem)!important;
+ font-weight:800;letter-spacing:-.025em;line-height:1.22;
 }
 body.sathivo-2d .incoming-compact-page #status {
   margin:0 0 12px;color:#775466;
@@ -129,8 +131,11 @@ body.sathivo-2d .incoming-compact-page .request-detail #empty h3 {
     padding-top:13px;
     padding-bottom:calc(140px + env(safe-area-inset-bottom));
   }
-  body.sathivo-2d .incoming-compact-page .incoming-compact-title{
-    font-size:1.42rem!important;margin:0 0 13px!important;
+  body.sathivo-2d .incoming-compact-page .request-page-intro{
+    margin-bottom:12px;
+  }
+  body.sathivo-2d .incoming-compact-page .request-page-intro h1{
+    font-size:1.45rem!important;line-height:1.18;
   }
   body.sathivo-2d .incoming-compact-page .request-hub {gap:11px}
   body.sathivo-2d .incoming-compact-page .request-hub-card {
