@@ -18,6 +18,25 @@ let activePanel = 'login';
 let appClient = null;
 let accountEpoch=0, accountView='home', accountViewStack=[];
 let accountRecovery=false;
+const accountViewNames=new Set(['home','settings','notifications','nearby','privacy']);
+function readAccountHistory(state){
+ const entry=state?.sathivoAccount;
+ if(!entry||!Array.isArray(entry.stack)||!accountViewNames.has(entry.view))return null;
+ if(entry.stack.length>8||!entry.stack.every(name=>accountViewNames.has(name)))return null;
+ if(entry.view==='home'&&entry.stack.length)return null;
+ if(entry.view!=='home'&&entry.stack[0]!=='home')return null;
+ return {view:entry.view,stack:[...entry.stack]};
+}
+const initialAccountHistory=location.hash==='#account'?readAccountHistory(history.state):null;
+let restoredAccountHistory=false, accountBackPending=false, accountRecoveryUser=null;
+function writeAccountHistory(mode='replaceState'){
+ history[mode]({sathivoAccount:{view:accountView,stack:[...accountViewStack]}},'', '#account');
+}
+function restoreAccountHistory(entry,{focus=true}={}){
+ accountViewStack=[...entry.stack];
+ showAccountView(entry.view,{focus});
+}
+
 // Only allow known relative booking email destinations, never external URLs.
 // Capture the query before the account page strips it for auth safety.
 const emailBookingReturnRoute=(()=>{
@@ -61,7 +80,8 @@ function showPanel(name, { focus = true } = {}) {
     if (link.dataset.route === name) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
   });
-  history.replaceState(null, '', '#' + name);
+  if(name==='account')writeAccountHistory();
+  else history.replaceState(null, '', '#' + name);
   announce();
   if (focus) document.querySelector(`[data-panel="${name}"] h2`)?.focus();
   updateResend();
@@ -118,13 +138,42 @@ function showAccountView(name,{focus=true}={}){
 }
 document.querySelectorAll('[data-account-open]').forEach(button=>button.addEventListener('click',()=>{
   if(activePanel!=='account'||busy)return;
+  const next=button.dataset.accountOpen;
+  if(accountBackPending||next===accountView||!accountViewNames.has(next))return;
   accountViewStack.push(accountView);
-  showAccountView(button.dataset.accountOpen);
+  showAccountView(next);
+  writeAccountHistory('pushState');
 }));
 document.querySelectorAll('[data-account-back]').forEach(button=>button.addEventListener('click',()=>{
   if(activePanel!=='account'||busy)return;
+  if(accountBackPending)return;
+  const entry=readAccountHistory(history.state);
+  if(entry?.view===accountView&&entry.stack.length){
+    accountBackPending=true;history.back();return;
+  }
   showAccountView(accountViewStack.pop()||'home');
+  writeAccountHistory();
 }));
+window.addEventListener('popstate',event=>{
+  accountBackPending=false;
+  const entry=readAccountHistory(event.state);
+  if(!entry)return;
+  if(activePanel==='account'){restoreAccountHistory(entry);return;}
+  if(!accountRecovery||!accountRecoveryUser||busy||!flow)return;
+  // Revalidate the existing main session; do not restore any recovery grant.
+  const priorUser=accountRecoveryUser;
+  void (async()=>{
+    try{
+      await flow.cancelChallenge();
+      clearSecrets();
+      const current=await flow.currentUser();
+      if(location.hash!=='#account')return;
+      if(!current||current.id!==priorUser.id){accountRecovery=false;accountRecoveryUser=null;showPanel('login');return;}
+      renderAccount(current);
+      restoreAccountHistory(entry);writeAccountHistory();
+    }catch{accountRecovery=false;accountRecoveryUser=null;showPanel('login');}
+  })();
+});
 
 function resetAccountPhoto(name){
   const image=document.querySelector('#account-avatar-photo');
@@ -172,7 +221,13 @@ function renderAccount(user){
   if(verification)verification.textContent=user.email_confirmed_at?'Email verified ✓':'Email verification unavailable';
   resetAccountPhoto(name);
   accountRecovery=false;
+  accountRecoveryUser=user;
   showPanel('account',{focus:false});
+  if(!restoredAccountHistory&&initialAccountHistory){
+    restoreAccountHistory(initialAccountHistory,{focus:false});
+    writeAccountHistory();
+  }
+  restoredAccountHistory=true;
   startFeedbackPrompt(user);
   clearSecrets();
   void refreshAccountActions(user,++accountEpoch);
@@ -257,6 +312,7 @@ bindForm('#otp-form', async values => {
 
 bindForm('#password-form', async values => {
   const result = await flow.changePassword(values.password, values.confirmation);
+  accountRecovery=false;accountRecoveryUser=null;
   clearSecrets();
   showPanel('login');
   announce(result.sessionsRevoked
@@ -276,6 +332,7 @@ resendButton.addEventListener('click', () => void run(async () => {
 signoutButton.addEventListener('click', () => void run(async () => {
   if (typeof window.sathivoPushUnregister === 'function') await window.sathivoPushUnregister();
   await flow.logout();
+  accountRecovery=false;accountRecoveryUser=null;
   clearSecrets();
   document.querySelector('#account-name').textContent = 'friend';
   document.querySelector('#account-email').textContent = '';
@@ -298,7 +355,10 @@ document.querySelectorAll('[data-route]').forEach(link => {
   link.addEventListener('click', event => {
     event.preventDefault();
     if (busy) return;
-    if(activePanel==='account'&&link.dataset.route==='forgot')accountRecovery=true;
+    if(activePanel==='account'&&link.dataset.route==='forgot'){
+      accountRecovery=true;
+      history.pushState({sathivoRecovery:true},'', '#forgot');
+    }
     const pendingEmail = (activePanel==='account'?document.querySelector('#account-email').textContent.trim():'')
       || flow?.getChallenge()?.email
       || (activePanel === 'signup' ? document.querySelector('#signup-email').value.trim() : '')
@@ -317,10 +377,14 @@ document.querySelectorAll('[data-route]').forEach(link => {
 window.addEventListener('hashchange', () => {
   const name = location.hash.slice(1);
   if (name === 'account-boundaries') {
-    if(activePanel==='account')showAccountView('privacy',{focus:false});
+    if(activePanel==='account'){
+      if(accountView!=='privacy'){accountViewStack.push(accountView);showAccountView('privacy',{focus:false});}
+      writeAccountHistory();
+    }
     document.querySelector('#account-boundaries').open = true;
     return;
   }
+  if(name==='account'&&readAccountHistory(history.state)&&(activePanel==='account'||accountRecovery))return;
   if (busy) { history.replaceState(null, '', '#' + activePanel); return; }
   if (!publicRoutes.has(name)) { history.replaceState(null, '', '#' + activePanel); return; }
   if (flow) void flow.cancelChallenge();
