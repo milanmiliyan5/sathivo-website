@@ -255,18 +255,31 @@ function scrollToDirectoryResults(hasProfiles){
  target.focus({preventScroll:true});
  target.scrollIntoView({block:'start',inline:'nearest',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
 }
+function showDirectoryEmpty(kind){
+ const copy={
+  saved:['heart','No saved companions','Save profiles you like to find them later.','Explore companions ↗'],
+  savedFiltered:['heart','No matching saved companions','Try changing your filters or explore more profiles.','Explore companions ↗'],
+  search:['search','No matching companions','Try a different location or activity.','Clear filters ↗']
+ }[kind];
+ $('empty').dataset.emptyKind=copy[0];
+ $('directory-empty-title').textContent=copy[1];
+ $('directory-empty-copy').textContent=copy[2];
+ $('directory-empty-action').textContent=copy[3];
+ $('status').textContent='';
+ $('empty').hidden=false;
+}
 async function list({fromPagination=false}={}){
  const seq=++request;$('empty').hidden=true;$('retry').hidden=true;$('previous').disabled=$('next').disabled=true;$('status').textContent='Finding good company…';
  $('results').replaceChildren(...Array.from({length:6},()=>{const n=el('article',undefined,'companion-card companion-skeleton');n.innerHTML='<div class="portrait skeleton-block"></div><div class="card-copy"><i></i><i></i><i></i><i></i></div>';return n}));
  const savedOnly=$('saved-only').checked;
  if(savedOnly&&!currentUser){location.href='account.html#login';return}
  const savedIds=savedOnly?[...favoriteIds]:null;
- if(savedOnly&&!savedIds.length){$('results').replaceChildren();$('empty').hidden=false;$('status').textContent='No saved companions yet.';$('previous').disabled=$('next').disabled=true;$('page-label').textContent='';return}
+ if(savedOnly&&!savedIds.length){$('results').replaceChildren();showDirectoryEmpty('saved');$('previous').disabled=$('next').disabled=true;$('page-label').textContent='';return}
  if(!locationsLoaded&&($('state').value||$('district').value)){
   $('results').replaceChildren();$('status').textContent='Location filters are temporarily unavailable. Please try again.';$('retry').hidden=false;$('page-label').textContent='';return;
  }
  const locationIds=selectedLocationIds();
- if(locationIds!==null&&!locationIds.length){$('results').replaceChildren();$('empty').hidden=false;$('status').textContent='No companions in '+scopeName()+' yet.';$('previous').disabled=$('next').disabled=true;$('page-label').textContent='';return;}
+ if(locationIds!==null&&!locationIds.length){$('results').replaceChildren();showDirectoryEmpty(savedOnly?'savedFiltered':'search');$('previous').disabled=$('next').disabled=true;$('page-label').textContent='';return;}
  try{
   const sort=$('sort').value||'discover',discover=sort==='discover';
   const filters={
@@ -296,7 +309,8 @@ async function list({fromPagination=false}={}){
    if(all.length>24)discoverCursors.set(page+1,all[23].public_id);
   }
   $('results').replaceChildren(...feedNodes(rows));$('empty').hidden=rows.length>0;
-  $('status').textContent=rows.length?(savedOnly?'Saved companions':'Explore companions')+' · '+scopeName()+' · '+sortLabel()+'.':(savedOnly?'No saved public companions match these filters.':'No published companions match these filters yet.');
+  if(rows.length)$('status').textContent=(savedOnly?'Saved companions':'Explore companions')+' · '+scopeName()+' · '+sortLabel()+'.';
+  else showDirectoryEmpty(savedOnly?'savedFiltered':'search');
   $('previous').disabled=page===0;$('next').disabled=all.length<=24;$('page-label').textContent='';
   if(fromPagination)scrollToDirectoryResults(rows.length>0);
  }catch(error){if(seq!==request)return;$('results').replaceChildren();$('status').textContent='Could not load companions. Please try again.';$('retry').hidden=false;if(fromPagination)scrollToDirectoryResults(false);}
@@ -473,7 +487,7 @@ async function detail(){
   try{
    const {data,error:reviewError}=await publicClient.rpc('public_companion_review_comments',{p_public_id:r.public_id,p_limit:15});
    if(reviewError)throw reviewError;
-   if(!data?.length)reviewList.append(el('p','No public written reviews yet. Only customers with completed bookings can rate. Written comments appear only with their permission.','public-review-empty'));
+   if(!data?.length)reviewList.append(el('p','No written reviews yet. Reviews are from completed bookings and appear with permission.','public-review-empty'));
    else for(const item of data){
     const review=el('article',undefined,'public-review');
     review.append(el('strong','★ '+Number(item.rating)+' / 5'));
