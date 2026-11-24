@@ -329,3 +329,25 @@ body.account-page.sathivo-2d .account-skeleton-row{cursor:default;pointer-events
 @media(max-width:640px){.account-skeleton-icon{flex-basis:38px;width:38px;height:38px}}
 @media(max-width:360px){.account-skeleton-icon{flex-basis:34px;width:34px;height:34px}.account-skeleton-circle{flex-basis:54px;width:54px;height:54px}}
 @media(prefers-reduced-motion:reduce){.account-skeleton-circle,.account-skeleton-icon,.account-skeleton-copy i,.account-skeleton-trust,.account-skeleton-chevron{animation:none}}
+
+/* Public Preview uses the canonical Explore card, not a second profile template. */
+.account-identity-status-row{display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;min-width:0}
+.account-identity-status-row #account-email-verification{font-size:.7rem;color:#276247;font-weight:700;white-space:nowrap}
+body.account-page .account-public-preview-pill{display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:30px;max-width:100%;padding:4px 8px;border:1px solid #d9bccb;border-radius:999px;background:#f5e5ed;color:#723e59;font:700 .68rem/1.3 inherit;font-family:inherit;font-size:.68rem;font-weight:700;box-shadow:none;cursor:pointer;white-space:nowrap}
+.account-public-preview-pill svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.account-public-preview-pill:focus-visible{outline:2px solid #723e59;outline-offset:2px}
+.account-public-preview #public-preview-status{margin:0 0 12px;color:#75636f;font-size:.82rem;line-height:1.45}
+.account-public-preview .account-preview-directory{padding:0!important;min-height:0;max-width:440px;margin:0}
+.account-public-preview #results{grid-template-columns:minmax(0,1fr);gap:0;margin:0}
+.account-public-preview #results:empty{display:none}
+body.account-page .account-public-preview #results .card-copy h2{font-size:1.7rem;line-height:1.2;margin:0}
+.account-public-preview #results .favorite-button:disabled{opacity:1;cursor:default;box-shadow:2px 2px 0 #ead0da}
+.account-preview-actions{max-width:440px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:16px}
+.account-preview-actions .button{display:flex;align-items:center;justify-content:center;text-align:center;font-size:.78rem;min-height:44px;padding:8px 10px}
+.account-preview-share-links{grid-column:1/-1;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px 18px}
+.account-preview-share-links a,.account-preview-share-links button{display:inline-flex;min-height:36px;align-items:center;font:inherit;font-size:.78rem;font-weight:650;color:#723e59;text-decoration:underline;text-underline-offset:3px;background:none;border:0;box-shadow:none;padding:4px 6px;cursor:pointer}
+.account-preview-share-links a{color:#276247}
+.account-preview-actions #public-preview-share-status{grid-column:1/-1;text-align:center;font-size:.74rem;color:#276247}
+.account-preview-actions #public-preview-share-status:empty{display:none}
+.account-preview-edit{display:inline-block;margin-top:16px;font-size:.82rem}
+@media(max-width:340px){.account-identity-status-row{gap:4px 6px}.account-preview-actions{grid-template-columns:1fr}}
