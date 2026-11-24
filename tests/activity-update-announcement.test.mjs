@@ -96,3 +96,17 @@ test('Profile tabs keep one form and preserve validation, publish and browser hi
  assert.doesNotMatch(js,/nearby_alert_preferences/);
  assert.match(css,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
 });
+
+test('Clean profile keeps avatar controls in a collapsed disclosure and consent fields',async()=>{
+ const html=await read('profile.html'),js=await read('js/profile-page.js'),css=await read('profile.css');
+ assert.match(html,/<details class="avatar-picker" id="profile-avatar-picker">/);
+ assert.match(html,/id="avatar-choices"/);
+ assert.match(html,/id="clear-avatar"/);
+ assert.doesNotMatch(html,/id="profile-mode-note"/);
+ assert.doesNotMatch(js,/profile-mode-note/);
+ assert.match(html,/name="adult_confirmed" type="checkbox" required/);
+ assert.match(html,/name="boundaries_accepted" type="checkbox" required/);
+ assert.match(html,/id="publish-consent"/);
+ assert.match(css,/#profile-status:empty\{display:none!important\}/);
+ assert.match(js,/message\(p\?'':'Complete your profile to get started\.'\)/);
+});
