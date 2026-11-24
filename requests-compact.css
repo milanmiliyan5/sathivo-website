@@ -4,7 +4,6 @@
 body.sathivo-2d .incoming-compact-page {
   padding-top:18px;
   padding-bottom:calc(125px + env(safe-area-inset-bottom));
-  overflow-anchor:none;
 }
 /* Match the static Explore Companions heading. These nodes sit outside
    the JS-rendered request menu/detail, so refreshes never replace the title. */
@@ -30,8 +29,11 @@ body.sathivo-2d .incoming-compact-page #status {
 body.sathivo-2d .incoming-compact-page #status:empty,
 body.sathivo-2d .incoming-compact-page [hidden] { display:none!important; }
 body.sathivo-2d .incoming-compact-page .request-hub {
+  /* Content list, not the global hamburger navigation. Stay in normal flow. */
   box-sizing:border-box;display:grid;gap:11px;
-  max-width:780px;margin:0;
+  position:static;inset:auto;width:100%;min-width:0;
+  grid-template-columns:minmax(0,1fr);align-items:stretch;
+  max-width:780px;margin:0;padding:0;
 }
 body.sathivo-2d .incoming-compact-page .request-hub-card {
   box-sizing:border-box;position:relative;
@@ -135,8 +137,8 @@ body.sathivo-2d .incoming-compact-page .request-detail #empty h3 {
   /* Normal document flow, like Explore: never cover the first card. */
   body.sathivo-2d .incoming-compact-page .request-page-intro{
     position:static!important;top:auto!important;z-index:auto!important;
-    margin:0 0 16px!important;padding:0!important;
-    background:transparent!important;overflow-anchor:none;
+    margin:0 0 12px!important;padding:0!important;
+    background:transparent!important;
   }
   body.sathivo-2d .incoming-compact-page .request-page-intro h1{
     font-size:1.45rem!important;line-height:1.18;
