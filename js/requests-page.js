@@ -1,7 +1,7 @@
 import {showCompletedBookingRating} from './booking-rating-dialog.js?v=20261122-1';
 import {renderBookingProgress} from './booking-progress.js?v=20261025-polish-1';
 import {offerCompletionFeedback} from './feedback-prompt.js?v=20261119-feedback-1';
-import {confirmCompletion,appendRecoveryControls,runRecovery,completionState,completionLabel,submitCompletion} from './booking-recovery.js?v=20261124-mutual-completion-1';
+import {confirmCompletion,appendRecoveryControls,runRecovery,completionState,completionLabel,submitCompletion} from './booking-recovery.js?v=20261124-companion-completion-1';
 import {withCurrentBookingNames} from './booking-name-sync.js?v=20261030-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
@@ -83,7 +83,11 @@ function receivedCard(r){
   decline.onclick=()=>{if(confirm('Decline this booking request?')){accept.disabled=decline.disabled=true;void update(r.id,'declined')}};a.append(accept,decline);
  }else if(r.status==='accepted'){
   const chat=el('a','Open chat & photos ↗','button button-primary');chat.href='chat.html?booking='+encodeURIComponent(r.id);
-  const done=el('button',completionLabel(r,user.id),'button button-outline');done.disabled=completionState(r,user.id)==='waiting';done.onclick=async()=>{if(await confirmCompletion()){done.disabled=true;await finishBooking(r.id);done.disabled=false}};const cancel=el('button','Cancel booking','button button-outline');cancel.onclick=()=>void cancelBooking(r);a.append(chat,done,cancel);
+  a.append(chat);
+  if(completionState(r,user.id)==='ready'){
+   const done=el('button',completionLabel(r,user.id),'button button-outline');done.onclick=async()=>{if(await confirmCompletion()){done.disabled=true;await finishBooking(r.id);done.disabled=false}};a.append(done);
+  }
+  const cancel=el('button','Cancel booking','button button-outline');cancel.onclick=()=>void cancelBooking(r);a.append(cancel);
  }
  appendRecoveryControls(a,r,user.id,recoverBooking);if(a.childNodes.length)n.append(a);if(r.status==='cancelled'&&r.cancel_reason)n.append(el('p','Cancelled · '+cancellationLabel(r.cancel_reason)+(r.cancel_note?' — '+r.cancel_note:''),'cancellation-note'));if(r.status==='accepted'&&r.agreed_hourly_rate)n.append(el('p','Deal recorded at ₹'+Number(r.agreed_hourly_rate).toLocaleString('en-IN')+'/hour. Coordinate details in chat. Payment stays outside Sathivo.','payment-note'));return n;
 }
@@ -184,7 +188,7 @@ async function finishBooking(id){
   const result=await submitCompletion(client,id);
   if(result==='completed'){offerCompletionFeedback(user);openView('completed',{focus:false});void sendBookingPush(client,id,'completed');}
   await load();
-  $('status').textContent=result==='completed'?'Booking completed.':'Waiting for the other member to confirm completion.';
+  $('status').textContent='Booking completed.';
  }catch{$('status').textContent='Could not confirm completion. Please try again.';}
 }
 async function update(id,status,extra={}){
