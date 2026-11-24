@@ -1,0 +1,96 @@
+/* Reversible Sathivo homepage free-to-join campaign. Delete link + promo section to restore original hero fee card. */
+@media screen{
+  .home-2d:has(#free-join-promo) .hero-fee-banner{display:none}
+}
+.home-2d #free-join-promo{
+  box-sizing:border-box;
+  display:grid;
+  grid-template-columns:132px minmax(0,1fr) minmax(230px,.65fr);
+  grid-template-areas:"stamp body benefits" "note note note";
+  align-items:center;
+  gap:16px 23px;
+  margin-block:10px 27px;
+  padding:22px 28px 15px;
+  border:1.5px solid #e9b2d0;
+  border-radius:25px;
+  background:linear-gradient(115deg,#fff4f9 0%,#fff7f9 48%,#f4e7ff 100%);
+  box-shadow:0 8px 27px rgba(107,48,80,.09);
+  color:#3b2531;
+}
+.home-2d .free-join-promo-stamp{
+  grid-area:stamp;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  width:116px;
+  height:116px;
+  border-radius:34%;
+  transform:rotate(-10deg);
+  border:1px solid #cf6494;
+  background:linear-gradient(145deg,#ed3989,#a13a72);
+  color:#fff;
+  box-shadow:0 6px 0 #efbed5,0 9px 20px rgba(132,35,83,.17);
+  line-height:1.15;
+}
+.home-2d .free-join-promo-stamp strong{font-size:1.65rem;font-weight:900;line-height:1.1}
+.home-2d .free-join-promo-stamp>span:nth-of-type(2){font-size:.8rem;font-weight:850;letter-spacing:.075em}
+.home-2d .free-join-promo-spark{position:absolute;top:6px;left:12px;font-size:1.3rem}
+.home-2d .free-join-promo-heart{position:absolute;bottom:4px;right:10px;font-size:1.3rem}
+.home-2d .free-join-promo-body{grid-area:body;min-width:0}
+.home-2d .free-join-promo-kicker{margin:0 0 6px;color:#a03c6c;letter-spacing:.1em;font-size:.64rem;font-weight:850}
+.home-2d .free-join-promo-body h2{margin:0 0 8px;color:#3b2531;font-size:clamp(1.55rem,2.3vw,2.15rem);letter-spacing:-.035em;line-height:1.16}
+.home-2d .free-join-promo-body h2 em{font-style:normal;color:#c12e75}
+.home-2d .free-join-promo-body>p:not(.free-join-promo-kicker){margin:0;color:#694d5e;line-height:1.55;font-size:.85rem}
+.home-2d .free-join-promo-cta{
+  display:inline-flex;align-items:center;justify-content:center;gap:12px;
+  margin-top:12px;min-height:39px;padding:8px 15px;
+  border:1px solid #9b3963;border-radius:11px;
+  background:#a13a63;color:white;text-decoration:none;
+  font-size:.81rem;line-height:1.2;font-weight:800;
+  transition:background-color .18s ease,transform .18s ease;
+}
+.home-2d .free-join-promo-cta:hover{background:#8b3055;transform:translateY(-1px)}
+.home-2d .free-join-promo-cta:focus-visible{outline:3px solid #7b2a58;outline-offset:3px}
+.home-2d .free-join-promo-benefits{
+  grid-area:benefits;
+  display:grid;gap:11px;min-width:0;
+  margin:0;padding:0;list-style:none;
+}
+.home-2d .free-join-promo-benefits li{display:flex;align-items:start;gap:9px;font-size:.79rem;font-weight:750;line-height:1.35}
+.home-2d .free-join-promo-benefits li>span{
+  flex:0 0 19px;display:grid;place-items:center;width:19px;height:19px;border-radius:50%;
+  background:#af346b;color:#fff;font-size:.72rem;font-weight:900;
+}
+.home-2d .free-join-promo-disclaimer{
+  grid-area:note;
+  margin:0;padding-top:11px;
+  border-top:1px solid rgba(154,71,113,.15);
+  color:#735666;text-align:center;font-size:.69rem;line-height:1.5;
+}
+@media(max-width:960px){
+ .home-2d #free-join-promo{grid-template-columns:104px minmax(0,1fr);grid-template-areas:"stamp body" "benefits benefits" "note note";gap:16px 19px}
+ .home-2d .free-join-promo-stamp{width:95px;height:95px}
+ .home-2d .free-join-promo-benefits{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+}
+@media(max-width:640px){
+ .home-2d #free-join-promo{
+  width:calc(100% - 34px);grid-template-columns:72px minmax(0,1fr);
+  grid-template-areas:"stamp body" "benefits benefits" "note note";
+  gap:12px 13px;margin-top:0;margin-bottom:24px;
+  padding:15px 14px 13px;border-radius:18px;
+ }
+ .home-2d .free-join-promo-stamp{width:69px;height:69px;border-radius:25%;box-shadow:0 4px 0 #efbed5}
+ .home-2d .free-join-promo-stamp strong{font-size:1rem}
+ .home-2d .free-join-promo-stamp>span:nth-of-type(2){font-size:.54rem}
+ .home-2d .free-join-promo-spark,.home-2d .free-join-promo-heart{font-size:.85rem}
+ .home-2d .free-join-promo-kicker{font-size:.56rem;letter-spacing:.06em}
+ .home-2d .free-join-promo-body h2{font-size:clamp(1.2rem,5vw,1.53rem);margin-bottom:5px}
+ .home-2d .free-join-promo-body>p:not(.free-join-promo-kicker){font-size:.73rem;line-height:1.45}
+ .home-2d .free-join-promo-cta{font-size:.74rem;min-height:37px;margin-top:9px;padding:7px 11px}
+ .home-2d .free-join-promo-benefits{grid-template-columns:1fr;gap:7px}
+ .home-2d .free-join-promo-benefits li{font-size:.74rem}
+ .home-2d .free-join-promo-disclaimer{font-size:.66rem}
+}
+@media(prefers-reduced-motion:reduce){.home-2d .free-join-promo-cta{transition:none}}
