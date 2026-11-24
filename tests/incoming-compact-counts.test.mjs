@@ -25,7 +25,7 @@ test('Requests is a vertically stacked seven-card hub with a same-page Back view
   assert.match(html,new RegExp('data-count-for="'+types[i]+'"'));
   assert.ok(html.includes('class="request-hub-name">'+labels[i]+'</span>'));
  }
- assert.match(html,/requests-compact\.css\?v=20261124-vertical-hub-1/);
+ assert.match(html,/requests-compact\.css\?v=20261124-heading-left-1/);
  assert.match(html,/requests-page\.js\?v=20261124-vertical-hub-1/);
 });
 test('My Requests and Received count separate directions; completed is not cancelled',async()=>{
@@ -91,4 +91,19 @@ test('Requests cards have vertical mobile layout, keyboard and safe-area accessi
  assert.match(css,/padding-bottom:calc\(140px \+ env\(safe-area-inset-bottom\)\)/);
  assert.doesNotMatch(css,/grid-template-columns:repeat\(4/);
  assert.equal((css.match(/\{/g)||[]).length,(css.match(/\}/g)||[]).length);
+});
+
+test('Requests heading is left aligned above the cards without a decorative box',async()=>{
+ const html=await read('requests.html');
+ const css=await read('requests-compact.css');
+ const title=html.indexOf('<h1 class="incoming-compact-title">Requests</h1>');
+ const cards=html.indexOf('id="request-menu"');
+ assert.ok(title>=0&&cards>title);
+ const style=css.match(/body\.sathivo-2d \.incoming-compact-page \.incoming-compact-title \{([^}]+)\}/);
+ assert.ok(style,'Heading rule');
+ assert.match(style[1],/text-align:left!important/);
+ assert.match(style[1],/padding:0!important/);
+ assert.match(style[1],/background:transparent!important/);
+ assert.match(style[1],/border:0!important/);
+ assert.match(style[1],/box-shadow:none!important/);
 });
