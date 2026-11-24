@@ -108,8 +108,9 @@ $('chats-retry').onclick=()=>{if(user)void load();else void init();};
 async function init(){try{
  client=await getSathivoClient();
  const u=await client.auth.getUser();
+ user=u.data?.user||null;
+ if(!user&&(!u.error||u.error.name==='AuthSessionMissingError'||u.error.status===401)){location.replace('account.html#login');return}
  if(u.error)throw u.error;
- user=u.data.user;if(!user){location.replace('account.html#login');return}
  if(disposed)return;
  await load();
  if(disposed)return;
