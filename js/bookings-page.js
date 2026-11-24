@@ -1,6 +1,6 @@
 import {showCompletedBookingRating} from './booking-rating-dialog.js?v=20261122-1';
 import {offerCompletionFeedback} from './feedback-prompt.js?v=20261119-feedback-1';
-import {confirmCompletion,appendRecoveryControls,runRecovery} from './booking-recovery.js?v=20261116-1';
+import {confirmCompletion,appendRecoveryControls,runRecovery,completionState,completionLabel,submitCompletion} from './booking-recovery.js?v=20261124-mutual-completion-1';
 import {withCurrentBookingNames} from './booking-name-sync.js?v=20261030-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
@@ -67,7 +67,7 @@ function card(r){const mine=r.customer_id===user.id,other=mine?r.companion_displ
  const a=el('div',undefined,'booking-actions');
  if(r.status==='pending'&&!mine){const review=el('a','Review request ↗','button button-primary');review.href='requests.html?id='+encodeURIComponent(r.id);a.append(review)}
  if(['pending','accepted'].includes(r.status)&&mine){const b=el('button','Cancel request','button button-outline');b.onclick=()=>void cancelBooking(r);a.append(b)}
- if(r.status==='accepted'&&!mine){const b=el('button','Mark completed','button button-primary');b.onclick=async()=>{if(await confirmCompletion()){b.disabled=true;await update(r.id,'completed');b.disabled=false}};a.append(b)}
+ if(r.status==='accepted'){const b=el('button',completionLabel(r,user.id),'button button-primary');b.disabled=completionState(r,user.id)==='waiting';b.onclick=async()=>{if(await confirmCompletion()){b.disabled=true;await finishBooking(r.id);b.disabled=false}};a.append(b)}
  if(r.status==='accepted'&&!mine){const c=el('a','Open chat & photos ↗','button button-outline');c.href='chat.html?booking='+encodeURIComponent(r.id);a.append(c)}
  if(r.status==='completed'&&mine){
   if(reviewedBookings.has(r.id))n.append(el('p','✓ You rated this completed booking','booking-rated'));
@@ -118,6 +118,14 @@ async function load(){
 }
 async function cancelBooking(r){const answer=await askCancellationReason();if(!answer)return;await update(r.id,'cancelled',{cancel_reason:answer.reason,cancel_note:answer.note||null})}
 async function recoverBooking(id,action){try{const result=await runRecovery(client,id,action);if(result==='accepted'){selectFilter('all');}await load();$('status').textContent=result==='accepted'?'Booking reopened.':result==='pending'?'Reopen request sent.':'Reopen request declined.';}catch(e){$('status').textContent=e.message||'Could not update recovery request.';}}
+async function finishBooking(id){
+ try{
+  const result=await submitCompletion(client,id);
+  if(result==='completed'){offerCompletionFeedback(user);selectFilter('all');void sendBookingPush(client,id,'completed');}
+  await load();
+  $('status').textContent=result==='completed'?'Booking completed.':'Waiting for the other member to confirm completion.';
+ }catch{$('status').textContent='Could not confirm completion. Please try again.';}
+}
 async function update(id,status,extra={}){$('status').textContent='Updating…';const {error}=await client.from('booking_requests').update({status,...extra}).eq('id',id);if(error){$('status').textContent=error.message;return}if(status==='completed'){offerCompletionFeedback(user);selectFilter('all');}if(['cancelled','completed'].includes(status)){ await load();void sendBookingPush(client,id,status).catch(()=>{});return}await load()}
 async function rateBooking(booking){
  if(promptOpen||booking.status!=='completed'||reviewedBookings.has(booking.id))return;
