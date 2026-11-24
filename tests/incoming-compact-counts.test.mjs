@@ -26,7 +26,7 @@ test('Requests is a vertically stacked seven-card hub with a same-page Back view
   assert.ok(html.includes('class="request-hub-name">'+labels[i]+'</span>'));
  }
  assert.match(html,/requests-compact\.css\?v=20261124-request-flow-4/);
- assert.match(html,/requests-page\.js\?v=20261124-request-flow-4/);
+ assert.match(html,/requests-page\.js\?v=20261124-back-history-1/);
 });
 test('My Requests and Received count separate directions; completed is not cancelled',async()=>{
  const js=await read('js/requests-page.js');
