@@ -6,7 +6,14 @@ body.sathivo-2d .incoming-compact-page {
   padding-bottom:calc(125px + env(safe-area-inset-bottom));
 }
 body.sathivo-2d .incoming-compact-page .incoming-compact-title {
+  display:block!important;
+  width:100%;
   margin:0 0 15px!important;
+  padding:0!important;
+  text-align:left!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
   color:#45283B;
   font-size:clamp(1.42rem,3vw,1.9rem)!important;
   line-height:1.22!important;
