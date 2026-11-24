@@ -270,7 +270,7 @@ function bindForm(id, task, loadingMessage) {
 bindForm('#login-form', async values => {
   await flow.login(values);
   clearSecrets();
-  let destination='./';
+  let destination='./?start=1';
   try{
     // Use only a validated local booking destination after sign-in.
     const pending=sessionStorage.getItem('sathivo.returnAfterLogin.v1')||'';
