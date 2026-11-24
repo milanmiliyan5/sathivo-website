@@ -19,5 +19,5 @@ test('new CSS removes thick borders and raised active tabs',async()=>{
  assert.match(css,/safe-area-inset-bottom/);
  assert.match(css,/:focus-visible/);
  assert.match(css,/@media\(max-width:360px\)/);
- assert.match(await read('index.html'),/js\/mobile-nav\.js\?v=20261124-clean-nav-1/);
+ assert.match(await read('index.html'),/js\/mobile-nav\.js\?v=20261124-clean-nav-2/);
 });
