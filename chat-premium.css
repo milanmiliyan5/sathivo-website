@@ -993,3 +993,20 @@ body.sathivo-2d.chat-premium .chat-inbox-avatar{
   max-width:34px!important;max-height:34px!important;
  }
 }
+
+/* Compact voluntary completion action: no chat overlay or fixed banner. */
+body.chat-premium .chat-complete-booking[hidden]{display:none!important}
+body.chat-premium .chat-complete-booking{display:flex;align-items:center;justify-content:center;gap:6px;width:max-content;max-width:100%;min-height:34px;margin:5px auto 4px;padding:6px 12px;border:1px solid #a9c9b5;border-radius:999px;background:#f6fbf7;color:#286b47;font:600 12px/1.3 inherit;font-family:inherit;font-size:12px;font-weight:600;line-height:1.3;box-shadow:none;white-space:normal;cursor:pointer}
+body.chat-premium .chat-complete-booking svg{width:16px;height:16px;flex:none}
+body.chat-premium .chat-complete-booking .chat-complete-arrow{width:14px;height:14px}
+body.chat-premium .chat-complete-booking:disabled{opacity:1;cursor:default}
+body.chat-premium .chat-complete-booking[data-state="waiting"]{color:#745e33;background:#fffaf1;border-color:#dfcfaf}
+body.chat-premium .chat-complete-booking[data-state="waiting"] .chat-complete-arrow{display:none}
+body.chat-premium .chat-complete-booking:focus-visible{outline:2px solid #328056;outline-offset:2px}
+body.chat-premium.chat-input-focused .chat-complete-booking{display:none!important}
+body.chat-premium .booking-success-dialog{border:1px solid #e3d9de;border-radius:18px;padding:20px;width:min(400px,calc(100% - 32px));max-height:calc(100dvh - 32px);overflow:auto;background:#fff;color:#372432;box-shadow:0 14px 50px #321b3330}
+body.chat-premium .booking-success-dialog::backdrop{background:#241b2755}
+body.chat-premium .booking-success-dialog h2{font-size:1.2rem;margin:0 0 10px}
+body.chat-premium .booking-success-dialog p{font-size:.88rem;line-height:1.5}
+body.chat-premium .booking-success-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+body.chat-premium .booking-success-actions button{flex:1 1 130px}
