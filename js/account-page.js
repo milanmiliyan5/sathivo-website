@@ -124,6 +124,7 @@ function renderOtp(pending) {
 
 function clearPublicPreview(){
  previewSequence++;previewData=null;
+ const empty=document.querySelector('#public-preview-empty');if(empty)empty.hidden=true;
  document.querySelector('#results')?.replaceChildren();
  const actions=document.querySelector('#public-preview-actions');
  if(actions)actions.hidden=true;
@@ -143,16 +144,20 @@ async function refreshPublicPreview(){
  const current=()=>seq===previewSequence&&activePanel==='account'&&accountView==='public-preview'&&accountRecoveryUser?.id===owner?.id;
  if(!owner||!appClient)return;
  try{
-  previewModule=await import('./companions-page.js?v=20261124-own-profile-guard-1');
+  previewModule=await import('./companions-page.js?v=20261124-clean-empty-1');
   if(!current())return;
   const preview=await previewModule.loadOwnPublicPreview(appClient,owner.id);
   if(!current())return;
   if(preview.state!=='public'){
-   feedback.textContent={
-    hidden:'Your profile is currently hidden. Turn Public Profile on in your profile settings to make it visible and shareable.',
-    unpublished:'Your companion profile has not been published yet.',
-    unavailable:'Your profile is currently unavailable to the public.'
-   }[preview.state]||'Your profile is not publicly available.';
+   const copy={
+    hidden:['Your profile is hidden','Turn Public Profile on in settings to share your card.'],
+    unpublished:['No public profile yet','Publish your companion profile to see your card.'],
+    unavailable:['Profile unavailable','Your profile is not currently visible to the public.']
+   }[preview.state]||['Profile unavailable','Your profile is not publicly available.'];
+   feedback.textContent='';
+   document.querySelector('#public-preview-empty-title').textContent=copy[0];
+   document.querySelector('#public-preview-empty-copy').textContent=copy[1];
+   document.querySelector('#public-preview-empty').hidden=false;
    return;
   }
   previewData=preview;
