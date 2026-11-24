@@ -7,7 +7,7 @@ const make=(tag,text,className)=>{
  return node;
 };
 
-export function renderBookingProgress(booking){
+export function renderBookingProgress(booking,{compact=false}={}){
  const status=String(booking?.status||'');
  const known=new Set(['pending','accepted','declined','cancelled','completed']);
  if(!known.has(status))return null;
@@ -56,22 +56,24 @@ export function renderBookingProgress(booking){
   }
  }[status];
 
- const section=make('section',undefined,'booking-progress booking-progress-'+status);
+ const section=make('section',undefined,'booking-progress booking-progress-'+status+(compact?' booking-progress-compact':''));
  section.setAttribute('aria-label','Booking progress');
  const kicker=make('p','YOUR BOOKING PROGRESS','booking-progress-kicker');
- section.append(kicker);
+ if(!compact)section.append(kicker);
 
  const steps=make('ol',undefined,'booking-progress-steps');
  resolved.labels.forEach((label,index)=>{
   const step=make('li',undefined,'booking-progress-step is-'+resolved.states[index]);
   const icon=make('span',resolved.marks[index],'booking-progress-icon');
   icon.setAttribute('aria-hidden','true');
-  const labelText=make('strong',label,'booking-progress-label');
+  const compactLabel=index===0?'Sent':index===2&&status==='completed'?'Completed':label;
+  const labelText=make('strong',compact?compactLabel:label,'booking-progress-label');
   const detail=make('small',resolved.captions[index],'booking-progress-caption');
   step.append(icon,labelText,detail);
   steps.append(step);
  });
  section.append(steps);
+ if(compact)return section;
 
  const note=make('div',undefined,'booking-progress-note');
  const heading=make('strong',resolved.heading,'booking-progress-heading');
@@ -85,4 +87,28 @@ export function renderBookingProgress(booking){
  }
  section.append(note);
  return section;
+}
+
+// Same three recorded rates, presented in a small accessible grid.
+export function renderCompactRates(booking,mine){
+ const box=make('div',undefined,'deal-box compact-deal-box');
+ box.setAttribute('aria-label','Hourly rates in Indian rupees');
+ for(const [label,value,tone] of [
+  ['Listed',booking.listed_hourly_rate,'listed'],
+  [mine?'Your offer':'Customer offer',booking.offered_hourly_rate,'offer'],
+  ['Agreed',booking.agreed_hourly_rate,'agreed']
+ ]){
+  if(value==null||!Number.isFinite(Number(value))||Number(value)<=0)continue;
+  const item=make('div',undefined,'compact-rate compact-rate-'+tone);
+  item.append(make('small',label),make('strong','₹'+Number(value).toLocaleString('en-IN')+'/hr'));
+  box.append(item);
+ }
+ return box.childNodes.length?box:null;
+}
+export function renderCompactPaymentNote(){
+ const note=make('p',undefined,'compact-payment-note');
+ note.append(make('span','Pay directly outside Sathivo. Never share UPI PINs or payment OTPs. '));
+ const link=make('a','Safety ↗');link.href='safety.html';
+ note.append(link);
+ return note;
 }
