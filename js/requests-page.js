@@ -1,5 +1,5 @@
 import {showCompletedBookingRating} from './booking-rating-dialog.js?v=20261122-1';
-import {renderBookingProgress} from './booking-progress.js?v=20261025-polish-1';
+import {renderBookingProgress,renderCompactRates,renderCompactPaymentNote} from './booking-progress.js?v=20261124-compact-booking-cards-1';
 import {offerCompletionFeedback} from './feedback-prompt.js?v=20261119-feedback-1';
 import {confirmCompletion,appendRecoveryControls,runRecovery,completionState,completionLabel,submitCompletion} from './booking-recovery.js?v=20261124-companion-completion-1';
 import {withCurrentBookingNames} from './booking-name-sync.js?v=20261030-1';
@@ -72,9 +72,11 @@ function syncRequestCounts(){
  $('request-view-count').textContent=String(counts[view]??0);
 }
 function receivedCard(r){
- const n=el('article',undefined,'booking-card request-card');n.id='request-'+r.id;
+ const n=el('article',undefined,'booking-card request-card booking-card-compact');n.id='request-'+r.id;n.dataset.bookingStatus=r.status;
  const top=el('div',undefined,'booking-top'),identity=el('div',undefined,'request-identity'),avatar=el('span',(r.customer_display_name||'S').trim().slice(0,1).toUpperCase(),'request-avatar'),left=el('div');
- left.append(el('h2',r.customer_display_name||'Sathivo member'),el('div',undefined,'booking-meta'));left.lastChild.append(el('span','Received by you'),el('span',r.category),el('span',r.meeting_mode==='in-person'?'In person':'Online'),el('span',fmt(r.requested_for)),el('span',r.duration_minutes+' min'));const price=el('div',undefined,'deal-box');if(r.listed_hourly_rate)price.append(el('span','Listed ₹'+Number(r.listed_hourly_rate).toLocaleString('en-IN')+'/hr'));if(r.offered_hourly_rate)price.append(el('strong','Customer offer ₹'+Number(r.offered_hourly_rate).toLocaleString('en-IN')+'/hr'));if(r.agreed_hourly_rate)price.append(el('strong','Agreed ₹'+Number(r.agreed_hourly_rate).toLocaleString('en-IN')+'/hr','deal-agreed'));left.append(price);identity.append(avatar,left);top.append(identity,el('span',r.status,'status-pill'));n.append(top);
+ left.append(el('h2',r.customer_display_name||'Sathivo member'),el('div',undefined,'booking-meta'));left.lastChild.append(el('span','Received by you'),el('span',r.category),el('span',r.meeting_mode==='in-person'?'In person':'Online'),el('span',fmt(r.requested_for)),el('span',r.duration_minutes+' min'));identity.append(avatar,left);top.append(identity,el('span',r.status,'status-pill'));n.append(top);
+ const progress=renderBookingProgress(r,{compact:true});if(progress)n.append(progress);
+ const price=renderCompactRates(r,false);if(price)n.append(price);
  if(r.note)n.append(el('p',r.note,'booking-note'));
  const a=el('div',undefined,'booking-actions');
  if(r.status==='pending'){
@@ -82,17 +84,17 @@ function receivedCard(r){
   accept.onclick=()=>{n.classList.add('request-accepting');accept.disabled=decline.disabled=true;void update(r.id,'accepted')};
   decline.onclick=()=>{if(confirm('Decline this booking request?')){accept.disabled=decline.disabled=true;void update(r.id,'declined')}};a.append(accept,decline);
  }else if(r.status==='accepted'){
-  const chat=el('a','Open chat & photos ↗','button button-primary');chat.href='chat.html?booking='+encodeURIComponent(r.id);
+  const chat=el('a','Open Chat ↗','button button-primary');chat.href='chat.html?booking='+encodeURIComponent(r.id);
   a.append(chat);
   if(completionState(r,user.id)==='ready'){
    const done=el('button',completionLabel(r,user.id),'button button-outline');done.onclick=async()=>{if(await confirmCompletion()){done.disabled=true;await finishBooking(r.id);done.disabled=false}};a.append(done);
   }
-  const cancel=el('button','Cancel booking','button button-outline');cancel.onclick=()=>void cancelBooking(r);a.append(cancel);
+  const cancel=el('button','Cancel Booking','button button-outline');cancel.onclick=()=>void cancelBooking(r);a.append(cancel);
  }
- appendRecoveryControls(a,r,user.id,recoverBooking);if(a.childNodes.length)n.append(a);if(r.status==='cancelled'&&r.cancel_reason)n.append(el('p','Cancelled · '+cancellationLabel(r.cancel_reason)+(r.cancel_note?' — '+r.cancel_note:''),'cancellation-note'));if(r.status==='accepted'&&r.agreed_hourly_rate)n.append(el('p','Deal recorded at ₹'+Number(r.agreed_hourly_rate).toLocaleString('en-IN')+'/hour. Coordinate details in chat. Payment stays outside Sathivo.','payment-note'));return n;
+ appendRecoveryControls(a,r,user.id,recoverBooking);if(a.childNodes.length)n.append(a);if(r.status==='cancelled'&&r.cancel_reason)n.append(el('p','Cancelled · '+cancellationLabel(r.cancel_reason)+(r.cancel_note?' — '+r.cancel_note:''),'cancellation-note'));if(r.status==='accepted'&&r.agreed_hourly_rate)n.append(renderCompactPaymentNote());return n;
 }
 function sentCard(r){
- const n=el('article',undefined,'booking-card request-card');n.id='request-'+r.id;
+ const n=el('article',undefined,'booking-card request-card booking-card-compact');n.id='request-'+r.id;n.dataset.bookingStatus=r.status;
  const top=el('div',undefined,'booking-top'),left=el('div');
  left.append(el('h2',r.companion_display_name||'Sathivo companion'));
  const meta=el('div',undefined,'booking-meta');
@@ -102,20 +104,16 @@ function sentCard(r){
  if(r.requested_for)meta.append(el('span',fmt(r.requested_for)));
  if(r.duration_minutes)meta.append(el('span',r.duration_minutes+' min'));
  left.append(meta);top.append(left,el('span',r.status,'status-pill'));n.append(top);
- const progress=renderBookingProgress(r);if(progress)n.append(progress);
- const price=el('div',undefined,'deal-box');
- if(r.listed_hourly_rate)price.append(el('span','Listed ₹'+Number(r.listed_hourly_rate).toLocaleString('en-IN')+'/hr'));
- if(r.offered_hourly_rate)price.append(el('strong','Your offer ₹'+Number(r.offered_hourly_rate).toLocaleString('en-IN')+'/hr'));
- if(r.agreed_hourly_rate)price.append(el('strong','Agreed ₹'+Number(r.agreed_hourly_rate).toLocaleString('en-IN')+'/hr','deal-agreed'));
- if(price.childNodes.length)n.append(price);
+ const progress=renderBookingProgress(r,{compact:true});if(progress)n.append(progress);
+ const price=renderCompactRates(r,true);if(price)n.append(price);
  if(r.note)n.append(el('p',r.note,'booking-note'));
  const a=el('div',undefined,'booking-actions');
  if(['pending','accepted'].includes(r.status)){
-  const cancel=el('button','Cancel request','button button-outline');cancel.type='button';
+  const cancel=el('button','Cancel Request','button button-outline');cancel.type='button';
   cancel.onclick=()=>void cancelBooking(r);a.append(cancel);
  }
  if(r.status==='accepted'){
-  const chat=el('a','Open chat & photos ↗','button button-primary');
+  const chat=el('a','Open Chat ↗','button button-primary');
   chat.href='chat.html?booking='+encodeURIComponent(r.id);a.prepend(chat);
  }
  if(r.status==='completed'){
@@ -128,7 +126,7 @@ function sentCard(r){
  appendRecoveryControls(a,r,user.id,recoverBooking);
  if(a.childNodes.length)n.append(a);
  if(r.status==='cancelled'&&r.cancel_reason)n.append(el('p','Cancelled · '+cancellationLabel(r.cancel_reason)+(r.cancel_note?' — '+r.cancel_note:''),'cancellation-note'));
- if(r.agreed_hourly_rate)n.append(el('p','Sathivo does not collect or manage booking payments. Confirm payment directly with your companion. Never share UPI PINs or payment OTPs.','payment-note'));
+ if(r.agreed_hourly_rate)n.append(renderCompactPaymentNote());
  return n;
 }
 function card(r){return r.companion_id===user.id?receivedCard(r):sentCard(r)}
