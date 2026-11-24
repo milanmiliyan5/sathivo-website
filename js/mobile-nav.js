@@ -1,7 +1,7 @@
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 
 const items=[
-  ['Home','./','<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 3.6l8.5 6.9v9.1a1.4 1.4 0 0 1-1.4 1.4h-5.2v-6.1h-3.8V21H4.9a1.4 1.4 0 0 1-1.4-1.4z"/></svg>'],
+  ['Home','./?view=home','<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 10.5 12 3.6l8.5 6.9v9.1a1.4 1.4 0 0 1-1.4 1.4h-5.2v-6.1h-3.8V21H4.9a1.4 1.4 0 0 1-1.4-1.4z"/></svg>'],
   ['Explore','companions.html','<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.6c0 5-8.8 10.9-8.8 10.9S3.2 13.6 3.2 8.6A4.6 4.6 0 0 1 12 6.8a4.6 4.6 0 0 1 8.8 1.8Z"/></svg>'],
   ['Requests','requests.html','<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.8h8.1L20 8.7v10.6a1.7 1.7 0 0 1-1.7 1.7H7a1.7 1.7 0 0 1-1.7-1.7V5.5A1.7 1.7 0 0 1 7 3.8Z"/><path d="M14.7 3.9v5h5M8.6 13h6.8M8.6 16.4h4.6"/></svg>'],
   ['Chats','chats.html','<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.2h16v11.2a2 2 0 0 1-2 2H9l-4.8 2.7.8-4.7H4a2 2 0 0 1-2-2V7.2a2 2 0 0 1 2-2Z"/><path d="M7.2 10.5h9.6M7.2 13.7h6.4"/></svg>'],
@@ -27,7 +27,7 @@ async function init(){
     const a=document.createElement('a');
     a.href=href;
     if(href==='requests.html')a.setAttribute('aria-label','Requests');
-    if((href==='./'&&['','index.html'].includes(path))||activePath===href)a.setAttribute('aria-current','page');
+    if((label==='Home'&&['','index.html'].includes(path))||activePath===href)a.setAttribute('aria-current','page');
 
     const iconWrap=document.createElement('span');
     iconWrap.className='mobile-nav-icon';
