@@ -78,3 +78,21 @@ test('eligibility is pre-seeded and only the owner may atomically claim a notice
  assert.match(sql,/p\.joined_at < timestamptz '2026-11-22 17:56:01\+00'/);
  assert.doesNotMatch(sql,/\b(?:UPDATE|DELETE|TRUNCATE)\s+(?:public\.)?(?:member_profiles|booking_requests|booking_messages|companion_listings)\b/i);
 });
+
+test('Profile tabs keep one form and preserve validation, publish and browser history',async()=>{
+ const html=await read('profile.html'),js=await read('js/profile-page.js'),css=await read('profile.css');
+ assert.equal((html.match(/role="tab" id="profile-tab-/g)||[]).length,3);
+ assert.equal((html.match(/id="profile-form"/g)||[]).length,1);
+ for(const section of ['personal','companion','privacy'])assert.ok(html.includes('data-profile-panel="'+section+'"'));
+ assert.match(html,/data-profile-extra="privacy"/);
+ assert.match(html,/id="profile-form" novalidate/);
+ assert.match(js,/revealProfileControl\(invalid\);invalid\.reportValidity\(\)/);
+ assert.match(js,/history\.pushState/);
+ assert.match(js,/window\.addEventListener\('popstate'/);
+ assert.match(js,/beforeunload/);
+ assert.match(js,/from\('member_profiles'\)\.upsert\(row/);
+ assert.match(js,/publishing\.publishSavedProfile/);
+ assert.doesNotMatch(html,/nearby_email_opt_in/);
+ assert.doesNotMatch(js,/nearby_alert_preferences/);
+ assert.match(css,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
+});
