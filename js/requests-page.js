@@ -23,7 +23,7 @@ const reloadAtTop=(()=>{
 let pendingReloadScrollReset=reloadAtTop;
 if(reloadAtTop){
  try{history.scrollRestoration='manual'}catch{}
- window.addEventListener('pageshow',()=>window.scrollTo(0,0),{once:true});
+ window.addEventListener('pageshow',()=>window.scrollTo({top:0,left:0,behavior:'instant'}),{once:true});
 }
 const viewNames={sent:'My Requests',received:'Received',pending:'Pending',accepted:'Accepted',completed:'Completed',cancelled:'Cancelled',all:'All'};
 function showMenu(){
@@ -127,7 +127,7 @@ function sentCard(r){
 function card(r){return r.companion_id===user.id?receivedCard(r):sentCard(r)}
 function render(){
  syncRequestCounts();
- if(!view){$('request-detail').hidden=true;$('request-menu').hidden=false;return}
+ if(!view){$('status').textContent='';$('request-detail').hidden=true;$('request-menu').hidden=false;return}
  $('request-menu').hidden=true;$('request-detail').hidden=false;
  $('request-view-name').textContent=viewNames[view];
  const list=rows.filter(visible);
@@ -172,7 +172,7 @@ async function load(){
  render();
  if(pendingReloadScrollReset){
   pendingReloadScrollReset=false;
-  requestAnimationFrame(()=>window.scrollTo(0,0));
+  requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:'instant'}));
  }
 }
 async function cancelBooking(r){const answer=await askCancellationReason();if(!answer)return;await update(r.id,'cancelled',{cancel_reason:answer.reason,cancel_note:answer.note||null})}
@@ -207,7 +207,23 @@ async function rateBooking(r){
  finally{ratingPromptOpen=false}
 }
 async function markLinkedNotification(){if(!linkedRequestId)return;await client.from('notifications').update({read_at:new Date().toISOString()}).eq('user_id',user.id).eq('link','requests.html?id='+linkedRequestId).is('read_at',null)}
+/* Use the actual responsive site-header height, not a guessed offset.
+   The mobile title remains below the sticky header even after the list grows. */
+function setupRequestTitleOffset(){
+ const header=document.querySelector('.site-header');
+ const intro=document.querySelector('.request-page-intro');
+ if(!header||!intro)return;
+ const sync=()=>intro.style.setProperty('--request-header-height',Math.ceil(header.getBoundingClientRect().height)+'px');
+ sync();
+ if('ResizeObserver' in window){
+  const observer=new ResizeObserver(sync);
+  observer.observe(header);
+  window.addEventListener('pagehide',()=>observer.disconnect(),{once:true});
+ }
+ window.addEventListener('resize',sync,{passive:true});
+}
 async function init(){try{
+ setupRequestTitleOffset();
  client=await getSathivoClient();
  const u=await client.auth.getUser();user=u.data.user;if(!user){if(linkedRequestId){const signIn=new URL('account.html',location.href);signIn.searchParams.set('next','requests.html?id='+linkedRequestId);signIn.hash='login';location.replace(signIn.href)}else location.replace('account.html#login');return}
  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>openView(b.dataset.view)));
