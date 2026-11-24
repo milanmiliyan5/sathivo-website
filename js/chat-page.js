@@ -3,7 +3,7 @@ import {withCurrentBookingNames} from './booking-name-sync.js?v=20261030-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendMessagePush,sendBookingPush} from './push-events.js?v=20261004-2';
 import {confirmCompletion,completionState,completionLabel,submitCompletion} from './booking-recovery.js?v=20261124-companion-completion-1';
-import {compressImageFile,formatBytes} from './image-compress.js?v=20261006-1';
+import {compressImageFile} from './image-compress.js?v=20261006-1';
 import {openSafetyReport,confirmSafetyBlock} from './safety-actions.js?v=20261018-1';
 
 const $=id=>document.getElementById(id);
@@ -388,18 +388,18 @@ function stagePhoto(file){
  if(!types.includes(file.type)){clearPhotoDraft();ps.textContent='Please choose a JPG, PNG or WebP image.';return}
  if(file.size>50*1024*1024){clearPhotoDraft();ps.textContent='This photo is extremely large. Please choose one under 50 MB.';return}
  clearPhotoDraft();selectedPhotoFile=file;selectedPhotoPreviewUrl=URL.createObjectURL(file);$('photo-draft-image').src=selectedPhotoPreviewUrl;$('photo-draft').hidden=false;$('message').maxLength=1000;$('message').placeholder='Add a caption…';
- ps.textContent=formatBytes(file.size)+' selected. It will be compressed automatically before sending.';
+ // The preview is sufficient; keep technical file details out of the chat UI.
 }
 async function sendStagedPhoto(){
  const file=selectedPhotoFile,ps=$('photo-status');if(!file)return false;if(booking.status!=='accepted'){ps.textContent='Photo sharing opens after the request is accepted.';return false}
  const viewOnce=$('view-once')?.checked===true,caption=$('message').value.trim().slice(0,1000);ps.innerHTML='<span class="upload-spinner"></span> Preparing photo…';
  let prepared;try{prepared=await compressImageFile(file,{maxBytes:480*1024,maxDimension:1600,minDimension:640,maxInputBytes:50*1024*1024})}catch(error){ps.textContent=error.message||'Could not prepare this photo.';return false}
- const path=booking.id+'/'+user.id+'/'+crypto.randomUUID()+'.'+prepared.ext;ps.innerHTML='<span class="upload-spinner"></span> Sending compressed photo…';
+ const path=booking.id+'/'+user.id+'/'+crypto.randomUUID()+'.'+prepared.ext;ps.innerHTML='<span class="upload-spinner"></span> Sending photo…';
  const up=await client.storage.from('booking-chat-photos').upload(path,prepared.blob,{contentType:prepared.type,cacheControl:'60',upsert:false});
  if(up.error){ps.textContent='Upload failed. Tap Send to retry.';return false}
  const msg=await client.from('booking_messages').insert({booking_id:booking.id,sender_id:user.id,message_type:'image',photo_path:path,body:caption,view_once:viewOnce}).select('id').single();
  if(msg.error){await client.storage.from('booking-chat-photos').remove([path]);ps.textContent='Send failed. Tap Send to retry.';return false}
- const sizeNote=formatBytes(prepared.originalBytes)+' → '+formatBytes(prepared.outputBytes);clearPhotoDraft();$('message').value='';fitComposer();$('photo-status').textContent=(viewOnce?'View-once photo sent.':'Photo sent.')+' Compressed '+sizeNote+'.';void sendMessagePush(client,booking.id,msg.data.id);return true;
+ clearPhotoDraft();$('message').value='';fitComposer();void sendMessagePush(client,booking.id,msg.data.id);return true;
 }
 async function report(){const sent=await openSafetyReport({client,reporterId:user.id,reportedUserId:otherId,bookingId:booking.id});if(sent)$('status').textContent='Report submitted privately to Sathivo for review.';}
 async function block(){if(blockedByMe)return;if(!await confirmSafetyBlock())return;const {error}=await client.from('user_blocks').insert({blocker_id:user.id,blocked_id:otherId});if(error&&error.code!=='23505'){$('status').textContent='Could not block this user. Please try again.';return}blockedByMe=true;$('block-user').disabled=true;$('block-user').textContent='User blocked';syncComposer();}
