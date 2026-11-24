@@ -224,3 +224,11 @@ body.sathivo-2d .directory-explore-first #directory-filters>summary>.directory-f
 body.sathivo-2d .directory-explore-first #directory-filters>summary>.directory-filter-icon{
  transform:none;rotate:none;transition:none;
 }
+
+/* Own profile: deliberately non-interactive cement-grey booking panel. */
+body.sathivo-2d .directory .own-profile-badge{display:inline-flex;width:fit-content;align-items:center;gap:5px;border:1px solid #d3d0cd;border-radius:999px;background:#efedeb;color:#595652;font-size:.75rem;font-weight:750;padding:5px 10px;margin:3px 0 8px}
+body.sathivo-2d .directory .booking-unavailable-panel{padding:16px;margin-block:16px;background:#f1efed!important;border:1px solid #d7d3cf!important;border-radius:14px;box-shadow:none!important}
+body.sathivo-2d .directory .booking-unavailable-panel h2{font-size:1rem;line-height:1.35;margin:0;color:#524f4d}
+body.sathivo-2d .directory .booking-unavailable-panel p{font-size:.8rem;line-height:1.45;color:#6c6865;margin:6px 0 12px}
+body.sathivo-2d .directory .booking-unavailable-panel .own-booking-disabled:disabled{display:block;width:100%;min-height:44px;border:1px solid #bcb8b4!important;border-radius:10px;background:#d7d4d1!important;color:#696562!important;box-shadow:none!important;opacity:1!important;transform:none!important;cursor:not-allowed;pointer-events:none}
+@media(max-width:540px){body.sathivo-2d .directory .booking-unavailable-panel{padding:13px}}
