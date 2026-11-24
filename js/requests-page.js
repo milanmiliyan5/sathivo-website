@@ -12,12 +12,29 @@ const validBookingId=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{
 const linkedRequestId=(()=>{try{const id=new URL(location.href).searchParams.get('id')||'';return validBookingId.test(id)?id:''}catch{return ''}})();
 let linkedRequestChecked=false,linkedRequestFocused=false;
 const viewNames={sent:'My Requests',received:'Received',pending:'Pending',accepted:'Accepted',completed:'Completed',cancelled:'Cancelled',all:'All'};
+function requestHistory(state){
+ const entry=state?.sathivoRequests;
+ if(!entry||!(entry.view===null||Object.hasOwn(viewNames,entry.view)))return null;
+ return {view:entry.view,fromMenu:entry.fromMenu===true};
+}
+let requestBackPending=false;
+function writeRequestHistory(mode='replaceState',fromMenu=false){
+ history[mode]({sathivoRequests:{view,fromMenu}},'',location.href);
+}
 function showMenu(){
  view=null;$('request-detail').hidden=true;$('request-menu').hidden=false;$('status').textContent='';
 }
-function openView(next,{focus=true}={}){
- if(!Object.hasOwn(viewNames,next))return;
- view=next;$('request-menu').hidden=true;$('request-detail').hidden=false;
+function focusRequestMenu(){
+ window.scrollTo({top:0,left:0,behavior:'instant'});
+ $('request-menu').querySelector('[data-view]')?.focus({preventScroll:true});
+}
+function openView(next,{focus=true,record=true}={}){
+ if(!Object.hasOwn(viewNames,next)||requestBackPending)return;
+ const fromMenu=view===null;
+ const previous=requestHistory(history.state);
+ view=next;
+ if(record)writeRequestHistory(fromMenu?'pushState':'replaceState',fromMenu||!!previous?.fromMenu);
+$('request-menu').hidden=true;$('request-detail').hidden=false;
  $('request-view-name').textContent=viewNames[next];render();
  if(focus)requestAnimationFrame(()=>{
   window.scrollTo({top:0,left:0,behavior:'instant'});
@@ -153,7 +170,10 @@ async function load(){
   if(requested?.status==='accepted'&&requested.companion_id===user.id){
    location.replace('chat.html?booking='+encodeURIComponent(linkedRequestId));return;
   }
-  if(requested)view=requested.companion_id===user.id?'received':'sent';
+  if(requested&&!requestHistory(history.state)?.view){
+   view=requested.companion_id===user.id?'received':'sent';
+   writeRequestHistory('replaceState',false);
+  }
  }
  render();
 }
@@ -192,10 +212,22 @@ async function markLinkedNotification(){if(!linkedRequestId)return;await client.
 async function init(){try{
  client=await getSathivoClient();
  const u=await client.auth.getUser();user=u.data.user;if(!user){if(linkedRequestId){const signIn=new URL('account.html',location.href);signIn.searchParams.set('next','requests.html?id='+linkedRequestId);signIn.hash='login';location.replace(signIn.href)}else location.replace('account.html#login');return}
+ const restored=requestHistory(history.state);
+ if(restored?.view)view=restored.view;
+ else writeRequestHistory('replaceState',false);
  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>openView(b.dataset.view)));
  $('request-back').addEventListener('click',()=>{
-  showMenu();window.scrollTo({top:0,left:0,behavior:'instant'});
-  $('request-menu').querySelector('[data-view]')?.focus({preventScroll:true});
+  if(requestBackPending)return;
+  const entry=requestHistory(history.state);
+  if(entry?.view===view&&entry.fromMenu){requestBackPending=true;history.back();return;}
+  showMenu();writeRequestHistory();focusRequestMenu();
+ });
+ window.addEventListener('popstate',event=>{
+  requestBackPending=false;
+  const entry=requestHistory(event.state);
+  if(!entry)return;
+  if(entry.view===null){showMenu();focusRequestMenu();}
+  else openView(entry.view,{record:false});
  });
  await markLinkedNotification();await load();
  channel=client.channel('incoming-requests:'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_requests'},()=>void load()).subscribe();
