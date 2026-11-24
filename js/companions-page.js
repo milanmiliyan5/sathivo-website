@@ -10,6 +10,10 @@ const $=id=>document.getElementById(id),directory=!!$('filters');
 const fields='public_id,display_name,bio,location_id,city_name,languages,interests,categories,meeting_mode,availability,hourly_rate,photo_path,safety_id,joined_at,email_verified_at,adult_confirmed,boundaries_accepted,public_gender';
 let client,publicClient,locations=[],locationsLoaded=false,page=0,request=0,currentUser=null,favoriteIds=new Set(),citySuggestionRequest=0,authStarted=false,filtersReady=false;
 
+// One seed per page visit. Keyset cursors keep the order stable without
+// repeating earlier profiles if another member publishes or hides mid-browse.
+const discoverSeed=directory?Array.from(crypto.getRandomValues(new Uint8Array(8)),n=>n.toString(16).padStart(2,'0')).join(''):'';
+let discoverCursors=new Map(),directoryFilterKey='';
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
 function opts(id,rows,title){$(id).replaceChildren(new Option(title,''));rows.forEach(([v,t])=>$(id).add(new Option(t,String(v))));}
 const normalized=value=>String(value||'').trim().toLocaleLowerCase('en-IN');
@@ -240,7 +244,7 @@ function card(row){
 function feedNodes(rows){
  return rows.map(card);
 }
-function sortLabel(){return {newest:'Newest',price_asc:'Price: low to high',price_desc:'Price: high to low',rating:'Top rated'}[$('sort')?.value]||'Newest';}
+function sortLabel(){return {discover:'Discover',newest:'Newest',price_asc:'Price: low to high',price_desc:'Price: high to low',rating:'Top rated'}[$('sort')?.value]||'Discover';}
 // Pagination lands at the start of the new results, not the previous scroll offset.
 function scrollToDirectoryResults(hasProfiles){
  const target=hasProfiles?$('results'):$('status');
@@ -260,20 +264,33 @@ async function list({fromPagination=false}={}){
  const locationIds=selectedLocationIds();
  if(locationIds!==null&&!locationIds.length){$('results').replaceChildren();$('empty').hidden=false;$('status').textContent='No companions in '+scopeName()+' yet.';$('previous').disabled=$('next').disabled=true;$('page-label').textContent='';return;}
  try{
-  const {data,error}=await publicClient.rpc('browse_public_companions_v3',{
+  const sort=$('sort').value||'discover',discover=sort==='discover';
+  const filters={
    p_location_ids:locationIds?.length?locationIds:null,
    p_city:selectedCity()||null,
    p_gender:$('gender-filter').value||null,
    p_category:$('category').value||null,
    p_mode:$('mode').value||null,
-   p_sort:$('sort').value||'newest',
-   p_public_ids:savedIds,
-   p_offset:page*24,
+   p_public_ids:savedIds
+  };
+  const filterKey=JSON.stringify([sort,filters]);
+  if(filterKey!==directoryFilterKey){directoryFilterKey=filterKey;page=0;discoverCursors.clear();}
+  if(discover&&page>0&&!discoverCursors.has(page))page=0;
+  if(page===0)discoverCursors.clear();
+  const cursor=discoverCursors.get(page);
+  const {data,error}=await publicClient.rpc('browse_public_companions_v3',{
+   ...filters,
+   p_sort:discover?'discover:'+discoverSeed+(cursor?':'+cursor:''):sort,
+   p_offset:discover?0:page*24,
    p_limit:25
   });
   if(seq!==request)return;if(error)throw error;
   const all=data||[],rows=await withCompletedCounts(all.slice(0,24));
   if(seq!==request)return;
+  if(discover){
+   for(const key of discoverCursors.keys())if(key>page)discoverCursors.delete(key);
+   if(all.length>24)discoverCursors.set(page+1,all[23].public_id);
+  }
   $('results').replaceChildren(...feedNodes(rows));$('empty').hidden=rows.length>0;
   $('status').textContent=rows.length?(savedOnly?'Saved companions':'Explore companions')+' · '+scopeName()+' · '+sortLabel()+'.':(savedOnly?'No saved public companions match these filters.':'No published companions match these filters yet.');
   $('previous').disabled=page===0;$('next').disabled=all.length<=24;$('page-label').textContent='';
@@ -465,7 +482,7 @@ function setupDirectory(){
   if(['state','district','city','gender-filter'].includes(e.target.id)){page=0;void list();}
  };
  $('city-custom').addEventListener('change',()=>{page=0;void list();});
- $('filters').onreset=e=>{e.preventDefault();$('state').value='';districts();$('city-custom').value='';$('category').value=$('mode').value=$('gender-filter').value='';$('sort').value='newest';$('saved-only').checked=false;page=0;void list();};
+ $('filters').onreset=e=>{e.preventDefault();$('state').value='';districts();$('city-custom').value='';$('category').value=$('mode').value=$('gender-filter').value='';$('sort').value='discover';$('saved-only').checked=false;page=0;void list();};
  $('saved-only').addEventListener('change',()=>{if($('saved-only').checked&&!currentUser){$('saved-only').checked=false;location.href='account.html#login';return}page=0;void list();});
  $('sort').addEventListener('change',()=>{page=0;void list();});
  $('previous').onclick=()=>{if(page>0&&!$('previous').disabled){page--;void list({fromPagination:true});}};
