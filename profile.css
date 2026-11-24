@@ -132,3 +132,38 @@ body.sathivo-2d .profile-tabbed .profile-card .profile-editor-tabs button[aria-s
  .profile-tabbed [data-profile-panel]{padding:11px}
  body.sathivo-2d .profile-tabbed .profile-card .profile-editor-tabs button{font-size:.76rem;padding-inline:2px}
 }
+
+/* Clean profile editor — compact content, native disclosure, same form fields. */
+body.profile-clean.sathivo-2d .profile-layout.profile-tabbed{padding-bottom:22px}
+body.profile-clean .profile-identity-copy{display:grid;gap:3px;min-width:0}
+body.profile-clean .profile-identity-copy .system-trust{display:flex;flex-wrap:wrap;gap:3px 9px;font-size:.72rem;line-height:1.4;text-align:left}
+body.profile-clean #email-trust{color:#276247;font-weight:650}
+body.profile-clean #email-trust:not([data-verified="true"]){color:var(--muted)}
+body.profile-clean .profile-summary-compact{background:#fff;border:1px solid #DCC7D2;padding:10px 12px;margin-bottom:12px}
+.profile-clean .profile-safety-id-line{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:4px 12px;margin-bottom:10px}
+.profile-clean .profile-safety-id-line strong{font-size:.78rem;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--plum);overflow-wrap:anywhere}
+.profile-clean .profile-progress-track{height:6px;margin:7px 0 0}
+.profile-clean #profile-progress-copy{margin-top:5px}
+.profile-clean #profile-progress-copy:empty,.profile-clean #profile-status:empty{display:none!important}
+body.profile-clean .profile-card label:not(.check){margin-top:13px}
+body.profile-clean .profile-card [data-profile-panel]>label:first-child{margin-top:0}
+body.profile-clean .profile-card small{font-size:.75rem;line-height:1.45;margin-top:5px}
+body.profile-clean .profile-card [data-profile-panel] h2{margin:16px 0 9px}
+body.profile-clean #companion-photo-section{margin-top:14px;padding-top:12px;border-top:1px solid #EADCE4}
+body.profile-clean .profile-card .photo-row{flex-direction:row;align-items:center;gap:12px;margin-bottom:9px}
+body.profile-clean .photo-row #avatar{flex:0 0 54px;width:54px;height:54px;object-fit:cover;border-radius:50%;box-shadow:none;border:1px solid #DCC7D2}
+body.profile-clean .profile-card .photo-row label{margin:0;font-weight:700}
+body.profile-clean .photo-row small{margin:3px 0}
+body.profile-clean .profile-card #photo{max-width:100%;min-width:0;font-size:16px;padding:8px;min-height:42px}
+body.profile-clean .avatar-picker{margin:10px 0 0;padding:0;background:#fff;border:1px solid #DCC7D2;border-radius:12px;box-shadow:none;overflow:hidden}
+body.profile-clean .avatar-picker>summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:10px 12px;font-size:.84rem;font-weight:700;color:var(--plum);cursor:pointer}
+.profile-clean .avatar-picker>summary::-webkit-details-marker{display:none}
+.profile-clean .avatar-picker>summary svg{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.profile-clean .avatar-picker[open]>summary svg{transform:rotate(180deg)}
+.profile-clean .avatar-picker>summary:focus-visible{outline:2px solid var(--rose);outline-offset:-3px}
+.profile-clean .avatar-picker .avatar-choices{padding:0 12px 12px}
+body.profile-clean .profile-safety-confirmations{margin-top:12px;padding:12px}
+body.profile-clean #publication .publication-title{font-size:1.25rem;margin:0 0 8px}
+body.profile-clean.sathivo-2d .profile-footer{padding:12px 0 18px!important;background:transparent!important;border-top:1px solid #DCC7D2!important;font-size:.72rem}
+.profile-clean .footer-legal-inline{margin-top:7px;gap:6px 12px}
+@media(max-width:640px){body.profile-clean.sathivo-2d .profile-layout.profile-tabbed{padding-block:13px 18px}.profile-clean .profile-safety-id-line{margin-bottom:8px}}
