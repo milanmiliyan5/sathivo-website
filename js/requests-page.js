@@ -11,20 +11,6 @@ const $=id=>document.getElementById(id);let client,user,rows=[],view=null,channe
 const validBookingId=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const linkedRequestId=(()=>{try{const id=new URL(location.href).searchParams.get('id')||'';return validBookingId.test(id)?id:''}catch{return ''}})();
 let linkedRequestChecked=false,linkedRequestFocused=false;
-/* Some mobile browsers restore the old vertical scroll position on refresh,
-   making the static page title seem to disappear as bookings finish loading.
-   Reset only an ordinary Requests-page reload, never an email/deep link. */
-const reloadAtTop=(()=>{
- try{
-  return !linkedRequestId&&!location.hash&&
-   performance.getEntriesByType('navigation')[0]?.type==='reload';
- }catch{return false}
-})();
-let pendingReloadScrollReset=reloadAtTop;
-if(reloadAtTop){
- try{history.scrollRestoration='manual'}catch{}
- window.addEventListener('pageshow',()=>window.scrollTo({top:0,left:0,behavior:'instant'}),{once:true});
-}
 const viewNames={sent:'My Requests',received:'Received',pending:'Pending',accepted:'Accepted',completed:'Completed',cancelled:'Cancelled',all:'All'};
 function showMenu(){
  view=null;$('request-detail').hidden=true;$('request-menu').hidden=false;$('status').textContent='';
@@ -170,10 +156,6 @@ async function load(){
   if(requested)view=requested.companion_id===user.id?'received':'sent';
  }
  render();
- if(pendingReloadScrollReset){
-  pendingReloadScrollReset=false;
-  requestAnimationFrame(()=>window.scrollTo({top:0,left:0,behavior:'instant'}));
- }
 }
 async function cancelBooking(r){const answer=await askCancellationReason();if(!answer)return;await update(r.id,'cancelled',{cancel_reason:answer.reason,cancel_note:answer.note||null})}
 async function recoverBooking(id,action){try{const result=await runRecovery(client,id,action);openView('all',{focus:false});await load();$('status').textContent=result==='accepted'?'Booking reopened.':result==='pending'?'Reopen request sent.':'Reopen request declined.';}catch(e){$('status').textContent=e.message||'Could not update recovery request.';}}
