@@ -12,7 +12,7 @@ test('Requests is a vertically stacked seven-card hub with a same-page Back view
  const html=await read('requests.html');
  assert.match(html,/<section class="request-page-intro" aria-labelledby="requests-title"><h1 id="requests-title" class="incoming-compact-title">Requests<\/h1><\/section>/);
  assert.doesNotMatch(html,/<section class="page-head">|PRIVATE CONVERSATIONS|Sathivo does not collect payment\. Any cash/);
- assert.match(html,/<nav id="request-menu" class="request-hub"[^>]* hidden>/);
+ assert.match(html,/<section id="request-menu" class="request-hub"[^>]* hidden>/);
  assert.match(html,/<section id="request-detail" class="request-detail"[^>]* hidden>/);
  assert.match(html,/id="request-back"[^>]*type="button"|id="request-back" class="request-back" type="button"/);
  assert.match(html,/id="requests" class="booking-list"/);
@@ -25,8 +25,8 @@ test('Requests is a vertically stacked seven-card hub with a same-page Back view
   assert.match(html,new RegExp('data-count-for="'+types[i]+'"'));
   assert.ok(html.includes('class="request-hub-name">'+labels[i]+'</span>'));
  }
- assert.match(html,/requests-compact\.css\?v=20261124-title-spacing-3/);
- assert.match(html,/requests-page\.js\?v=20261124-title-spacing-3/);
+ assert.match(html,/requests-compact\.css\?v=20261124-request-flow-4/);
+ assert.match(html,/requests-page\.js\?v=20261124-request-flow-4/);
 });
 test('My Requests and Received count separate directions; completed is not cancelled',async()=>{
  const js=await read('js/requests-page.js');
@@ -120,24 +120,20 @@ test('Requests heading is static, left aligned and kept visible like Explore',as
  assert.doesNotMatch(js,/getElementById\('requests-title'\)/);
 });
 
-test('Ordinary Requests reload restores page top without overriding deep links',async()=>{
- const js=await read('js/requests-page.js');
- assert.match(js,/performance\.getEntriesByType\('navigation'\)\[0\]\?\.type==='reload'/);
- assert.match(js,/!linkedRequestId&&!location\.hash/);
- assert.match(js,/history\.scrollRestoration='manual'/);
- assert.match(js,/pendingReloadScrollReset=false/);
- assert.match(js,/requestAnimationFrame\(\(\)=>window\.scrollTo\(\{top:0,left:0,behavior:'instant'\}\)\)/);
- assert.match(js,/if\(requested\?\.status==='accepted'&&requested\.companion_id===user\.id\)/);
-});
-
-test('Mobile Requests heading is in normal flow with clearance before the first card',async()=>{
+test('Request hub does not inherit the mobile hamburger nav absolute positioning',async()=>{
+ const html=await read('requests.html');
  const css=await read('requests-compact.css');
+ const shared=await read('styles.css');
  const js=await read('js/requests-page.js');
- assert.match(css,/position:static!important;top:auto!important;z-index:auto!important/);
- assert.match(css,/margin:0 0 16px!important;padding:0!important/);
+ assert.match(shared,/nav\{display:none;position:absolute;left:0;right:0;top:74px/);
+ assert.doesNotMatch(html,/<nav[^>]*id="request-menu"/);
+ assert.match(html,/<section id="request-menu" class="request-hub"[^>]* hidden>/);
+ assert.match(html,/<\/section>\s*<section id="request-detail"/);
+ assert.match(css,/\.request-hub\s*\{[^}]*position:static;inset:auto;width:100%;min-width:0/);
+ assert.match(css,/grid-template-columns:minmax\(0,1fr\)/);
+ assert.match(css,/margin:0 0 12px!important;padding:0!important/);
  assert.doesNotMatch(css,/position:sticky/);
- assert.match(css,/overflow-anchor:none/);
- assert.doesNotMatch(js,/setupRequestTitleOffset|--request-header-height/);
- assert.match(js,/window\.scrollTo\(\{top:0,left:0,behavior:'instant'\}\)/);
+ assert.doesNotMatch(js,/pendingReloadScrollReset|scrollRestoration|setupRequestTitleOffset/);
  assert.match(js,/if\(!view\)\{\$\('status'\)\.textContent='';\$\('request-detail'\)\.hidden=true;\$\('request-menu'\)\.hidden=false;return\}/);
+ assert.match(js,/if\(requested\?\.status==='accepted'&&requested\.companion_id===user\.id\)/);
 });
