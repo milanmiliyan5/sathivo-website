@@ -57,8 +57,9 @@ function renderChats(){
  $('chats').replaceChildren(...cards);
  if(rows.length)void showChatAvatars(client,rows.map((row,i)=>({userId:row.other_user_id,element:cards[i].querySelector('.chat-list-avatar')})));
  $('empty').hidden=rows.length>0;
- $('chats-empty-title').textContent=activeTab==='completed'?'No completed chats yet.':'No ongoing chats yet.';
- $('chats-empty-copy').textContent=activeTab==='completed'?'Completed bookings and their chat history will appear here.':'When a booking request is accepted, your private chat will appear here.';
+ $('empty').dataset.emptyKind=activeTab==='completed'?'check':'chat';
+ $('chats-empty-title').textContent=activeTab==='completed'?'No completed chats':'No ongoing chats';
+ $('chats-empty-copy').textContent=activeTab==='completed'?'Your completed conversations will appear here.':'Your accepted bookings will appear here.';
  $('chats-empty-explore').hidden=activeTab==='completed';
 }
 function selectTab(tab,{write=true,focus=false}={}){
