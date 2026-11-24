@@ -18,7 +18,8 @@ let activePanel = 'login';
 let appClient = null;
 let accountEpoch=0, accountView='home', accountViewStack=[];
 let accountRecovery=false;
-const accountViewNames=new Set(['home','settings','notifications','nearby','privacy']);
+let previewSequence=0,previewData=null,previewModule=null;
+const accountViewNames=new Set(['home','settings','notifications','nearby','privacy','public-preview']);
 function readAccountHistory(state){
  const entry=state?.sathivoAccount;
  if(!entry||!Array.isArray(entry.stack)||!accountViewNames.has(entry.view))return null;
@@ -71,7 +72,7 @@ function showPanel(name, { focus = true } = {}) {
   activePanel = name;
   document.body.classList.toggle('account-hub-active',name==='account');
   if(name==='account'){accountViewStack=[];showAccountView('home',{focus:false});}
-  else{accountEpoch++;delete document.body.dataset.accountView;stopFeedbackPrompt();}
+  else{accountEpoch++;clearPublicPreview();delete document.body.dataset.accountView;stopFeedbackPrompt();}
   const recoveryBack=document.querySelector('#account-recovery-back');
   if(recoveryBack)recoveryBack.hidden=!(name==='forgot'&&accountRecovery);
   panels.forEach(panel => { panel.hidden = panel.dataset.panel !== name; });
@@ -121,12 +122,72 @@ function renderOtp(pending) {
   clearSecrets();
 }
 
+function clearPublicPreview(){
+ previewSequence++;previewData=null;
+ document.querySelector('#results')?.replaceChildren();
+ const actions=document.querySelector('#public-preview-actions');
+ if(actions)actions.hidden=true;
+ const shareStatus=document.querySelector('#public-preview-share-status');
+ if(shareStatus)shareStatus.textContent='';
+ const link=document.querySelector('#public-preview-link');
+ if(link)link.removeAttribute('href');
+ const whatsapp=document.querySelector('#public-preview-whatsapp');
+ if(whatsapp)whatsapp.removeAttribute('href');
+}
+async function refreshPublicPreview(){
+ clearPublicPreview();
+ const seq=previewSequence,owner=accountRecoveryUser;
+ const feedback=document.querySelector('#public-preview-status');
+ const retry=document.querySelector('#public-preview-retry');
+ retry.hidden=true;feedback.textContent='Loading your public profile…';
+ const current=()=>seq===previewSequence&&activePanel==='account'&&accountView==='public-preview'&&accountRecoveryUser?.id===owner?.id;
+ if(!owner||!appClient)return;
+ try{
+  previewModule=await import('./companions-page.js?v=20261124-public-preview-1');
+  if(!current())return;
+  const preview=await previewModule.loadOwnPublicPreview(appClient,owner.id);
+  if(!current())return;
+  if(preview.state!=='public'){
+   feedback.textContent={
+    hidden:'Your profile is currently hidden. Turn Public Profile on in your profile settings to make it visible and shareable.',
+    unpublished:'Your companion profile has not been published yet.',
+    unavailable:'Your profile is currently unavailable to the public.'
+   }[preview.state]||'Your profile is not publicly available.';
+   return;
+  }
+  previewData=preview;
+  document.querySelector('#results').replaceChildren(preview.node);
+  feedback.textContent='This is how your card appears to others on Explore.';
+  document.querySelector('#public-preview-link').href=preview.url;
+  document.querySelector('#public-preview-whatsapp').href='https://wa.me/?text='+encodeURIComponent('See my Sathivo profile: '+preview.url);
+  document.querySelector('#public-preview-actions').hidden=false;
+ }catch{
+  if(!current())return;
+  feedback.textContent='Could not load your public profile. Please try again.';
+  retry.hidden=false;
+ }
+}
+document.querySelector('#public-preview-retry').onclick=()=>void refreshPublicPreview();
+document.querySelector('#public-preview-share').onclick=()=>{
+ if(previewData&&previewModule&&accountView==='public-preview')void previewModule.shareProfile(previewData.row,document.querySelector('#public-preview-share'));
+};
+document.querySelector('#public-preview-copy').onclick=async()=>{
+ if(!previewData||accountView!=='public-preview')return;
+ const url=previewData.url,seq=previewSequence;
+ try{await navigator.clipboard.writeText(url);if(seq===previewSequence)document.querySelector('#public-preview-share-status').textContent='Profile link copied.';}
+ catch{window.prompt('Copy your public profile link:',url);}
+};
+document.addEventListener('visibilitychange',()=>{
+ if(!document.hidden&&activePanel==='account'&&accountView==='public-preview')void refreshPublicPreview();
+});
 function showAccountView(name,{focus=true}={}){
   const screens=[...document.querySelectorAll('[data-account-screen]')];
   if(!screens.some(screen=>screen.dataset.accountScreen===name))return;
   accountView=name;
   document.body.dataset.accountView=name;
   screens.forEach(screen=>{screen.hidden=screen.dataset.accountScreen!==name;});
+  if(name==='public-preview')void refreshPublicPreview();
+  else clearPublicPreview();
   if(name==='privacy'){
     const boundaries=document.querySelector('#account-boundaries');
     if(boundaries)boundaries.open=false;
