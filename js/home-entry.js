@@ -35,7 +35,13 @@ async function init(){
   const destination=await resolveEntry(client);
   // Do not redirect unexpectedly after the preflight deadline or a user's navigation.
   if(destination&&pending()){
-   location.replace(new URL(destination,location.href).href);
+   const target=new URL(destination,location.href);
+   // Carry only a short-lived, non-sensitive animation timestamp across pages.
+   try{
+    const started=window.__sathivoEntrySplashStartedAt;
+    if(Number.isFinite(started))sessionStorage.setItem('sathivo.launch-splash.handoff.v1',JSON.stringify({path:target.pathname,started,issued:Date.now()}));
+   }catch{}
+   location.replace(target.href);
    return;
   }
  }catch{/* Guest Home stays available when auth/profile services are unavailable. */}

@@ -28,9 +28,9 @@ test('Splash initializes first in body across public pages but not admin',async(
    assert.doesNotMatch(html,/js\/launch-splash\.js/);
    continue;
   }
-  assert.match(html,/launch-splash\.css\?v=20261122-fade-1/);
-  assert.match(html,/js\/launch-splash\.js\?v=20261122-fade-1/);
-  assert.match(html,/<body\b[^>]*><script src="js\/launch-splash\.js\?v=20261122-fade-1"><\/script>/i,
+  assert.match(html,/launch-splash\.css\?v=(?:20261122-fade-1|20261125-entry-handoff-1)/);
+  assert.match(html,/js\/launch-splash\.js\?v=(?:20261122-fade-1|20261125-entry-handoff-1)/);
+  assert.match(html,/<body\b[^>]*>\s*<script src="js\/launch-splash\.js\?v=(?:20261122-fade-1|20261125-entry-handoff-1)"><\/script>/i,
     'Splash must run before other page content in '+file);
  }
 });

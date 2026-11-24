@@ -4,13 +4,32 @@
 (()=>{
  'use strict';
  const SEEN='sathivo.launch-splash.seen.v1';
+ const HANDOFF='sathivo.launch-splash.handoff.v1';
  const durationMs=2200;
- if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+ const root=document.documentElement;
  if(!document.body)return;
+ let handoff=null;
  try{
-  if(sessionStorage.getItem(SEEN)==='1')return;
+  const raw=sessionStorage.getItem(HANDOFF);
+  if(raw){
+   sessionStorage.removeItem(HANDOFF);
+   const candidate=JSON.parse(raw);
+   const now=Date.now();
+   if(candidate.path===location.pathname&&Number.isFinite(candidate.started)&&Number.isFinite(candidate.issued)&&now>=candidate.issued&&now-candidate.issued<10000&&candidate.started<=candidate.issued&&candidate.issued-candidate.started<10000)handoff=candidate;
+  }
+ }catch{}
+ if(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)return;
+ const externalEntry=root.classList.contains('sathivo-entry-launch');
+ const pending=()=>root.classList.contains('sathivo-entry-pending');
+ try{
+  if(!externalEntry&&!handoff&&sessionStorage.getItem(SEEN)==='1')return;
   sessionStorage.setItem(SEEN,'1');
  }catch{/* Blocked storage must never block loading. */}
+ const started=handoff?.started??Date.now();
+ if(externalEntry)window.__sathivoEntrySplashStartedAt=started;
+ // Continue the same artwork on the destination; retain a short fade even if
+ // authentication or navigation took longer than the nominal splash duration.
+ const elapsed=()=>Math.max(0,Math.min(1200,Date.now()-started));
  const screen=document.createElement('div');
  screen.className='sathivo-launch-screen';
  screen.setAttribute('aria-hidden','true');
@@ -27,18 +46,36 @@
    <div class="sathivo-launch-screen__name">Sathivo</div>
    <div class="sathivo-launch-screen__tagline">Find your kind of company.</div>
   </div>`;
+ if(handoff)screen.style.setProperty('--sathivo-splash-elapsed',elapsed()+'ms');
  document.body.prepend(screen);
  let removed=false;
- let fallback;
+ let fallback,observer;
  const remove=()=>{
   if(removed)return;
   removed=true;
   clearTimeout(fallback);
+  observer?.disconnect();
   screen.remove();
  };
  screen.addEventListener('animationend',event=>{
-  if(event.target===screen&&event.animationName==='sathivo-splash-dissolve')remove();
+  if(event.target===screen&&event.animationName==='sathivo-splash-dissolve'&&!pending())remove();
  });
- fallback=setTimeout(remove,durationMs+500);
+ const armFade=()=>{
+  screen.style.setProperty('--sathivo-splash-fade-elapsed',elapsed()+'ms');
+  fallback=setTimeout(remove,durationMs-elapsed()+500);
+ };
+ if(pending()){
+  // Hold the branded splash above hidden Home while resolving the route.
+  // On a failed/expired session the existing seven-second fallback reveals Home.
+  observer=new MutationObserver(()=>{
+   if(pending())return;
+   observer.disconnect();armFade();
+  });
+  observer.observe(root,{attributes:true,attributeFilter:['class']});
+ }else if(handoff){
+  armFade();
+ }else{
+  fallback=setTimeout(remove,durationMs+500);
+ }
  window.addEventListener('pagehide',remove,{once:true});
 })();

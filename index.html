@@ -4,11 +4,12 @@
   <meta charset="utf-8">
 <style id="sathivo-entry-style">
 #sathivo-entry-loader{display:none}
-html.sathivo-entry-pending body>:not(#sathivo-entry-loader){display:none!important}
-html.sathivo-entry-pending #sathivo-entry-loader{display:flex;position:fixed;inset:0;z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#fff9f7;color:#723e59;font:600 16px system-ui,sans-serif;text-align:center;padding:24px}
-#sathivo-entry-loader .entry-heart{font-size:48px;line-height:1;color:#a13a63}
-#sathivo-entry-loader small{font-size:13px;font-weight:400;color:#806c78}
-#sathivo-entry-loader a{font-size:13px;text-decoration:underline;color:#723e59;margin-top:8px}
+html.sathivo-entry-pending{background:#fff7f4}
+html.sathivo-entry-pending body>:not(.sathivo-launch-screen):not(#sathivo-entry-loader){display:none!important}
+html.sathivo-entry-pending #sathivo-entry-loader{display:flex;position:fixed;inset:0;z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:#fff7f4;color:#471429;text-align:center;padding:24px}
+#sathivo-entry-loader .entry-heart{font-size:72px;line-height:1;color:#90264b}
+#sathivo-entry-loader strong{font:400 54px/1.1 Georgia,serif}
+#sathivo-entry-loader small{font:400 15px/1.35 system-ui,sans-serif;color:#542639}
 </style>
 <script id="sathivo-entry-preflight">
 (()=>{
@@ -19,6 +20,8 @@ html.sathivo-entry-pending #sathivo-entry-loader{display:flex;position:fixed;ins
  if(!start&&document.referrer){
   try{if(new URL(document.referrer).origin===url.origin)return;}catch{}
  }
+ // An external root visit is a new launch even in a previously used tab.
+ root.classList.add('sathivo-entry-launch');
  let stored=false;try{stored=!!localStorage.getItem('sathivo.auth.v1');}catch{}
  if(!stored&&!start)return;
  root.classList.add('sathivo-entry-pending');
@@ -26,7 +29,7 @@ html.sathivo-entry-pending #sathivo-entry-loader{display:flex;position:fixed;ins
  window.addEventListener('pageshow',event=>{if(event.persisted)root.classList.remove('sathivo-entry-pending');});
 })();
 </script>
-<script type="module" src="js/home-entry.js?v=20261124-smart-entry-1"></script>
+<script type="module" src="js/home-entry.js?v=20261125-splash-entry-1"></script>
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#702842">
   <meta name="description" content="Meet new friends in India through Sathivo. Explore strictly platonic companionship for coffee, conversations, movies and outings. Free profiles and requests; 18+ only.">
@@ -63,8 +66,8 @@ html.sathivo-entry-pending #sathivo-entry-loader{display:flex;position:fixed;ins
     @media(max-width:600px){.sathivo-ticker-shell{padding:0 10px;gap:8px;min-height:39px}.sathivo-ticker-label{font-size:.55rem;padding:6px 8px;letter-spacing:.02em}.announcement.sathivo-ticker .sathivo-ticker-set span{font-size:.76rem}.sathivo-ticker-set{gap:20px;padding-right:20px}.sathivo-ticker-cta{min-height:29px;font-size:.64rem;padding:5px 7px}.sathivo-ticker-track{animation-duration:30s}}
     @media(prefers-reduced-motion:reduce){.sathivo-ticker-track{animation:none;will-change:auto}}
   </style>
-<link rel="stylesheet" href="gender-prompt.css?v=20261116-1"><script type="module" src="js/gender-prompt.js?v=20261116-1"></script><link rel="stylesheet" href="feedback-prompt.css?v=20261119-feedback-1"><script type="module" src="js/feedback-prompt.js?v=20261119-feedback-1"></script><link rel="stylesheet" href="mens-day-popup.css?v=20261119-2"><script type="module" src="js/mens-day-popup.js?v=20261119-2"></script><link rel="stylesheet" href="hero-fee-banner.css?v=20261119-1"><link rel="stylesheet" href="android-coming-soon.css?v=20261123-1"><link rel="stylesheet" href="contribution.css?v=20261119-1"><link rel="stylesheet" href="launch-splash.css?v=20261122-fade-1"><link rel="stylesheet" href="activity-update-announcement.css?v=20261122-1"><script type="module" src="js/activity-update-announcement.js?v=20261122-1"></script><link rel="stylesheet" href="policy-warning-gate.css?v=20261124-1"><script type="module" src="js/policy-warning-gate.js?v=20261124-1"></script><link rel="stylesheet" href="safety-thanks-popup.css?v=20261124-thanks-1"><script type="module" src="js/safety-thanks-popup.js?v=20261124-thanks-1"></script><link rel="stylesheet" href="mobile-nav-clean.css?v=20261124-2"><link rel="stylesheet" href="home-free-join.css?v=20261124-1"></head>
-<body class="home-2d sathivo-2d"><div id="sathivo-entry-loader" role="status" aria-live="polite"><span class="entry-heart" aria-hidden="true">♡</span><strong>Opening Sathivo…</strong><small>Getting your account ready.</small><a href="./?view=home">Continue to Home</a></div><script src="js/launch-splash.js?v=20261122-fade-1"></script>
+<link rel="stylesheet" href="gender-prompt.css?v=20261116-1"><script type="module" src="js/gender-prompt.js?v=20261116-1"></script><link rel="stylesheet" href="feedback-prompt.css?v=20261119-feedback-1"><script type="module" src="js/feedback-prompt.js?v=20261119-feedback-1"></script><link rel="stylesheet" href="mens-day-popup.css?v=20261119-2"><script type="module" src="js/mens-day-popup.js?v=20261119-2"></script><link rel="stylesheet" href="hero-fee-banner.css?v=20261119-1"><link rel="stylesheet" href="android-coming-soon.css?v=20261123-1"><link rel="stylesheet" href="contribution.css?v=20261119-1"><link rel="stylesheet" href="launch-splash.css?v=20261125-entry-handoff-1"><link rel="stylesheet" href="activity-update-announcement.css?v=20261122-1"><script type="module" src="js/activity-update-announcement.js?v=20261122-1"></script><link rel="stylesheet" href="policy-warning-gate.css?v=20261124-1"><script type="module" src="js/policy-warning-gate.js?v=20261124-1"></script><link rel="stylesheet" href="safety-thanks-popup.css?v=20261124-thanks-1"><script type="module" src="js/safety-thanks-popup.js?v=20261124-thanks-1"></script><link rel="stylesheet" href="mobile-nav-clean.css?v=20261124-2"><link rel="stylesheet" href="home-free-join.css?v=20261124-1"></head>
+<body class="home-2d sathivo-2d"><script src="js/launch-splash.js?v=20261125-entry-handoff-1"></script><div id="sathivo-entry-loader" role="status" aria-label="Opening Sathivo"><span class="entry-heart" aria-hidden="true">♡</span><strong>Sathivo</strong><small>Find your kind of company.</small></div>
   <a class="skip-link" href="#main">Skip to content</a>
   <div class="announcement sathivo-ticker" role="region" aria-label="Sathivo offers announcement">
     <div class="sathivo-ticker-shell">

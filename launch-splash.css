@@ -55,3 +55,24 @@
 @media(prefers-reduced-motion:reduce){
  .sathivo-launch-screen{animation:none;display:none}
 }
+
+/* Entry routing shares the same artwork. Hold until auth resolves; the next
+   document resumes the animation rather than showing a second loader. */
+html.sathivo-entry-pending .sathivo-launch-screen{
+ animation:none;opacity:1;visibility:visible;filter:none;
+}
+.sathivo-launch-screen{
+ animation-delay:calc(0ms - var(--sathivo-splash-fade-elapsed,var(--sathivo-splash-elapsed,0ms)));
+}
+.sathivo-launch-screen .sathivo-launch-screen__stroke--one{
+ animation-delay:calc(0ms - var(--sathivo-splash-elapsed,0ms));
+}
+.sathivo-launch-screen .sathivo-launch-screen__stroke--two{
+ animation-delay:calc(260ms - var(--sathivo-splash-elapsed,0ms));
+}
+.sathivo-launch-screen .sathivo-launch-screen__name{
+ animation-delay:calc(520ms - var(--sathivo-splash-elapsed,0ms));
+}
+.sathivo-launch-screen .sathivo-launch-screen__tagline{
+ animation-delay:calc(750ms - var(--sathivo-splash-elapsed,0ms));
+}
