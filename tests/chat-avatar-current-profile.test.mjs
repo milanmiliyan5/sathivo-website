@@ -47,3 +47,29 @@ test('all booking chat DPs crop inside fixed circular frames without stretching'
  assert.match(chatCss,/clip-path:circle\(50% at 50%\)/);
  assert.match(chatCss,/\.chat-avatar\.is-online::after/);
 });
+
+test('Chat list displays a stable Explore-style serif heading above messages',async()=>{
+ const html=await read('chats.html');
+ const css=await read('chats-compact.css');
+ const js=await read('js/chats-page.js');
+ const title='<section class="chats-page-intro" aria-labelledby="chats-title"><h1 id="chats-title">Chats</h1></section>';
+ assert.ok(html.includes(title));
+ assert.ok(html.indexOf(title)<html.indexOf('id="chats" class="chat-list"'));
+ assert.match(html,/chats-compact\.css\?v=20261124-chats-heading-1/);
+ assert.doesNotMatch(html,/PRIVATE CONVERSATIONS|Your chats\.|7 chats/);
+ const match=css.match(/body\.sathivo-2d \.chats-list-compact \.chats-page-intro h1\{([^}]+)\}/);
+ assert.ok(match,'Chats title rule exists');
+ for(const declaration of [
+  'font-family:var(--serif)',
+  'font-size:clamp(1.45rem,3.3vw,2rem)!important',
+  'text-align:left!important',
+  'visibility:visible!important',
+  'opacity:1!important',
+  'transform:none!important',
+  'background:transparent!important',
+  'border:0!important',
+  'box-shadow:none!important'
+ ])assert.ok(match[1].includes(declaration),declaration);
+ assert.match(css,/\.chats-page-intro h1\{\s*font-size:1\.45rem!important;line-height:1\.18/);
+ assert.doesNotMatch(js,/getElementById\('chats-title'\)/);
+});
