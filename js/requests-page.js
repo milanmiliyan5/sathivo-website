@@ -213,7 +213,7 @@ async function init(){try{
  client=await getSathivoClient();
  const u=await client.auth.getUser();user=u.data.user;if(!user){if(linkedRequestId){const signIn=new URL('account.html',location.href);signIn.searchParams.set('next','requests.html?id='+linkedRequestId);signIn.hash='login';location.replace(signIn.href)}else location.replace('account.html#login');return}
  const restored=requestHistory(history.state);
- if(restored?.view)view=restored.view;
+ if(restored){view=restored.view;linkedRequestChecked=true;}
  else writeRequestHistory('replaceState',false);
  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>openView(b.dataset.view)));
  $('request-back').addEventListener('click',()=>{
