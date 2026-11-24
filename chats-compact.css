@@ -23,3 +23,27 @@ body.sathivo-2d .chats-list-compact #empty{
  }
  body.sathivo-2d .chats-list-compact #status{font-size:.78rem}
 }
+
+/* Same visible, left-aligned serif title used by Explore Companions.
+   Keep it static, outside the realtime-rendered chat cards. */
+body.sathivo-2d .chats-list-compact .chats-page-intro{
+ display:block!important;position:relative;flex:none;width:100%;
+ margin:0 0 14px;padding:0;max-width:100%;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ opacity:1!important;visibility:visible!important;transform:none!important;
+}
+body.sathivo-2d .chats-list-compact .chats-page-intro h1{
+ display:block!important;position:static!important;width:auto;max-width:none;
+ margin:0!important;padding:0!important;text-align:left!important;
+ background:transparent!important;border:0!important;box-shadow:none!important;
+ opacity:1!important;visibility:visible!important;transform:none!important;
+ color:#43283A;font-family:var(--serif);
+ font-size:clamp(1.45rem,3.3vw,2rem)!important;
+ font-weight:800;letter-spacing:-.025em;line-height:1.22;
+}
+@media(max-width:640px){
+ body.sathivo-2d .chats-list-compact .chats-page-intro{margin-bottom:12px}
+ body.sathivo-2d .chats-list-compact .chats-page-intro h1{
+  font-size:1.45rem!important;line-height:1.18;
+ }
+}
