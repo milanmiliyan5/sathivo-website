@@ -44,25 +44,30 @@ $('request-menu').hidden=true;$('request-detail').hidden=false;
 const fmt=d=>new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d));
 const el=(t,x,c)=>{const n=document.createElement(t);if(x!==undefined)n.textContent=x;if(c)n.className=c;return n};
 const cancelledStatuses=new Set(['cancelled','declined']);
-function visible(r){
- if(!view)return false;
- if(view==='sent')return r.customer_id===user.id;
- if(view==='received')return r.companion_id===user.id;
- if(view==='cancelled')return cancelledStatuses.has(r.status);
- if(view==='all')return true;
- return r.status===view;
+const activeStatuses=new Set(['pending','accepted']);
+function matchesRequestView(r,section,uid){
+ if(!section||!uid||(r.customer_id!==uid&&r.companion_id!==uid))return false;
+ if(section==='sent')return r.customer_id===uid&&activeStatuses.has(r.status);
+ if(section==='received')return r.companion_id===uid&&activeStatuses.has(r.status);
+ if(section==='cancelled')return cancelledStatuses.has(r.status);
+ if(section==='all')return true;
+ return r.status===section;
 }
+function visible(r){return matchesRequestView(r,view,user?.id)}
 function requestCounts(items){
- const counts={sent:0,received:0,pending:0,accepted:0,completed:0,cancelled:0,all:items.length};
+ const counts={sent:0,received:0,pending:0,accepted:0,completed:0,cancelled:0,all:0};
  for(const r of items){
-  if(r.customer_id===user.id)counts.sent++;
-  if(r.companion_id===user.id)counts.received++;
-  if(r.status==='pending')counts.pending++;
-  else if(r.status==='accepted')counts.accepted++;
-  else if(r.status==='completed')counts.completed++;
-  else if(cancelledStatuses.has(r.status))counts.cancelled++;
+  for(const section of Object.keys(counts)){
+   if(matchesRequestView(r,section,user?.id))counts[section]++;
+  }
  }
  return counts;
+}
+// Old notification links must still find their booking after it closes.
+function linkedRequestView(r,uid){
+ if(r.status==='completed')return 'completed';
+ if(cancelledStatuses.has(r.status))return 'cancelled';
+ return r.companion_id===uid?'received':'sent';
 }
 function syncRequestCounts(){
  const counts=requestCounts(rows);
@@ -139,8 +144,8 @@ function render(){
  $('requests').replaceChildren(...list.map(card));
  $('empty').hidden=list.length>0;
  $('request-empty-description').textContent=view==='sent'
-  ?'Requests you send to companions will appear here.'
-  :view==='received'?'Requests other people send to you will appear here.'
+  ?'Your pending and accepted requests will appear here.'
+  :view==='received'?'Pending and accepted requests sent to you will appear here.'
   :'No '+viewNames[view].toLowerCase()+' requests at the moment.';
  $('status').textContent='';
  if(!linkedRequestId)return;
@@ -169,11 +174,11 @@ async function load(){
  if(newlyCompleted)offerCompletionFeedback(user);
  if(linkedRequestId&&!linkedRequestChecked){
   linkedRequestChecked=true;const requested=rows.find(r=>r.id===linkedRequestId);
-  if(requested?.status==='accepted'&&requested.companion_id===user.id){
+  if(requested?.status==='accepted'&&requested.companion_id===user.id&&!requestHistory(history.state)?.view){
    location.replace('chat.html?booking='+encodeURIComponent(linkedRequestId));return;
   }
-  if(requested&&!requestHistory(history.state)?.view){
-   view=requested.companion_id===user.id?'received':'sent';
+  if(requested&&(!requestHistory(history.state)?.view||!matchesRequestView(requested,view,user.id))){
+   view=linkedRequestView(requested,user.id);
    writeRequestHistory('replaceState',false);
   }
  }
@@ -223,7 +228,7 @@ async function init(){try{
  client=await getSathivoClient();
  const u=await client.auth.getUser();user=u.data.user;if(!user){if(linkedRequestId){const signIn=new URL('account.html',location.href);signIn.searchParams.set('next','requests.html?id='+linkedRequestId);signIn.hash='login';location.replace(signIn.href)}else location.replace('account.html#login');return}
  const restored=requestHistory(history.state);
- if(restored){view=restored.view;linkedRequestChecked=true;}
+ if(restored){view=restored.view;}
  else writeRequestHistory('replaceState',false);
  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>openView(b.dataset.view)));
  $('request-back').addEventListener('click',()=>{
