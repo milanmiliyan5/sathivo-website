@@ -180,16 +180,7 @@ function syncModeUI(){
  $('save-profile').textContent='Save Changes';
  $('profile-customer-companion-note').hidden=companion;
  syncSummaryPhoto();
- $('profile-kind-hint').textContent=companion
-  ? 'Your companion details stay private until you save and explicitly publish them.'
-  : 'Your customer profile stays private. Only the details needed to use Sathivo are saved.';
- $('profile-mode-note-title').textContent=companion?'You’re setting up as a companion.':'Want to become a companion?';
- $('profile-mode-note-copy').textContent=companion
-  ? 'Add your photo/avatar, bio, categories, availability and hourly rate, then save before publishing.'
-  : 'Choose Become a companion or Both in the profile type whenever you want to create a public companion listing.';
- $('profile-mode-note-extra').textContent=companion
-  ? 'Customers can send hourly offers. You choose what to accept; payment is settled directly between users outside Sathivo.'
-  : 'As a customer, your saved profile is not published in Find a companion.';
+ $('profile-kind-hint').textContent=companion?'Save, then publish to appear in Explore.':'Your customer profile stays private.';
  updateCompleteness();
 }
 function updateCompleteness(){
@@ -215,14 +206,13 @@ function updateCompleteness(){
  $('profile-summary-initial').textContent=name.slice(0,1).toUpperCase()||'S';
  const pct=Math.round(values.filter(Boolean).length/values.length*100);
  $('profile-percent').textContent=pct+'%';$('profile-progress-bar').style.width=pct+'%';
- $('profile-progress-copy').textContent=pct===100
-  ? (companion?'Profile complete — save it, then publish when ready.':'Customer profile complete — you’re ready to find companions.')
-  : pct>=70?'Almost there. A few details will make your profile stronger.':'Add a few more details to finish your profile.';
+ $('profile-progress-copy').textContent=pct===100?'':'Complete the remaining profile details.';
 }
 function showSystemInfo(p){
  $('safety-id').textContent=p?.safety_id||'Assigned after first save';
  const verified=!!(user?.email_confirmed_at||p?.email_verified_at);
  $('email-trust').textContent=verified?'✓ Email verified':'Email verification pending';
+ $('email-trust').dataset.verified=String(verified);
  const joined=p?.joined_at||user?.created_at;
  $('joined-date').textContent=joined?'Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(joined)):'';
 }
@@ -373,7 +363,7 @@ async function init(){
       showSystemInfo(null);
     }
     syncModeUI();
-    $('fields').disabled=false;profileLoaded=true;message(p?'Your saved profile. Make it feel like you.':'Let’s create your free profile.');
+    $('fields').disabled=false;profileLoaded=true;message(p?'':'Complete your profile to get started.');
     // The 21-activity announcement deep-links here, after saved selections
     // are restored. Do not alter selections or force profile publishing.
     if(location.hash==='#your-kind-of-company'&&profileTab==='companion'&&isCompanionKind()){
