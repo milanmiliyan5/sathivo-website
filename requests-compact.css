@@ -172,3 +172,82 @@ body.sathivo-2d .incoming-compact-page .request-detail #empty h3 {
 @media(prefers-reduced-motion:reduce) {
   body.sathivo-2d .incoming-compact-page .request-hub-card {transition:none}
 }
+
+/* Compact cards on Requests and My Bookings. Keep forms and dialogs untouched. */
+body.sathivo-2d:not(.home-2d) .booking-card.booking-card-compact{
+ box-sizing:border-box;min-width:0;padding:14px;gap:10px;border-radius:15px;
+ box-shadow:3px 3px 0 rgba(93,48,72,.10);
+}
+body.sathivo-2d:not(.home-2d) .booking-card.booking-card-compact:hover{transform:none;box-shadow:3px 3px 0 rgba(93,48,72,.10)}
+body.sathivo-2d .booking-card-compact .booking-top{
+ display:flex;flex-direction:row!important;align-items:flex-start;justify-content:space-between;gap:8px;min-width:0;
+}
+body.sathivo-2d .booking-card-compact .booking-top>div{min-width:0;flex:1}
+body.sathivo-2d .booking-card-compact h2{
+ font-family:inherit;font-size:1.06rem!important;font-weight:750;line-height:1.25;margin:0 0 4px!important;overflow-wrap:anywhere;
+}
+body.sathivo-2d .booking-card-compact .booking-meta{gap:3px 8px;font-size:.71rem;line-height:1.45}
+body.sathivo-2d .booking-card-compact .request-identity{gap:8px;align-items:flex-start}
+body.sathivo-2d .booking-card-compact .request-avatar{width:34px;height:34px;font-size:.8rem}
+body.sathivo-2d .booking-card-compact .status-pill{
+ flex:0 0 auto;max-width:100%;padding:4px 8px;line-height:1.2;font-size:.66rem;font-weight:700;box-shadow:none;
+}
+body.sathivo-2d .booking-card-compact[data-booking-status="accepted"] .status-pill,
+body.sathivo-2d .booking-card-compact[data-booking-status="completed"] .status-pill{color:#276247;background:#e8f4ed;border-color:#c4dfce}
+body.sathivo-2d .booking-card-compact[data-booking-status="pending"] .status-pill{color:#855b24;background:#fff4df;border-color:#ebd7b4}
+body.sathivo-2d .booking-card-compact[data-booking-status="cancelled"] .status-pill,
+body.sathivo-2d .booking-card-compact[data-booking-status="declined"] .status-pill{color:#8e3f55;background:#fbeaf0;border-color:#e8c6d1}
+body.sathivo-2d .booking-card-compact .booking-progress-compact{
+ margin:0;padding:10px 4px;border:0;border-top:1px solid #eee3e9;border-bottom:1px solid #eee3e9;border-radius:0;background:transparent;
+}
+body.sathivo-2d .booking-card-compact .booking-progress-step{gap:3px}
+body.sathivo-2d .booking-card-compact .booking-progress-icon{width:30px;height:30px;font-size:.88rem}
+body.sathivo-2d .booking-card-compact .booking-progress-step:not(:last-child):before{
+ top:14px;left:calc(50% + 18px);width:calc(100% - 26px);height:2px;
+}
+body.sathivo-2d .booking-card-compact .booking-progress-label{font-size:.69rem;line-height:1.25}
+body.sathivo-2d .booking-card-compact .booking-progress-caption{font-size:.6rem;line-height:1.2}
+body.sathivo-2d .booking-card-compact .compact-deal-box{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,80px),1fr));gap:6px;margin:0;
+}
+body.sathivo-2d .booking-card-compact .compact-rate{
+ display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;
+ min-width:0;gap:3px;padding:7px 3px;border:1px solid #e9e2e5;border-radius:9px;background:#f7f3f5;
+}
+body.sathivo-2d .booking-card-compact .compact-rate small{font-size:.64rem;line-height:1.25;color:#75636f;overflow-wrap:anywhere}
+body.sathivo-2d .booking-card-compact .compact-rate strong{
+ display:block;min-width:0;padding:0;border:0;border-radius:0;box-shadow:none;
+ background:none;color:inherit;font-size:.78rem;line-height:1.3;overflow-wrap:anywhere;
+}
+body.sathivo-2d .booking-card-compact .compact-rate-offer{background:#fff5e6;color:#765121;border-color:#eedec5}
+body.sathivo-2d .booking-card-compact .compact-rate-agreed{background:#eaf5ee;color:#276247;border-color:#d1e6d9}
+body.sathivo-2d .booking-card-compact .booking-note,
+body.sathivo-2d .booking-card-compact .cancellation-note,
+body.sathivo-2d .booking-card-compact .booking-rated{margin:0;font-size:.76rem;line-height:1.4;overflow-wrap:anywhere}
+body.sathivo-2d .booking-card-compact .booking-actions{
+ display:flex;flex-wrap:wrap;gap:7px;width:100%;min-width:0;margin:0;
+}
+body.sathivo-2d:not(.home-2d) .booking-card-compact .booking-actions>.button{
+ flex:1 1 125px;width:auto;max-width:100%;min-width:0;min-height:44px;
+ box-sizing:border-box;justify-content:center;text-align:center;padding:7px 9px;font-size:.75rem;
+ line-height:1.3;gap:4px;border-width:1px;border-radius:9px;box-shadow:2px 2px 0 rgba(93,48,72,.12);
+}
+body.sathivo-2d .booking-card-compact .booking-actions>.launch-note{
+ flex:1 0 100%;margin:0;padding:8px;font-size:.74rem;box-shadow:none;
+}
+body.sathivo-2d .booking-card-compact .compact-payment-note{
+ margin:0;padding-top:7px;border-top:1px solid #eee3e9;color:#75636f;font-size:.69rem;line-height:1.4;
+}
+body.sathivo-2d .booking-card-compact .compact-payment-note a{color:#723e59;text-decoration:underline;text-underline-offset:2px}
+@media(max-width:640px){
+ body.sathivo-2d:not(.home-2d) .booking-card.booking-card-compact{padding:12px;gap:9px}
+ body.sathivo-2d .incoming-compact-page .request-detail-top{gap:5px;margin-bottom:10px}
+ body.sathivo-2d .incoming-compact-page .request-back{min-height:36px;padding-block:5px}
+}
+@media(max-width:350px){
+ body.sathivo-2d .booking-card-compact .booking-top{flex-wrap:wrap}
+ body.sathivo-2d .booking-card-compact .booking-meta{font-size:.68rem}
+ body.sathivo-2d .booking-card-compact .compact-deal-box{grid-template-columns:repeat(auto-fit,minmax(min(100%,68px),1fr))}
+ body.sathivo-2d .booking-card-compact .compact-rate strong{font-size:.7rem}
+ body.sathivo-2d:not(.home-2d) .booking-card-compact .booking-actions>.button{flex-basis:105px;font-size:.7rem}
+}
