@@ -137,8 +137,9 @@ function render(){
  const empty=$('empty');
  empty.hidden=visible.length>0;
  if(!visible.length){
-  empty.querySelector('h2').textContent=filter==='unread'?'All caught up!':'All quiet for now.';
-  empty.querySelector('p').textContent=filter==='unread'?'You have no unread notifications.':'Your booking, message and nearby companion updates will appear here.';
+  empty.dataset.emptyKind=filter==='unread'?'check':'bell';
+  empty.querySelector('h2').textContent=filter==='unread'?'You’re all caught up':'No notifications yet';
+  empty.querySelector('p').textContent=filter==='unread'?'No unread notifications.':'New updates will appear here.';
  }
  $('status').textContent=rows.length?rows.length+' recent notification'+(rows.length===1?'':'s')+'.':'';
  updateSummary();
