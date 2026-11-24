@@ -143,7 +143,7 @@ async function refreshPublicPreview(){
  const current=()=>seq===previewSequence&&activePanel==='account'&&accountView==='public-preview'&&accountRecoveryUser?.id===owner?.id;
  if(!owner||!appClient)return;
  try{
-  previewModule=await import('./companions-page.js?v=20261124-public-preview-1');
+  previewModule=await import('./companions-page.js?v=20261124-own-profile-guard-1');
   if(!current())return;
   const preview=await previewModule.loadOwnPublicPreview(appClient,owner.id);
   if(!current())return;
