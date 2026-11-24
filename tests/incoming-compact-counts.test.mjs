@@ -26,7 +26,7 @@ test('Requests is a vertically stacked seven-card hub with a same-page Back view
   assert.ok(html.includes('class="request-hub-name">'+labels[i]+'</span>'));
  }
  assert.match(html,/requests-compact\.css\?v=20261124-request-flow-4/);
- assert.match(html,/requests-page\.js\?v=20261124-back-history-1/);
+ assert.match(html,/requests-page\.js\?v=20261124-back-history-2/);
 });
 test('My Requests and Received count separate directions; completed is not cancelled',async()=>{
  const js=await read('js/requests-page.js');
@@ -136,4 +136,14 @@ test('Request hub does not inherit the mobile hamburger nav absolute positioning
  assert.doesNotMatch(js,/pendingReloadScrollReset|scrollRestoration|setupRequestTitleOffset/);
  assert.match(js,/if\(!view\)\{\$\('status'\)\.textContent='';\$\('request-detail'\)\.hidden=true;\$\('request-menu'\)\.hidden=false;return\}/);
  assert.match(js,/if\(requested\?\.status==='accepted'&&requested\.companion_id===user\.id\)/);
+});
+
+test('Request categories participate in browser history without replaying a deep link',async()=>{
+ const js=await read('js/requests-page.js');
+ assert.match(js,/history\[mode\]\(\{sathivoRequests:/);
+ assert.match(js,/fromMenu\?'pushState':'replaceState'/);
+ assert.match(js,/window\.addEventListener\('popstate'/);
+ assert.match(js,/openView\(entry\.view,\{record:false\}\)/);
+ assert.match(js,/if\(restored\)\{view=restored\.view;linkedRequestChecked=true;\}/);
+ assert.match(js,/requestBackPending=true;history\.back\(\);return/);
 });
