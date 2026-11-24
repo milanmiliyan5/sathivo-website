@@ -15,6 +15,7 @@ let client,publicClient,locations=[],locationsLoaded=false,page=0,request=0,curr
 const discoverSeed=directory?Array.from(crypto.getRandomValues(new Uint8Array(8)),n=>n.toString(16).padStart(2,'0')).join(''):'';
 let discoverCursors=new Map(),directoryFilterKey='';
 let detailAuthReady=false;
+let favoritesLoaded=false;
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
 function opts(id,rows,title){$(id).replaceChildren(new Option(title,''));rows.forEach(([v,t])=>$(id).add(new Option(t,String(v))));}
 const normalized=value=>String(value||'').trim().toLocaleLowerCase('en-IN');
@@ -172,11 +173,11 @@ function activeMemberBadge(row){
 }
 
 async function loadFavorites({strict=false}={}){
- favoriteIds=new Set();
- if(!currentUser)return;
+ favoritesLoaded=false;
+ if(!currentUser){favoriteIds=new Set();return;}
  const {data,error}=await client.from('companion_favorites').select('companion_public_id').eq('user_id',currentUser.id);
  if(error&&strict)throw Error('Could not load saved companions. Please try again.');
- if(!error)(data||[]).forEach(r=>favoriteIds.add(r.companion_public_id));
+ if(!error){favoriteIds=new Set((data||[]).map(r=>r.companion_public_id));favoritesLoaded=true;}
 }
 function syncFavoriteButtons(publicId){
  document.querySelectorAll('[data-favorite-id="'+CSS.escape(publicId)+'"]').forEach(button=>{
@@ -273,6 +274,11 @@ async function list({fromPagination=false}={}){
  $('results').replaceChildren(...Array.from({length:6},()=>{const n=el('article',undefined,'companion-card companion-skeleton');n.innerHTML='<div class="portrait skeleton-block"></div><div class="card-copy"><i></i><i></i><i></i><i></i></div>';return n}));
  const savedOnly=$('saved-only').checked;
  if(savedOnly&&!currentUser){location.href='account.html#login';return}
+ if(savedOnly&&!favoritesLoaded){
+  try{await loadFavorites({strict:true});}
+  catch{if(seq===request){$('results').replaceChildren();$('status').textContent='Could not load saved companions. Please try again.';$('retry').hidden=false;$('page-label').textContent='';}return;}
+  if(seq!==request)return;
+ }
  const savedIds=savedOnly?[...favoriteIds]:null;
  if(savedOnly&&!savedIds.length){$('results').replaceChildren();showDirectoryEmpty('saved');$('previous').disabled=$('next').disabled=true;$('page-label').textContent='';return}
  if(!locationsLoaded&&($('state').value||$('district').value)){
