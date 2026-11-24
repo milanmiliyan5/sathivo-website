@@ -10,8 +10,8 @@
   <title>Your account — Sathivo</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml"><link rel="manifest" href="manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes">
   <link rel="stylesheet" href="styles.css?v=20261119-brand-co">
-  <link rel="stylesheet" href="account.css?v=20261124-account-no-flash-1">
-  <script type="module" src="js/account-page.js?v=20261124-smart-entry-1"></script>
+  <link rel="stylesheet" href="companions.css?v=20261124-filter-icon-1"><link rel="stylesheet" href="active-member.css?v=20261122-active-1"><link rel="stylesheet" href="experience-categories.css?v=20261123-pastels-1"><link rel="stylesheet" href="account.css?v=20261124-public-preview-1">
+  <script type="module" src="js/account-page.js?v=20261124-public-preview-1"></script>
 <link rel="stylesheet" href="responsive.css?v=20261025-polish-1"><script type="module" src="js/mobile-nav.js?v=20261124-clean-nav-2"></script><script type="module" src="js/header-requests.js?v=20261119-tabs"></script><script type="module" src="js/header-notifications.js?v=20261123-photo-gender-1"></script><script type="module" src="js/push-settings.js?v=20261123-push-1"></script><script type="module" src="js/site-presence.js?v=20261122-rate-safe-1"></script><link rel="stylesheet" href="site-2d.css?v=20261018-alerts-1"><script src="js/site-motion.js?v=20261006-1" defer></script><link rel="stylesheet" href="nearby-alert-settings.css?v=20261027-1"><script type="module" src="js/nearby-alert-settings.js?v=20261123-push-1"></script><link rel="stylesheet" href="gender-prompt.css?v=20261116-1"><script type="module" src="js/gender-prompt.js?v=20261116-1"></script><link rel="stylesheet" href="mobile-header.css?v=20261118-hamburger-1"><link rel="stylesheet" href="feedback-prompt.css?v=20261119-feedback-1"><link rel="stylesheet" href="contribution.css?v=20261119-1"><link rel="stylesheet" href="launch-splash.css?v=20261122-fade-1"><link rel="stylesheet" href="activity-update-announcement.css?v=20261122-1"><script type="module" src="js/activity-update-announcement.js?v=20261122-1"></script><link rel="stylesheet" href="policy-warning-gate.css?v=20261124-1"><script type="module" src="js/policy-warning-gate.js?v=20261124-1"></script><link rel="stylesheet" href="safety-thanks-popup.css?v=20261124-thanks-1"><script type="module" src="js/safety-thanks-popup.js?v=20261124-thanks-1"></script><link rel="stylesheet" href="mobile-nav-clean.css?v=20261124-2"></head>
 <body class="account-page sathivo-2d auth-pending"><script src="js/launch-splash.js?v=20261122-fade-1"></script>
   <a class="skip-link" href="#account-main">Skip to account</a>
@@ -108,7 +108,7 @@
           <h2 id="account-title" class="account-hub-heading" tabindex="-1">Account</h2>
           <div class="account-hub-identity">
             <span class="account-hub-avatar" aria-hidden="true"><span id="account-avatar-initial">S</span><img id="account-avatar-photo" alt="" width="60" height="60" hidden></span>
-            <div class="account-hub-identity-copy"><strong id="account-name">friend</strong><span id="account-email"></span><small id="account-email-verification">Email verified ✓</small></div>
+            <div class="account-hub-identity-copy"><strong id="account-name">friend</strong><span id="account-email"></span><div class="account-identity-status-row"><small id="account-email-verification">Email verified ✓</small><button class="account-public-preview-pill" type="button" data-account-open="public-preview"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12Z"/><circle cx="12" cy="12" r="2.7"/></svg><span>Public Preview</span></button></div></div>
           </div>
           <p class="account-hub-trust-note">Email verification confirms access to your inbox, not identity or age.</p>
           <div class="account-hub-list">
@@ -125,6 +125,22 @@
           </div>
           <button class="account-hub-signout" id="signout" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 17l5-5-5-5M15 12H3M14 3h6v18h-6"/></svg><span>Sign Out</span></button>
           <p class="account-hub-footnote">Sathivo.co · 18+ · Strictly platonic</p>
+        </section>
+        <section class="account-hub-screen account-public-preview" data-account-screen="public-preview" aria-labelledby="account-preview-title" hidden>
+          <button type="button" class="account-hub-back" data-account-back><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m7-7-7 7 7 7"/></svg><span>Back</span></button>
+          <h3 id="account-preview-title" class="account-hub-heading" tabindex="-1">Public Preview</h3>
+          <p id="public-preview-status" role="status" aria-live="polite"></p>
+          <button id="public-preview-retry" type="button" class="button button-outline" hidden>Try again</button>
+          <div class="directory account-preview-directory">
+            <section id="results" class="companion-grid" aria-label="Your public Explore card"></section>
+          </div>
+          <div id="public-preview-actions" class="account-preview-actions" hidden>
+            <a id="public-preview-link" class="button button-outline">View full profile ↗</a>
+            <button id="public-preview-share" type="button" class="button button-primary">Share My Profile ↗</button>
+            <div class="account-preview-share-links"><a id="public-preview-whatsapp" target="_blank" rel="noopener noreferrer">WhatsApp ↗</a><button id="public-preview-copy" type="button">Copy profile link</button></div>
+            <p id="public-preview-share-status" role="status" aria-live="polite"></p>
+          </div>
+          <a class="account-preview-edit text-link" href="profile.html">Edit my profile ↗</a>
         </section>
         <section class="account-hub-screen" data-account-screen="settings" aria-labelledby="account-settings-title" hidden>
           <button type="button" class="account-hub-back" data-account-back><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5m7-7-7 7 7 7"/></svg><span>Back</span></button>
