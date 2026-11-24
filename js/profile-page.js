@@ -10,6 +10,63 @@ const form = $('profile-form');
 const categories = experienceCategories;
 const el=(tag,text,cssClass)=>{const element=document.createElement(tag);if(text!==undefined)element.textContent=text;if(cssClass)element.className=cssClass;return element;};
 let client, user, locations = [], avatarPath = null, savedAvatarPath = null, dirty = false, publishing = null;
+let profileTab='personal',profileLoaded=false,hadSavedProfile=false;
+const profileTabs=new Set(['personal','companion','privacy']);
+function showProfileTab(name,{record=false,focus=false}={}){
+ if(!profileTabs.has(name))name='personal';
+ const changed=profileTab!==name;
+ profileTab=name;
+ document.querySelectorAll('[data-profile-tab]').forEach(button=>{
+  const selected=button.dataset.profileTab===name;
+  button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;
+ });
+ document.querySelectorAll('[data-profile-panel]').forEach(panel=>{panel.hidden=panel.dataset.profilePanel!==name;});
+ document.querySelectorAll('[data-profile-extra]').forEach(panel=>{panel.hidden=panel.dataset.profileExtra!==name;});
+ if(record&&changed)history.pushState({...history.state,sathivoProfileTab:name},'',location.href);
+ if(focus)$('profile-tab-'+name)?.focus({preventScroll:true});
+}
+function revealProfileControl(control){
+ const panel=control?.closest('[data-profile-panel]');
+ if(panel)showProfileTab(panel.dataset.profilePanel,{record:true});
+ if(control){
+  for(let parent=control.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;
+  control.focus();
+ }
+}
+function validateProfileForm(){
+ // A single form is intentionally kept enabled across tabs. Open the first
+ // invalid control's tab BEFORE the native validation UI attempts to focus it.
+ const invalid=[...form.elements].find(control=>control.willValidate&&!control.validity.valid);
+ if(invalid){revealProfileControl(invalid);invalid.reportValidity();return false;}
+ return form.reportValidity();
+}
+function syncSummaryPhoto(){
+ const source=$('avatar'),image=$('profile-summary-photo');
+ if(!source||!image)return;
+ const src=source.getAttribute('src');
+ if(source.hidden||!src||!isCompanionKind()){image.hidden=true;image.removeAttribute('src');return;}
+ if(image.getAttribute('src')!==src){image.hidden=true;image.src=src;}
+ else if(image.complete&&image.naturalWidth)image.hidden=false;
+}
+$('profile-summary-photo').addEventListener('load',()=>{if(isCompanionKind()&&!$('avatar').hidden)$('profile-summary-photo').hidden=false;});
+$('profile-summary-photo').addEventListener('error',()=>{$('profile-summary-photo').hidden=true;});
+new MutationObserver(syncSummaryPhoto).observe($('avatar'),{attributes:true,attributeFilter:['src','hidden']});
+document.querySelectorAll('[data-profile-tab]').forEach(button=>{
+ button.addEventListener('click',()=>showProfileTab(button.dataset.profileTab,{record:true}));
+ button.addEventListener('keydown',event=>{
+  const tabs=[...profileTabs],index=tabs.indexOf(profileTab);
+  const next=event.key==='ArrowRight'?tabs[(index+1)%tabs.length]:event.key==='ArrowLeft'?tabs[(index+tabs.length-1)%tabs.length]:event.key==='Home'?tabs[0]:event.key==='End'?tabs[tabs.length-1]:null;
+  if(next){event.preventDefault();showProfileTab(next,{record:true,focus:true});}
+ });
+});
+$('profile-choose-companion').addEventListener('click',()=>revealProfileControl($('profile_kind')));
+window.addEventListener('popstate',event=>{
+ const tab=event.state?.sathivoProfileTab;
+ if(profileTabs.has(tab))showProfileTab(tab);
+});
+const initialProfileTab=profileTabs.has(history.state?.sathivoProfileTab)?history.state.sathivoProfileTab:(location.hash==='#your-kind-of-company'?'companion':'personal');
+history.replaceState({...history.state,sathivoProfileTab:initialProfileTab},'',location.href);
+showProfileTab(initialProfileTab);
 function message(text, error=false) { $('profile-status').textContent=text; $('profile-status').dataset.error=String(error); }
 function options(select, items, placeholder) {
   select.replaceChildren(new Option(placeholder,''));
@@ -120,7 +177,9 @@ function syncModeUI(){
  setSectionDisabled('companion-details-section',!companion);
  $('hourly_rate').required=companion;
  $('publication').hidden=!companion;
- $('save-profile').textContent=companion?'Save companion profile ↗':'Save & find companions ↗';
+ $('save-profile').textContent='Save Changes';
+ $('profile-customer-companion-note').hidden=companion;
+ syncSummaryPhoto();
  $('profile-kind-hint').textContent=companion
   ? 'Your companion details stay private until you save and explicitly publish them.'
   : 'Your customer profile stays private. Only the details needed to use Sathivo are saved.';
@@ -151,6 +210,9 @@ function updateCompleteness(){
   !!avatarPath||!!$('photo').files[0],
   Number($('hourly_rate').value)>=1
  );
+ const name=$('display_name').value.trim()||'Your profile';
+ $('profile-summary-name').textContent=name;
+ $('profile-summary-initial').textContent=name.slice(0,1).toUpperCase()||'S';
  const pct=Math.round(values.filter(Boolean).length/values.length*100);
  $('profile-percent').textContent=pct+'%';$('profile-progress-bar').style.width=pct+'%';
  $('profile-progress-copy').textContent=pct===100
@@ -220,7 +282,7 @@ function initPublishPrompt(){
 initPublishPrompt();
 
 form.addEventListener('submit',async event=>{
-  event.preventDefault();if(!user||!form.reportValidity())return;
+  event.preventDefault();if(!user||!profileLoaded||$('fields').disabled||!validateProfileForm())return;
   const values=new FormData(form);
   const row={user_id:user.id};
   row.display_name=String(values.get('display_name')||'').trim();
@@ -233,13 +295,13 @@ form.addEventListener('submit',async event=>{
   row.meeting_mode=companion?String(values.get('meeting_mode')||'online').trim():'online';
   row.availability=companion?String(values.get('availability')||'').trim():'';
   const rateRaw=String(values.get('hourly_rate')||'').trim();row.hourly_rate=companion?Number(rateRaw):null;
-  if(['companion','both'].includes(row.profile_kind)&&(!Number.isInteger(row.hourly_rate)||row.hourly_rate<1||row.hourly_rate>100000)){message('Set a valid hourly companionship rate between ₹1 and ₹1,00,000.',true);$('hourly_rate').focus();return;}
-  if(row.display_name.length<2||row.languages.length<2){message('Enter your name and languages (at least 2 characters).',true);return;}
+  if(['companion','both'].includes(row.profile_kind)&&(!Number.isInteger(row.hourly_rate)||row.hourly_rate<1||row.hourly_rate>100000)){message('Set a valid hourly companionship rate between ₹1 and ₹1,00,000.',true);revealProfileControl($('hourly_rate'));return;}
+  if(row.display_name.length<2||row.languages.length<2){message('Enter your name and languages (at least 2 characters).',true);revealProfileControl(row.display_name.length<2?$('display_name'):$('languages'));return;}
   row.city_name=String(values.get('city_name')||'').trim();
-  if(row.city_name.length<2||row.city_name.length>80){message('Enter your city or town (2–80 characters).',true);$('city_name').focus();return;}
+  if(row.city_name.length<2||row.city_name.length>80){message('Enter your city or town (2–80 characters).',true);revealProfileControl($('city_name'));return;}
   resolveLocationId();row.location_id=Number($('location_id').value);row.categories=companion?values.getAll('categories'):[];
   row.adult_confirmed=values.get('adult_confirmed')==='on';row.boundaries_accepted=values.get('boundaries_accepted')==='on';
-  if(!locations.some(r=>r.id===row.location_id&&r.state===$('state').value&&r.district===$('district').value)){message('Choose your state and district again, then enter your city or town.',true);return;}
+  if(!locations.some(r=>r.id===row.location_id&&r.state===$('state').value&&r.district===$('district').value)){message('Choose your state and district again, then enter your city or town.',true);revealProfileControl($('state'));return;}
   $('fields').disabled=true;message('Saving your profile…');
   try {
     const fresh=await client.auth.getUser();if(fresh.error||fresh.data.user?.id!==user.id)throw Error('Your session ended. Sign in again before saving.');
@@ -264,28 +326,14 @@ form.addEventListener('submit',async event=>{
       publicSyncFailed=true;
       publicCardNote=' Profile saved, but the public card could not be updated. Please retry saving or use Update My Public Profile.';
     }
-    let nearbyPreferenceWarning='';
-    try{
-      const prefs=await client.from('nearby_alert_preferences').select('email_enabled').eq('user_id',user.id).maybeSingle();
-      if(prefs.error)throw prefs.error;
-      const wantsEmail=!!form.elements.nearby_email_opt_in.checked;
-      if(prefs.data && prefs.data.email_enabled!==wantsEmail){
-        const update=await client.from('nearby_alert_preferences').update({email_enabled:wantsEmail,updated_at:new Date().toISOString()}).eq('user_id',user.id);
-        if(update.error)throw update.error;
-      }else if(!prefs.data&&wantsEmail){
-        const insert=await client.from('nearby_alert_preferences').insert({user_id:user.id,email_enabled:true,in_app_enabled:true});
-        if(insert.error)throw insert.error;
-      }
-      // No preference row means website notifications follow the default ON
-      // rule, while promotional email notifications remain OFF.
-    }catch(error){nearbyPreferenceWarning=' Profile saved, but the nearby email choice could not be saved. Please retry it in Account settings.'}
     savedAvatarPath=companion?avatarPath:null;dirty=false;$('photo').value='';if(localPreviewUrl){URL.revokeObjectURL(localPreviewUrl);localPreviewUrl=null;}showSystemInfo(data);
-    if(preparedPhoto)message('Your profile is saved. Photo compressed '+formatBytes(preparedPhoto.originalBytes)+' → '+formatBytes(preparedPhoto.outputBytes)+'.'+publicCardNote+nearbyPreferenceWarning,publicSyncFailed||!!nearbyPreferenceWarning);
-    else message((companion?'Your companion profile is saved. Review it, then publish other changes when you are ready.':'Your customer profile is saved. Taking you to Find a companion…')+publicCardNote+nearbyPreferenceWarning,publicSyncFailed||!!nearbyPreferenceWarning);
+    if(preparedPhoto)message('Your profile is saved. Photo compressed '+formatBytes(preparedPhoto.originalBytes)+' → '+formatBytes(preparedPhoto.outputBytes)+'.'+publicCardNote,publicSyncFailed);
+    else message((companion?'Your companion profile is saved. Review it, then publish other changes when you are ready.':(hadSavedProfile?'Your profile changes are saved.':'Your customer profile is saved. Taking you to Find a companion…'))+publicCardNote,publicSyncFailed);
     if(companion&&avatarPath)await showPhoto(avatarPath);else{$('avatar').hidden=true;syncAvatarChoice();}
     updateCompleteness();
-    if(companion)openPublishPrompt();
-     else if(!nearbyPreferenceWarning&&!publicSyncFailed)window.setTimeout(()=>location.assign('companions.html'),450);
+    if(companion){showProfileTab('privacy',{record:true});openPublishPrompt();}
+     else if(!hadSavedProfile&&!publicSyncFailed)window.setTimeout(()=>location.assign('companions.html'),450);
+    hadSavedProfile=true;
   }catch(error){message(error.message||'Could not save your profile. Please try again.',true);}
   finally{$('fields').disabled=false;if(!$('publish-prompt').open)$('profile-status').focus();}
 });
@@ -295,15 +343,13 @@ async function init(){
     client=await getSathivoClient();
     const result=await client.auth.getUser();user=result.data?.user;
     if(!user){message('Sign in to create or edit your free profile.');$('signin').hidden=false;return;}
-    const [loc,profile,nearbyPrefs,activeBadge]=await Promise.all([client.from('profile_locations').select('*').order('state'),client.from('member_profiles').select('*').eq('user_id',user.id).maybeSingle(),client.from('nearby_alert_preferences').select('in_app_enabled,email_enabled').eq('user_id',user.id).maybeSingle(),client.from('active_member_badges').select('user_id').eq('user_id',user.id).maybeSingle()]);
-    if(loc.error||profile.error||nearbyPrefs.error)throw Error('Your profile or notification preferences could not load. Refresh to retry; your saved details are safe.');
+    const [loc,profile,activeBadge]=await Promise.all([client.from('profile_locations').select('*').order('state'),client.from('member_profiles').select('*').eq('user_id',user.id).maybeSingle(),client.from('active_member_badges').select('user_id').eq('user_id',user.id).maybeSingle()]);
+    if(loc.error||profile.error)throw Error('Your profile could not load. Refresh to retry; your saved details are safe.');
     // A public community-activity badge is independent from account email verification.
     $('active-member-own-badge').hidden=!!activeBadge.error||!activeBadge.data;
     locations=loc.data;states();districts();
-    // The only source of email marketing consent is an explicit choice:
-    // saved preferences, or the unchecked-by-default signup checkbox.
-    form.elements.nearby_email_opt_in.checked=nearbyPrefs.data ? nearbyPrefs.data.email_enabled===true : user.user_metadata?.nearby_email_opt_in===true;
     const p=profile.data;
+    hadSavedProfile=!!p;
     if(p){
       for(const name of ['display_name','profile_kind','gender','bio','languages','interests','meeting_mode','availability'])$(name).value=p[name]||'';
       $('hourly_rate').value=p.hourly_rate||'';
@@ -327,10 +373,10 @@ async function init(){
       showSystemInfo(null);
     }
     syncModeUI();
-    $('fields').disabled=false;message(p?'Your saved profile. Make it feel like you.':'Let’s create your free profile.');
+    $('fields').disabled=false;profileLoaded=true;message(p?'Your saved profile. Make it feel like you.':'Let’s create your free profile.');
     // The 21-activity announcement deep-links here, after saved selections
     // are restored. Do not alter selections or force profile publishing.
-    if(location.hash==='#your-kind-of-company'&&isCompanionKind()){
+    if(location.hash==='#your-kind-of-company'&&profileTab==='companion'&&isCompanionKind()){
       requestAnimationFrame(()=>{
         const heading=$('your-kind-of-company');
         heading?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});
