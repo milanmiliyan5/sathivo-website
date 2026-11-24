@@ -26,7 +26,7 @@ test('Requests is a vertically stacked seven-card hub with a same-page Back view
   assert.ok(html.includes('class="request-hub-name">'+labels[i]+'</span>'));
  }
  assert.match(html,/requests-compact\.css\?v=20261124-stable-heading-1/);
- assert.match(html,/requests-page\.js\?v=20261124-vertical-hub-1/);
+ assert.match(html,/requests-page\.js\?v=20261124-reload-title-1/);
 });
 test('My Requests and Received count separate directions; completed is not cancelled',async()=>{
  const js=await read('js/requests-page.js');
@@ -118,4 +118,14 @@ test('Requests heading is static, left aligned and kept visible like Explore',as
  ])assert.ok(style.includes(declaration),declaration);
  assert.match(css,/\.request-page-intro h1\{\s*font-size:1\.45rem!important;line-height:1\.18/);
  assert.doesNotMatch(js,/getElementById\('requests-title'\)/);
+});
+
+test('Ordinary Requests reload restores page top without overriding deep links',async()=>{
+ const js=await read('js/requests-page.js');
+ assert.match(js,/performance\.getEntriesByType\('navigation'\)\[0\]\?\.type==='reload'/);
+ assert.match(js,/!linkedRequestId&&!location\.hash/);
+ assert.match(js,/history\.scrollRestoration='manual'/);
+ assert.match(js,/pendingReloadScrollReset=false/);
+ assert.match(js,/requestAnimationFrame\(\(\)=>window\.scrollTo\(0,0\)\)/);
+ assert.match(js,/if\(requested\?\.status==='accepted'&&requested\.companion_id===user\.id\)/);
 });
