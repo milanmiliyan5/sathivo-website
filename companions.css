@@ -175,11 +175,11 @@ body.sathivo-2d .directory-explore-first #directory-filters .directory-filter-co
 body.sathivo-2d .directory-explore-first #directory-filters .directory-filter-copy small{
  font-size:.68rem;line-height:1.3;font-weight:500;color:#82707A;
 }
-body.sathivo-2d .directory-explore-first #directory-filters .directory-filter-chevron{
- flex:none;font-size:1.15rem;transition:transform .2s ease;line-height:1;
+body.sathivo-2d .directory-explore-first #directory-filters .directory-filter-icon{
+ flex:0 0 22px;display:grid;place-items:center;width:22px;height:22px;color:#6B2146;line-height:1;
 }
-body.sathivo-2d .directory-explore-first #directory-filters[open] .directory-filter-chevron{
- transform:rotate(180deg);
+body.sathivo-2d .directory-explore-first #directory-filters .directory-filter-icon svg{
+ display:block;width:100%;height:100%;overflow:visible;
 }
 body.sathivo-2d .directory-explore-first #directory-filters>.filters{
  width:100%;box-sizing:border-box;border:0;border-top:1px solid #EAD5DF;
@@ -218,8 +218,4 @@ body.sathivo-2d .directory-explore-first #results{
   scroll-margin-top:74px;
  }
 }
-@media(prefers-reduced-motion:reduce){
- body.sathivo-2d .directory-explore-first #directory-filters .directory-filter-chevron{
-  transition:none;
- }
-}
+
