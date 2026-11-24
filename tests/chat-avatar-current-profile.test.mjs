@@ -55,7 +55,7 @@ test('Chat list displays a stable Explore-style serif heading above messages',as
  const title='<section class="chats-page-intro" aria-labelledby="chats-title"><h1 id="chats-title">Chats</h1></section>';
  assert.ok(html.includes(title));
  assert.ok(html.indexOf(title)<html.indexOf('id="chats" class="chat-list"'));
- assert.match(html,/chats-compact\.css\?v=20261124-chats-heading-1/);
+ assert.match(html,/chats-compact\.css\?v=20261124-compact-inbox-2/);
  assert.doesNotMatch(html,/PRIVATE CONVERSATIONS|Your chats\.|7 chats/);
  const match=css.match(/body\.sathivo-2d \.chats-list-compact \.chats-page-intro h1\{([^}]+)\}/);
  assert.ok(match,'Chats title rule exists');
@@ -72,4 +72,16 @@ test('Chat list displays a stable Explore-style serif heading above messages',as
  ])assert.ok(match[1].includes(declaration),declaration);
  assert.match(css,/\.chats-page-intro h1\{\s*font-size:1\.45rem!important;line-height:1\.18/);
  assert.doesNotMatch(js,/getElementById\('chats-title'\)/);
+});
+
+test('Compact inbox rows are scoped to Chats and preserve all booking and message metadata',async()=>{
+ const css=await read('chats-compact.css');
+ const js=await read('js/chats-page.js');
+ assert.match(css,/\.chats-list-compact #chats\{\s*gap:7px/);
+ assert.match(css,/\.chats-list-compact #chats \.chat-list-card\{[^}]*padding:8px 12px/);
+ assert.match(css,/--inbox-avatar-size:40px/);
+ assert.match(css,/--inbox-avatar-size:36px/);
+ assert.match(css,/\.chat-list-meta\{\s*display:block/);
+ for(const field of ['other_display_name','last_message','last_message_at','booking_status','unread_count','showChatAvatars'])assert.ok(js.includes(field));
+ assert.doesNotMatch(css,/\.chat-workspace|\.chat-composer/);
 });
