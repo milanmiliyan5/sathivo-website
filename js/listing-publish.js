@@ -37,31 +37,53 @@ export async function syncPublishedCardPhoto(client,userId,avatarPath,photoChang
  return {published:true,updated:true,hidden:false};
 }
 
-export async function setupPublishing({client,user,isDirty}) {
+export async function setupPublishing({client,user,isDirty,onRequestPublish}) {
  const $=id=>document.getElementById(id);
- const panel=$('publication'), status=$('listing-status'), publish=$('publish-listing'), hide=$('hide-listing'), view=$('view-listing');
- panel.hidden=false;let busy=false,listingPublished=false;
+ const status=$('listing-status'), publish=$('publish-listing'), gender=$('public-gender-consent'), view=$('view-listing'), update=$('update-public-listing');
+ let busy=false,known=false,listingPublished=false,listingGender=false;
+ function render(){
+  publish.setAttribute('aria-checked',String(known&&listingPublished));
+  gender.setAttribute('aria-checked',String(known&&listingPublished&&listingGender));
+  publish.disabled=busy||!known;gender.disabled=busy||!known||!listingPublished;
+  view.hidden=update.hidden=!(known&&listingPublished);update.disabled=busy;
+  $('publish-listing-description').textContent=!known?'Visibility unavailable':listingPublished?'Visible in Explore':'Hidden from Explore';
+  $('public-gender-consent-description').textContent=!known?'Status unavailable':!listingPublished?'Choose when publishing':listingGender?'Visible on public profile':'Private';
+  publish.dataset.known=gender.dataset.known=String(known);
+ }
  async function refresh(){
   const {data,error}=await client.from('companion_listings').select('public_id,published,public_gender').eq('user_id',user.id).maybeSingle();
-  if(error)throw Error('Could not load listing status. Refresh to retry.');
-  listingPublished=!!data?.published;
-  $('public-gender-consent').checked=!!data?.public_gender;
-  hide.hidden=!listingPublished;view.hidden=!listingPublished;
-  status.textContent=data?.published?'Your listing is public.':'Your listing is hidden.';
-  if(data?.published)view.href='companion.html?id='+encodeURIComponent(data.public_id);
+  if(error)throw Error('Could not check listing status. Refresh to retry.');
+  listingPublished=!!data?.published;listingGender=['male','female','other'].includes(data?.public_gender);
+  known=true;
+  if(data?.published)view.href='companion.html?id='+encodeURIComponent(data.public_id);else view.removeAttribute('href');
+  render();
+ }
+ async function refreshStatus(){
+  try{await refresh();status.textContent='';return true;}
+  catch(error){known=false;render();status.textContent=error.message;return false;}
  }
  async function run(task){
-  if(busy||$('fields').disabled)return false;busy=true;publish.disabled=hide.disabled=true;$('fields').disabled=true;
-  try{await task();return true;}catch(error){status.textContent=error.message||'Could not update your listing. Try again.';return false;}
-  finally{busy=false;publish.disabled=hide.disabled=false;$('fields').disabled=false;if(!$('publish-prompt')?.open)status.focus();}
+  if(busy||!known||$('fields').disabled)return false;
+  busy=true;$('fields').disabled=true;render();status.textContent='Updating…';
+  try{
+   const auth=await client.auth.getUser();
+   if(auth.error||auth.data.user?.id!==user.id)throw Error('Sign in again before changing visibility.');
+   await task();await refresh();status.textContent='';return true;
+  }catch(error){
+   const failure=error.message||'Could not update your listing. Try again.';
+   try{await refresh();}catch{known=false;}
+   status.textContent=failure+(known?'':' Visibility could not be verified. Refresh to retry.');
+   return false;
+  }finally{busy=false;$('fields').disabled=false;render();if(!$('publish-prompt')?.open&&status.textContent)status.focus();}
  }
- async function publishSavedProfile({confirmedInPrompt=false,showGender=$('public-gender-consent').checked}={}){return run(async()=>{
+ async function publishSavedProfile({confirmedInPrompt=false,showGender=false}={}){return run(async()=>{
   if(isDirty())throw Error('Save your profile changes first, then publish.');
-  if(!confirmedInPrompt&&!$('publish-consent').checked)throw Error('Confirm that your saved profile details and photo/avatar can be public.');
+  if(!confirmedInPrompt||!$('publish-consent').checked)throw Error('Confirm that your saved profile details and photo/avatar can be public.');
   status.textContent='Publishing your saved profile…';
   const {data:p,error}=await client.from('member_profiles').select('*').eq('user_id',user.id).single();
   if(error||!p)throw Error('Save your profile first.');
   if(!['companion','both'].includes(p.profile_kind))throw Error('Choose Become a companion or Both, then save.');
+  if(!p.adult_confirmed||!p.boundaries_accepted)throw Error('Confirm and save your safety declarations before publishing.');
   if(p.bio.trim().length<20||!p.categories.length)throw Error('Save a bio of at least 20 characters and select at least one category.');
   if(!Number.isInteger(p.hourly_rate)||p.hourly_rate<1||p.hourly_rate>100000)throw Error('Set and save your hourly companionship rate before publishing.');
   if(!p.avatar_path)throw Error('Add a profile photo or choose a Sathivo avatar before publishing.');
@@ -70,7 +92,7 @@ export async function setupPublishing({client,user,isDirty}) {
   // Hide before replacing the public photo so a failed update cannot expose a new photo on an old listing.
   const hidden=await client.from('companion_listings').update({published:false}).eq('user_id',user.id);
   if(hidden.error)throw Error('Could not prepare publication. Try again.');
-  hide.hidden=view.hidden=true;
+  // Busy controls stay disabled until the final database read confirms visibility.
   if(isBuiltinAvatar(p.avatar_path)){
    row.photo_path=p.avatar_path;
    // A previous uploaded public photo is no longer referenced; remove it when possible.
@@ -92,7 +114,7 @@ export async function setupPublishing({client,user,isDirty}) {
     {onConflict:'user_id',ignoreDuplicates:true}
    );}catch{}
   }
-  $('publish-consent').checked=false;await refresh();
+  $('publish-consent').checked=false;
   // In-app nearby notices are committed by the DB. Push is opt-in and idempotent.
   // Never block an otherwise successful publication if browser push fails.
   if(saved.data?.public_id){
@@ -100,12 +122,30 @@ export async function setupPublishing({client,user,isDirty}) {
     .catch(()=>{ /* Nearby browser push is optional. */ });
   }
  });}
- publish.addEventListener('click',()=>void publishSavedProfile());
- hide.addEventListener('click',()=>void run(async()=>{
-  const {error}=await client.from('companion_listings').update({published:false}).eq('user_id',user.id).select('public_id').single();
-  if(error)throw Error('Could not hide your listing. Try again.');
-  await refresh();
- }));
- try{await refresh();}catch(error){status.textContent=error.message;}
- return {publishSavedProfile,isPublished:()=>listingPublished};
+ publish.addEventListener('click',()=>{
+  if(busy||!known||$('fields').disabled)return;
+  if(!listingPublished){onRequestPublish();return;}
+  void run(async()=>{
+   const {error}=await client.from('companion_listings').update({published:false}).eq('user_id',user.id).select('public_id').single();
+   if(error)throw Error('Could not hide your listing. Try again.');
+  });
+ });
+ gender.addEventListener('click',()=>{
+  if(busy||!known||!listingPublished||$('fields').disabled)return;
+  const show=!listingGender;
+  void run(async()=>{
+   let publicGender=null;
+   if(show){
+    if(isDirty())throw Error('Save your profile before showing your gender.');
+    const {data:p,error}=await client.from('member_profiles').select('gender').eq('user_id',user.id).single();
+    if(error||!['male','female','other'].includes(p?.gender))throw Error('Choose and save a gender in Personal before showing it.');
+    publicGender=p.gender;
+   }
+   const {error}=await client.from('companion_listings').update({public_gender:publicGender}).eq('user_id',user.id).eq('published',true).select('public_id').single();
+   if(error)throw Error('Could not update gender visibility. Try again.');
+   try{await client.from('companion_gender_prompt_responses').upsert({user_id:user.id,show_gender:show},{onConflict:'user_id',ignoreDuplicates:true});}catch{}
+  });
+ });
+ await refreshStatus();
+ return {publishSavedProfile,refreshStatus,isPublished:()=>known&&listingPublished,isKnown:()=>known,showGender:()=>known&&listingPublished&&listingGender};
 }
