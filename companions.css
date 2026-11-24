@@ -32,13 +32,12 @@
  .directory-filter-disclosure{border:1px solid #e5cbd6;border-radius:16px;background:#fff9fc;margin:20px 0}
  .directory-filter-disclosure>summary{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:17px 16px;font-weight:750;color:#4d2540;cursor:pointer;min-height:52px;list-style:none}
  .directory-filter-disclosure>summary::-webkit-details-marker{display:none}
- .directory-filter-disclosure>summary span{font-size:21px;transition:transform .2s ease}
- .directory-filter-disclosure[open]>summary span{transform:rotate(180deg)}
+
  .directory-filter-disclosure>.filters{border:0;border-top:1px solid #edd5e0;border-radius:0 0 16px 16px;padding:15px;background:#fff}
  .directory-filter-disclosure .button{min-height:44px}
  .directory-nojs{margin-top:12px}
 }
-@media(prefers-reduced-motion:reduce){.directory-filter-disclosure>summary span{transition:none}}
+
 
 /* Verified completed-booking experience badge (not an unverified review). */
 .completed-booking-badge{
@@ -219,3 +218,9 @@ body.sathivo-2d .directory-explore-first #results{
  }
 }
 
+
+/* Sliders are not a disclosure chevron. Keep both text and icon upright. */
+body.sathivo-2d .directory-explore-first #directory-filters>summary>.directory-filter-copy,
+body.sathivo-2d .directory-explore-first #directory-filters>summary>.directory-filter-icon{
+ transform:none;rotate:none;transition:none;
+}
