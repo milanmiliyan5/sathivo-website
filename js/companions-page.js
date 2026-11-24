@@ -206,8 +206,11 @@ function favoriteButton(row,large=false){
  b.onclick=()=>void toggleFavorite(row.public_id);
  return b;
 }
-async function shareProfile(row,button){
- const url=new URL('companion.html?id='+encodeURIComponent(row.public_id),location.href).href;
+export function publicProfileUrl(row){
+ return 'https://sathivo.co/companion.html?id='+encodeURIComponent(row.public_id);
+}
+export async function shareProfile(row,button){
+ const url=publicProfileUrl(row);
  const data={title:row.display_name+' on Sathivo',text:'See '+row.display_name+' on Sathivo — strictly platonic companionship.',url};
  try{
   if(navigator.share){await navigator.share(data);return}
@@ -550,5 +553,39 @@ async function init(){
   console.warn('Sathivo discovery initialization failed:',error?.message||'network error');
  }
 }
-$('retry').onclick=()=>void init();
-void init();
+// The Account preview imports this exact Explore renderer on demand.
+// Never start directory/detail initialization on an Account page.
+export async function loadOwnPublicPreview(accountClient,expectedUserId){
+ const identity=await accountClient.auth.getUser();
+ const owner=identity.data?.user;
+ if(identity.error||!owner?.email_confirmed_at||owner.id!==expectedUserId)
+  throw Error('Sign in again to preview your profile.');
+ // Use the authenticated client only to identify the owner's listing.
+ // Never render the private member profile or unpublished listing fields.
+ const {data:listing,error}=await accountClient.from('companion_listings')
+  .select('public_id,published,moderation_status').eq('user_id',owner.id).maybeSingle();
+ if(error)throw error;
+ if(!listing)return {state:'unpublished'};
+ if(!listing.published)return {state:'hidden'};
+ if(listing.moderation_status!=='active')return {state:'unavailable'};
+ publicClient=await getSathivoPublicClient();
+ // Match Explore's RPC, filters and optional public badges exactly.
+ const response=await publicClient.rpc('browse_public_companions_v3',{
+  p_location_ids:null,p_city:null,p_gender:null,p_category:null,p_mode:null,
+  p_sort:'newest',p_public_ids:[listing.public_id],p_offset:0,p_limit:1
+ });
+ if(response.error)throw response.error;
+ const visible=(response.data||[]).find(row=>row.public_id===listing.public_id);
+ if(!visible)return {state:'unavailable'};
+ try{if(!locationsLoaded)await loadPublicLocations();}catch{}
+ const [row]=await withCompletedCounts([visible]);
+ // Same card, same renderer and stylesheet; saving your own card is disabled.
+ const node=card(row);
+ const favorite=node.querySelector('.favorite-button');
+ if(favorite){favorite.disabled=true;favorite.title='Your own profile';favorite.setAttribute('aria-label','Your own profile');}
+ return {state:'public',row,node,url:publicProfileUrl(row)};
+}
+if(directory||$('detail')){
+ $('retry').onclick=()=>void init();
+ void init();
+}
