@@ -570,3 +570,44 @@ body.home-2d{
   text-align:center;
 }
 .android-launch-note svg {flex-shrink:0}
+
+/* Home reading resources contain prose and links, not a single icon/text pair.
+   Keep all public guide links in normal flow and prevent min-content overflow. */
+.home-2d #guides .availability-note{
+ display:block;min-width:0;max-width:100%;overflow-wrap:anywhere;
+ font-size:.84rem;line-height:1.65;margin-top:20px;
+}
+.home-2d #guides .guide-resource-note>strong{
+ display:block;margin-bottom:5px;color:var(--plum);font-size:.78rem;
+}
+.home-2d #guides .guide-resource-note .text-link{
+ display:block;min-width:0;max-width:100%;padding:6px 0;
+ font-size:.88rem;line-height:1.5;white-space:normal;overflow-wrap:anywhere;
+}
+.home-2d #guides .guide-resource-links{
+ display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));
+ gap:4px 18px;min-width:0;margin-top:3px;font-size:inherit;color:inherit;
+}
+.home-2d #guides .guide-resource-description{
+ display:block;margin-top:6px;font-size:inherit;color:inherit;
+}
+.home-2d .availability-note>.availability-note-copy{
+ flex:1;min-width:0;font-size:inherit;color:inherit;overflow-wrap:anywhere;
+}
+.home-2d .availability-note-copy .text-link{
+ display:inline;padding:0;font-size:inherit;line-height:inherit;
+ white-space:normal;overflow-wrap:anywhere;
+}
+@media(max-width:640px){
+ .home-2d #guides .availability-note{margin-top:16px;font-size:.78rem}
+ .home-2d #guides .guide-resource-note .text-link{font-size:.84rem}
+ /* The global nav>a:not(.button) rule otherwise consumes label width. */
+ .home-2d .mobile-bottom-nav>a:not(.button){padding-inline:2px}
+ .home-2d .mobile-bottom-nav small{
+  max-width:100%;font-size:clamp(8px,2.4vw,10px);letter-spacing:0;
+ }
+}
+@media(max-width:360px){
+ .home-2d .mobile-bottom-nav>a:not(.button){padding-inline:1px}
+ .home-2d .mobile-bottom-nav small{font-size:8.5px}
+}
