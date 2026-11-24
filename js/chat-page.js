@@ -2,7 +2,7 @@ import {showChatAvatars} from './chat-avatars.js?v=20261123-avatar-square-1';
 import {withCurrentBookingNames} from './booking-name-sync.js?v=20261030-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendMessagePush,sendBookingPush} from './push-events.js?v=20261004-2';
-import {confirmCompletion,completionState,completionLabel,submitCompletion} from './booking-recovery.js?v=20261124-mutual-completion-1';
+import {confirmCompletion,completionState,completionLabel,submitCompletion} from './booking-recovery.js?v=20261124-companion-completion-1';
 import {compressImageFile,formatBytes} from './image-compress.js?v=20261006-1';
 import {openSafetyReport,confirmSafetyBlock} from './safety-actions.js?v=20261018-1';
 
@@ -313,15 +313,16 @@ function syncCompletion(){
  const state=completionState(booking,user?.id);
  const visible=completionReady&&!blockedByMe&&!blockedByOther&&state!=='unavailable';
  button.hidden=!visible;
- button.disabled=completionBusy||state==='waiting';
+ button.parentElement.hidden=!visible;
+ button.disabled=completionBusy;
  button.dataset.state=state;
  button.querySelector('[data-completion-label]').textContent=completionLabel(booking,user?.id,true);
 }
 async function completeFromChat(){
- if(completionBusy||!completionReady||blockedByMe||blockedByOther||!['ready','confirm'].includes(completionState(booking,user?.id)))return;
+ if(completionBusy||!completionReady||blockedByMe||blockedByOther||completionState(booking,user?.id)!=='ready')return;
  completionBusy=true;syncCompletion();
  try{
-  if(!await confirmCompletion())return;
+  if(!await confirmCompletion()||completionState(booking,user?.id)!=='ready'||blockedByMe||blockedByOther)return;
   const result=await submitCompletion(client,booking.id);
   await loadBooking();
   if(result==='completed'){void sendBookingPush(client,booking.id,'completed');}
