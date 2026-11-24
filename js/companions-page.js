@@ -14,6 +14,7 @@ let client,publicClient,locations=[],locationsLoaded=false,page=0,request=0,curr
 // repeating earlier profiles if another member publishes or hides mid-browse.
 const discoverSeed=directory?Array.from(crypto.getRandomValues(new Uint8Array(8)),n=>n.toString(16).padStart(2,'0')).join(''):'';
 let discoverCursors=new Map(),directoryFilterKey='';
+let detailAuthReady=false;
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
 function opts(id,rows,title){$(id).replaceChildren(new Option(title,''));rows.forEach(([v,t])=>$(id).add(new Option(t,String(v))));}
 const normalized=value=>String(value||'').trim().toLocaleLowerCase('en-IN');
@@ -300,11 +301,33 @@ async function list({fromPagination=false}={}){
   if(fromPagination)scrollToDirectoryResults(rows.length>0);
  }catch(error){if(seq!==request)return;$('results').replaceChildren();$('status').textContent='Could not load companions. Please try again.';$('retry').hidden=false;if(fromPagination)scrollToDirectoryResults(false);}
 }
-function bookingForm(r){
+// Check ownership using the verified viewer's own listing, never URL flags,
+ // names, email addresses or publicly exposed account identifiers.
+async function bookingAccess(r){
+ if(!detailAuthReady)return 'checking';
+ if(!currentUser)return 'guest';
+ try{
+  const {data,error}=await client.from('companion_listings').select('public_id')
+   .eq('user_id',currentUser.id).eq('public_id',r.public_id).maybeSingle();
+  if(error)return 'unavailable';
+  return data?.public_id===r.public_id?'own':'other';
+ }catch{return 'unavailable'}
+}
+function disabledBookingPanel(wrap,access){
+ wrap.classList.add('booking-unavailable-panel');
+ const own=access==='own';
+ wrap.append(el('h2',own?"You're viewing your own profile":access==='checking'?'Checking booking access…':'Booking temporarily unavailable'));
+ wrap.append(el('p',own?'You cannot send a booking request to yourself.':access==='checking'?'Checking your account…':'Could not verify booking access. Refresh the page to try again.'));
+ const button=el('button','Send Request','button button-outline own-booking-disabled');
+ button.type='button';button.disabled=true;wrap.append(button);
+ return wrap;
+}
+function bookingForm(r,access='checking'){
  const wrap=el('section',undefined,'booking-form');
+ if(['own','checking','unavailable'].includes(access))return disabledBookingPanel(wrap,access);
  wrap.append(el('h2','Send a booking request'),el('p','The companion has set '+rateText(r.hourly_rate)+'. You can send your own hourly offer. If they accept, your offer becomes the agreed rate.'));
  if(!Number(r.hourly_rate)){wrap.append(el('p','This companion has not set a rate yet, so new booking requests are temporarily unavailable.','payment-note'));return wrap;}
- if(!currentUser){const a=el('a','Sign in to send a request ↗','button button-primary');a.href='account.html#login';wrap.append(a);return wrap;}
+ if(access==='guest'||!currentUser){const a=el('a','Sign in to send a request ↗','button button-primary');a.href='account.html#login';wrap.append(a);return wrap;}
  const form=document.createElement('form'),grid=el('div',undefined,'booking-grid');
  const category=document.createElement('select');category.required=true;r.categories.forEach(v=>category.add(new Option(experienceLabel(v),v)));
  const mode=document.createElement('select');mode.required=true;if(['online','both'].includes(r.meeting_mode))mode.add(new Option('Online','online'));if(['in-person','both'].includes(r.meeting_mode))mode.add(new Option('In person — public place','in-person'));
@@ -321,7 +344,7 @@ function bookingForm(r){
  grid.append(field('Experience',category),field('Meeting type',mode),field('Preferred date & time',when,false,'Choose a future time that suits you.'),field('Duration',duration),field('Your hourly offer (₹)',offer,false,'You may offer the listed rate or a different amount. The companion decides whether to accept.'),field('Offer estimate',estimate,false),field('Note to companion',note,true,'Optional. Use this for the plan or preferred public meeting area. Do not share passwords, OTPs or your exact home address.'));
  form.append(grid);form.append(bookingSafety);form.append(el('p','Sathivo currently charges no platform fees or commission and does not collect, process or manage payments. Agree directly on payment by your own UPI ID, QR code, UPI-linked mobile number or cash. Verify the recipient and amount first. Sathivo does not hold funds, process refunds or provide payment protection. Never share UPI PINs, banking passwords or payment OTPs.','payment-note'));
  const row=el('div',undefined,'booking-submit-row'),b=el('button','Send request ↗','button button-primary'),status=el('p','', 'field-hint');b.type='submit';row.append(b,status);form.append(row);
- form.onsubmit=async e=>{e.preventDefault();const chosen=new Date(when.value);if(!when.value||Number.isNaN(chosen.getTime())||chosen<=new Date()){status.textContent='Please choose a future date and time.';when.focus();return}b.disabled=true;status.textContent='Sending request…';try{const iso=chosen.toISOString();const offerRate=Number(offer.value);if(!Number.isInteger(offerRate)||offerRate<1||offerRate>100000){status.textContent='Enter a valid hourly offer between ₹1 and ₹1,00,000.';offer.focus();b.disabled=false;return}const {data,error}=await client.rpc('create_booking_request_with_offer',{p_companion_public_id:r.public_id,p_category:category.value,p_meeting_mode:mode.value,p_requested_for:iso,p_duration_minutes:Number(duration.value),p_note:note.value.trim(),p_offer_hourly_rate:offerRate});if(error)throw error;status.textContent='Request sent. Notifying the companion…';await Promise.all([sendBookingPush(client,data,'request'),sendBookingEmail(client,data,'request')]);status.textContent='Request sent. Opening your bookings…';location.href='bookings.html?id='+encodeURIComponent(data)+'&booked=1'}catch(err){status.textContent=err.message||'Could not send request.';b.disabled=false;}};
+ form.onsubmit=async e=>{e.preventDefault();if(access!=='other'||!currentUser)return;const chosen=new Date(when.value);if(!when.value||Number.isNaN(chosen.getTime())||chosen<=new Date()){status.textContent='Please choose a future date and time.';when.focus();return}b.disabled=true;status.textContent='Sending request…';try{const iso=chosen.toISOString();const offerRate=Number(offer.value);if(!Number.isInteger(offerRate)||offerRate<1||offerRate>100000){status.textContent='Enter a valid hourly offer between ₹1 and ₹1,00,000.';offer.focus();b.disabled=false;return}const {data,error}=await client.rpc('create_booking_request_with_offer',{p_companion_public_id:r.public_id,p_category:category.value,p_meeting_mode:mode.value,p_requested_for:iso,p_duration_minutes:Number(duration.value),p_note:note.value.trim(),p_offer_hourly_rate:offerRate});if(error)throw error;status.textContent='Request sent. Notifying the companion…';await Promise.all([sendBookingPush(client,data,'request'),sendBookingEmail(client,data,'request')]);status.textContent='Request sent. Opening your bookings…';location.href='bookings.html?id='+encodeURIComponent(data)+'&booked=1'}catch(err){status.textContent=err.message||'Could not send request.';b.disabled=false;}};
  wrap.append(form);return wrap;
 }
 // Detail-only photo overlay. Use a sibling layer because the photo may load
@@ -391,13 +414,18 @@ async function detail(){
   if(error)throw error;if(!r){$('status').textContent='This profile is unavailable or has been hidden by its owner.';return;}
   r.review_count=rating?.review_count||0;r.average_rating=rating?.average_rating||null;
   const [current]=await withCompletedCounts([r]);r.completed_count=current?.completed_count??null;r.is_active_member=current?.is_active_member===true;
+  const access=await bookingAccess(r);
+  const own=access==='own';
   const copy=el('div',undefined,'detail-copy');copy.append(el('p','GOOD COMPANY, ON YOUR TERMS','eyebrow'));
-  const titleRow=el('div',undefined,'detail-title-row');titleRow.append(namedHeading('h1',r),favoriteButton(r,true));copy.append(titleRow);
+  const titleRow=el('div',undefined,'detail-title-row'),favorite=favoriteButton(r,true);
+  if(own){favorite.disabled=true;favorite.title='Your own profile';favorite.setAttribute('aria-label','Your own profile');}
+  titleRow.append(namedHeading('h1',r),favorite);copy.append(titleRow);
+  if(own)copy.append(el('span','Your own profile','own-profile-badge'));
   copy.append(experienceAndRating(r));
   // Keep the lightweight share action below the name; safety controls live
   // together under Trust & account details so the profile header stays clean.
-  const shareRow=el('div',undefined,'profile-actions sathivo-profile-share-row'),share=el('button','Share Profile ↗','sathivo-profile-share-button');
-  share.type='button';share.onclick=()=>void shareProfile(r,share);shareRow.append(share);copy.append(shareRow);
+  const shareRow=el('div',undefined,'profile-actions sathivo-profile-share-row'),share=el('button',own?'Share My Profile ↗':'Share Profile ↗','sathivo-profile-share-button');
+  share.type='button';share.onclick=()=>void shareProfile(r,share);shareRow.append(share);if(own){const edit=el('a','Edit Profile ↗','text-link');edit.href='profile.html';shareRow.append(edit);}copy.append(shareRow);
   const safetyControls=el('section',undefined,'sathivo-profile-safety-tools');
   safetyControls.setAttribute('aria-label','Safety and help actions');
   const safetyHeading=el('h3','Safety & Help','sathivo-profile-safety-heading');
@@ -428,12 +456,12 @@ async function detail(){
     return;
    }
    }catch{ safetyFeedback.textContent='Could not block this user. Please try again.';}finally{if(blockBtn.textContent!=='User blocked')blockBtn.disabled=false;}};
-  safetyActions.append(reportBtn,blockBtn);
+  if(!own)safetyActions.append(reportBtn,blockBtn);
   safetyControls.append(safetyHeading,safetyActions,safetyFeedback);
   copy.append(el('p',locationName(r.location_id,r.city_name)),el('div',rateText(r.hourly_rate),'detail-rate'),trustChips(r),tags(r));
   // Prioritize the complete booking form immediately after rate and experience tags.
   // Keep all trust, safety, About and payment information intact below it.
-  copy.append(bookingForm(r));
+  copy.append(bookingForm(r,access));
   const trust=el('section',undefined,'profile-trust-panel');trust.append(el('strong','Trust & account details'));const trustGrid=el('div',undefined,'profile-trust-grid');
   trustGrid.append(el('span',r.email_verified_at?'✓ Email verified':'Email verification unavailable'),el('span',r.adult_confirmed?'18+ self-declared':'Age declaration missing'),el('span',r.boundaries_accepted?'Platonic boundaries accepted':'Boundaries declaration missing'));
   if(r.joined_at)trustGrid.append(el('span','Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(r.joined_at))));if(r.safety_id)trustGrid.append(el('span','Safety ID '+r.safety_id));trust.append(trustGrid);copy.append(trust,safetyControls);
@@ -494,18 +522,22 @@ function setupDirectory(){
 function refreshAccountInBackground(){
  if(authStarted)return;
  authStarted=true;
- // Auth is optional for public browsing. A 403/invalid saved login must not
- // prevent guests or signed-in users from seeing public companion profiles.
- void client.auth.getUser().then(async({data,error})=>{
-  if(error)return;
-  currentUser=data?.user||null;
-  if(!currentUser)return;
-  await loadFavorites();
-  document.querySelectorAll('[data-favorite-id]').forEach(button=>syncFavoriteButtons(button.dataset.favoriteId));
-  // If detail loaded before the session, upgrade its sign-in CTA to the
-  // authenticated booking form without interrupting a form in progress.
-  if(!directory&&$('detail')&&!$('detail').hidden&&!$('detail').querySelector('.booking-form form'))void detail();
- }).catch(()=>{});
+ // Keep public details readable while account ownership is checked.
+ // Never enable a booking form before the viewer's own-listing lookup succeeds.
+ void (async()=>{
+  try{
+   const {data,error}=await client.auth.getUser();
+   currentUser=error?null:(data?.user||null);
+   if(currentUser){
+    await loadFavorites();
+    document.querySelectorAll('[data-favorite-id]').forEach(button=>syncFavoriteButtons(button.dataset.favoriteId));
+   }
+  }catch{/* Public content remains readable without a restored account. */}
+  finally{
+   detailAuthReady=true;
+   if(!directory&&$('detail')&&!$('detail').hidden&&!$('detail').querySelector('.booking-form form'))void detail();
+  }
+ })();
 }
 async function loadPublicLocations(){
  const {data,error}=await publicClient.from('profile_locations').select('id,state,district,city').order('state');
@@ -545,6 +577,8 @@ async function init(){
    client=await getSathivoClient();
    refreshAccountInBackground();
   }catch(error){
+   detailAuthReady=true;
+   if(!directory&&$('detail')&&!$('detail').hidden)void detail();
    console.warn('Optional account tools unavailable, public discovery remains available:',error?.message||'network error');
   }
  }catch(error){
