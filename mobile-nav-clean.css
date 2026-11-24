@@ -1,0 +1,51 @@
+/* Clean, compact Sathivo mobile tabs. Loaded after site theme CSS. */
+@media(max-width:640px){
+ body .mobile-bottom-nav,
+ body.sathivo-2d:not(.home-2d) .mobile-bottom-nav,
+ body:has(.compact-header) .mobile-bottom-nav{
+  left:12px;right:12px;bottom:calc(8px + env(safe-area-inset-bottom));
+  min-height:68px;padding:6px 7px;gap:2px;
+  border:1px solid #eadde3;border-radius:19px;background:#fff;
+  box-shadow:0 6px 22px rgba(69,35,55,.12);
+ }
+ body .mobile-bottom-nav::before{display:none;content:none}
+ body .mobile-bottom-nav>a,
+ body.home-2d .mobile-bottom-nav>a:not(.button),
+ body.sathivo-2d:not(.home-2d) .mobile-bottom-nav>a{
+  min-height:52px;padding:5px 1px;gap:4px;border:0;border-radius:12px;
+  box-shadow:none;transform:none;background:transparent;color:#786872;
+  transition:background-color .16s ease,color .16s ease,transform .14s ease;
+ }
+ body .mobile-bottom-nav>a[aria-current=page],
+ body.home-2d .mobile-bottom-nav>a[aria-current=page],
+ body.sathivo-2d:not(.home-2d) .mobile-bottom-nav>a[aria-current=page]{
+  background:#f9e8f0;color:#993d65;border:0;box-shadow:none;transform:none;
+ }
+ body .mobile-bottom-nav>a[aria-current=page] .mobile-nav-icon{transform:none}
+ body .mobile-bottom-nav .mobile-nav-icon{width:23px;height:23px}
+ body .mobile-bottom-nav .mobile-nav-icon svg{width:22px;height:22px;stroke-width:1.85}
+ body .mobile-bottom-nav small,
+ body.home-2d .mobile-bottom-nav small,
+ body:has(.compact-header) .mobile-bottom-nav small{
+  max-width:100%;overflow:visible;text-overflow:clip;
+  font-size:clamp(9px,2.6vw,10.5px);font-weight:650;letter-spacing:0;line-height:1.12;white-space:nowrap;
+ }
+ body .mobile-bottom-nav a:focus-visible{outline:2px solid #9d4269;outline-offset:1px}
+ body .mobile-bottom-nav .mobile-nav-badge{
+  top:1px;right:5px;min-width:17px;height:17px;padding:0 3px;font-size:9px;
+  border:1px solid #fff;background:#ad3b69;box-shadow:0 1px 3px rgba(76,31,51,.18);
+ }
+ body .mobile-bottom-nav>a:active,
+ body .mobile-bottom-nav>a[aria-current=page]:active{box-shadow:none}
+}
+@media(max-width:360px){
+ body .mobile-bottom-nav,
+ body.sathivo-2d:not(.home-2d) .mobile-bottom-nav,
+ body:has(.compact-header) .mobile-bottom-nav{left:7px;right:7px;gap:1px;padding:5px 4px;border-radius:17px}
+ body .mobile-bottom-nav>a,
+ body.home-2d .mobile-bottom-nav>a:not(.button){min-height:50px;padding-inline:0}
+ body .mobile-bottom-nav small,
+ body.home-2d .mobile-bottom-nav small,
+ body:has(.compact-header) .mobile-bottom-nav small{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){body .mobile-bottom-nav>a{transition:none}}

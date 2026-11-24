@@ -16,7 +16,18 @@ function badge(n){
   return b;
 }
 
+function ensureMobileNavStyles(){
+ const existing=document.querySelector('link[data-mobile-nav-clean]');
+ if(existing)return;
+ const link=document.createElement('link');
+ link.rel='stylesheet';
+ link.href='mobile-nav-clean.css?v=20261124-1';
+ link.dataset.mobileNavClean='true';
+ document.head.append(link);
+}
+
 async function init(){
+  ensureMobileNavStyles();
   const nav=document.createElement('nav');
   nav.className='mobile-bottom-nav';
   nav.setAttribute('aria-label','Primary mobile navigation');
