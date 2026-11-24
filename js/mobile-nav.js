@@ -17,7 +17,7 @@ function badge(n){
 }
 
 function ensureMobileNavStyles(){
- const existing=document.querySelector('link[data-mobile-nav-clean]');
+ const existing=document.querySelector('link[href*="mobile-nav-clean.css"]');
  if(existing)return;
  const link=document.createElement('link');
  link.rel='stylesheet';
