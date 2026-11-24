@@ -1,5 +1,5 @@
 import {experienceCategoryGroups,experienceCategories,experienceLabel,experienceSafetyNote,experienceVisual} from './experience-categories.js?v=20261123-pastels-1';
-import { setupPublishing,syncPublishedCardPhoto } from './listing-publish.js?v=20261123-nearby-1';
+import { setupPublishing,syncPublishedCardPhoto } from './listing-publish.js?v=20261124-privacy-switch-1';
 import {districtsByState,statesAndUTs} from './india-districts.js?v=20261015-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { getSathivoClient } from './supabase-client.js?v=20261025-polish-1';
@@ -11,6 +11,13 @@ const categories = experienceCategories;
 const el=(tag,text,cssClass)=>{const element=document.createElement(tag);if(text!==undefined)element.textContent=text;if(cssClass)element.className=cssClass;return element;};
 let client, user, locations = [], avatarPath = null, savedAvatarPath = null, dirty = false, publishing = null;
 let profileTab='personal',profileLoaded=false,hadSavedProfile=false;
+function markSafetySaved(p){
+ for(const [name,prefix] of [['adult_confirmed','adult'],['boundaries_accepted','boundaries']]){
+  const confirmed=p?.[name]===true&&form.elements[name].checked;
+  $(prefix+'-confirmed-status').hidden=!confirmed;
+  $(prefix+'-confirmation-control').hidden=confirmed;
+ }
+}
 const profileTabs=new Set(['personal','companion','privacy']);
 function showProfileTab(name,{record=false,focus=false}={}){
  if(!profileTabs.has(name))name='personal';
@@ -231,7 +238,8 @@ async function photoBlob(file) {
 }
 
 function openPublishPrompt(){
-  if(!publishing||!isCompanionKind())return;
+  if(!publishing||!publishing.isKnown()||!isCompanionKind())return;
+  if(dirty){message('Save your changes before publishing.',true);$('profile-status').focus();return;}
   const dialog=$('publish-prompt'), alreadyPublic=publishing.isPublished();
   $('publish-prompt-title').textContent=alreadyPublic?'Publish your latest changes?':'Ready to go public?';
   $('publish-prompt-copy').textContent=alreadyPublic
@@ -239,24 +247,25 @@ function openPublishPrompt(){
     : 'Publish your companion profile so people can discover you on Sathivo and send booking requests.';
   $('publish-prompt-confirm').textContent=alreadyPublic?'Yes, Update My Public Profile ↗':'Yes, Publish My Profile ↗';
   $('publish-prompt-later').textContent=alreadyPublic?'Not Now, Keep Current Listing':'Not Now, Keep It Private';
-  $('publish-prompt-consent').checked=false;
-  $('prompt-gender-consent').checked=$('public-gender-consent').checked;
+  $('publish-consent').checked=false;
+  $('prompt-gender-consent').checked=publishing.showGender();
   $('publish-prompt-error').hidden=true;
   $('publish-prompt-error').textContent='';
   if(!dialog.open)dialog.showModal();
 }
 function initPublishPrompt(){
   const dialog=$('publish-prompt'),confirm=$('publish-prompt-confirm');
+  $('update-public-listing').addEventListener('click',openPublishPrompt);
   const dismiss=()=>{if(!confirm.disabled)dialog.close();};
   $('publish-prompt-close').addEventListener('click',dismiss);
   $('publish-prompt-later').addEventListener('click',dismiss);
   dialog.addEventListener('cancel',event=>{if(confirm.disabled)event.preventDefault();});
-  dialog.addEventListener('close',()=>{$('publish-prompt-consent').checked=false;$('publish-prompt-error').hidden=true;});
+  dialog.addEventListener('close',()=>{$('publish-consent').checked=false;$('publish-prompt-error').hidden=true;});
   confirm.addEventListener('click',async()=>{
     const error=$('publish-prompt-error');
-    if(!$('publish-prompt-consent').checked){
+    if(!$('publish-consent').checked){
       error.textContent='Please confirm that your saved companion details and photo/avatar may be public.';
-      error.hidden=false;$('publish-prompt-consent').focus();return;
+      error.hidden=false;$('publish-consent').focus();return;
     }
     if(!publishing)return;
     confirm.disabled=true;$('publish-prompt-later').disabled=true;$('publish-prompt-close').disabled=true;
@@ -316,12 +325,13 @@ form.addEventListener('submit',async event=>{
       publicSyncFailed=true;
       publicCardNote=' Profile saved, but the public card could not be updated. Please retry saving or use Update My Public Profile.';
     }
-    savedAvatarPath=companion?avatarPath:null;dirty=false;$('photo').value='';if(localPreviewUrl){URL.revokeObjectURL(localPreviewUrl);localPreviewUrl=null;}showSystemInfo(data);
+    savedAvatarPath=companion?avatarPath:null;dirty=false;markSafetySaved(row);$('photo').value='';if(localPreviewUrl){URL.revokeObjectURL(localPreviewUrl);localPreviewUrl=null;}showSystemInfo(data);
     if(preparedPhoto)message('Your profile is saved. Photo compressed '+formatBytes(preparedPhoto.originalBytes)+' → '+formatBytes(preparedPhoto.outputBytes)+'.'+publicCardNote,publicSyncFailed);
     else message((companion?'Your companion profile is saved. Review it, then publish other changes when you are ready.':(hadSavedProfile?'Your profile changes are saved.':'Your customer profile is saved. Taking you to Find a companion…'))+publicCardNote,publicSyncFailed);
     if(companion&&avatarPath)await showPhoto(avatarPath);else{$('avatar').hidden=true;syncAvatarChoice();}
     updateCompleteness();
-    if(companion){showProfileTab('privacy',{record:true});openPublishPrompt();}
+    if(publishing)await publishing.refreshStatus();
+    if(companion){showProfileTab('privacy',{record:true});if(avatarPath&&!publicSyncFailed)openPublishPrompt();}
      else if(!hadSavedProfile&&!publicSyncFailed)window.setTimeout(()=>location.assign('companions.html'),450);
     hadSavedProfile=true;
   }catch(error){message(error.message||'Could not save your profile. Please try again.',true);}
@@ -362,8 +372,8 @@ async function init(){
       form.elements.boundaries_accepted.checked=!!user.user_metadata?.community_rules_version;
       showSystemInfo(null);
     }
-    syncModeUI();
-    $('fields').disabled=false;profileLoaded=true;message(p?'':'Complete your profile to get started.');
+    syncModeUI();markSafetySaved(p);
+    message(p?'':'Complete your profile to get started.');
     // The 21-activity announcement deep-links here, after saved selections
     // are restored. Do not alter selections or force profile publishing.
     if(location.hash==='#your-kind-of-company'&&profileTab==='companion'&&isCompanionKind()){
@@ -374,7 +384,8 @@ async function init(){
       });
     }
     if(isCompanionKind()&&avatarPath)await showPhoto(avatarPath);updateCompleteness();
-    publishing=await setupPublishing({client,user,isDirty:()=>dirty});
+    publishing=await setupPublishing({client,user,isDirty:()=>dirty,onRequestPublish:openPublishPrompt});
+    $('fields').disabled=false;profileLoaded=true;
     $('publication').hidden=!isCompanionKind();
     client.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){dirty=false;location.replace('account.html');}});
   }catch(error){message(error.message||'Profile services are unavailable. Please refresh.',true);}
