@@ -132,19 +132,19 @@ body.sathivo-2d .incoming-compact-page .request-detail #empty h3 {
     padding-top:13px;
     padding-bottom:calc(140px + env(safe-area-inset-bottom));
   }
-  /* Keep the plain title below the mobile sticky site header, even when
-     browser scroll restoration or an async list update changes scroll. */
+  /* Normal document flow, like Explore: never cover the first card. */
   body.sathivo-2d .incoming-compact-page .request-page-intro{
-    position:sticky!important;top:var(--request-header-height,65px);
-    z-index:10;margin:0 0 12px;
-    padding:0 0 5px;
-    background:#fffaf7!important;
-    overflow-anchor:none;
+    position:static!important;top:auto!important;z-index:auto!important;
+    margin:0 0 16px!important;padding:0!important;
+    background:transparent!important;overflow-anchor:none;
   }
   body.sathivo-2d .incoming-compact-page .request-page-intro h1{
     font-size:1.45rem!important;line-height:1.18;
   }
-  body.sathivo-2d .incoming-compact-page .request-hub {gap:11px}
+  body.sathivo-2d .incoming-compact-page .request-hub {
+    gap:11px;width:100%;padding:0;margin:0;
+    align-items:stretch;justify-items:stretch;
+  }
   body.sathivo-2d .incoming-compact-page .request-hub-card {
     min-height:77px;padding:13px 12px;gap:11px;
   }
