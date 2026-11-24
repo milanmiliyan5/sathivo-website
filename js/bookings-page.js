@@ -80,6 +80,17 @@ function render(){
  const list=rows.filter(visible);
  $('bookings').replaceChildren(...list.map(card));
  $('empty').hidden=list.length>0;
+ const emptyCopy={
+  all:['calendar','No bookings yet','Your booking requests will appear here.'],
+  pending:['clock','No pending bookings','Requests awaiting a response will appear here.'],
+  accepted:['calendar','No accepted bookings','Your active bookings will appear here.'],
+  completed:['check','No completed bookings','Your completed bookings will appear here.'],
+  closed:['cancel','No closed bookings','Cancelled and declined bookings will appear here.']
+ }[filter]||['calendar','No bookings yet','Your booking requests will appear here.'];
+ $('empty').dataset.emptyKind=emptyCopy[0];
+ $('booking-empty-title').textContent=emptyCopy[1];
+ $('booking-empty-copy').textContent=emptyCopy[2];
+ $('booking-empty-explore').hidden=filter!=='all';
  $('status').textContent=list.length?list.length+' booking'+(list.length===1?'':'s')+'.':'';
  if(!linkedBookingId)return;
  const focused=document.getElementById('booking-'+linkedBookingId);
