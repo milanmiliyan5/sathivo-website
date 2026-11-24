@@ -3,9 +3,9 @@ export async function confirmCompletion(){
  const dialog=document.createElement('dialog');
  dialog.className='booking-success-dialog';
  dialog.setAttribute('aria-label','Complete this booking?');
- dialog.innerHTML='<div class="booking-success-content"><h2>Complete this booking?</h2><p>Only complete a booking when the experience has ended. Active chat will close. You can undo an accidental completion within 30 seconds, or request to reopen afterward.</p><div class="booking-success-actions"><button type="button" class="button button-outline" data-back>Go back</button><button type="button" class="button button-primary" data-confirm>Yes, complete</button></div></div>';
+ dialog.innerHTML='<div class="booking-success-content"><h2>Complete this booking?</h2><p>Confirm only after your planned activity is finished. Chat stays open until both members confirm. Once completed, you can request to reopen the booking.</p><div class="booking-success-actions"><button type="button" class="button button-outline" data-back>Go back</button><button type="button" class="button button-primary" data-confirm>Confirm Completion</button></div></div>';
  document.body.append(dialog);
- if(typeof dialog.showModal!=='function'){dialog.remove();return window.confirm('Complete this booking? Active chat will close. You can undo within 30 seconds.')}
+ if(typeof dialog.showModal!=='function'){dialog.remove();return window.confirm('Confirm completion? Chat remains active until both members confirm.')}
  return new Promise(resolve=>{
   let yes=false;
   dialog.querySelector('[data-back]').onclick=()=>dialog.close();
@@ -46,5 +46,22 @@ export function appendRecoveryControls(container,row,uid,onAction){
 export async function runRecovery(client,id,action,reason=null){
  const {data,error}=await client.rpc('booking_recovery_action',{p_booking_id:id,p_action:action,p_reason:reason});
  if(error)throw error;
+ return data;
+}
+
+export function completionState(row,uid){
+ if(row?.status!=='accepted'||![row.customer_id,row.companion_id].includes(uid))return 'unavailable';
+ const mine=uid===row.customer_id?row.customer_completion_confirmed_at:row.companion_completion_confirmed_at;
+ const other=uid===row.customer_id?row.companion_completion_confirmed_at:row.customer_completion_confirmed_at;
+ return mine?'waiting':other?'confirm':'ready';
+}
+export function completionLabel(row,uid,chat=false){
+ const state=completionState(row,uid);
+ return state==='waiting'?'Waiting for confirmation':state==='confirm'?'Confirm booking completion':chat?'Click here to complete your booking':'Mark completed';
+}
+export async function submitCompletion(client,id){
+ const {data,error}=await client.rpc('confirm_booking_completion',{p_booking_id:id});
+ if(error)throw error;
+ if(!['accepted','completed'].includes(data))throw Error('Completion status unavailable');
  return data;
 }
