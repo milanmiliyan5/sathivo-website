@@ -25,7 +25,7 @@ test('Requests is a vertically stacked five-card hub with a same-page Back view'
   assert.match(html,new RegExp('data-count-for="'+types[i]+'"'));
   assert.ok(html.includes('class="request-hub-name">'+labels[i]+'</span>'));
  }
- assert.match(html,/requests-compact\.css\?v=20261124-five-sections-1/);
+ assert.match(html,/requests-compact\.css\?v=20261125-icons-1/);
  assert.match(html,/requests-page\.js\?v=20261124-five-sections-1/);
  assert.equal((html.match(/class="request-hub-card" data-view=/g)||[]).length,5);
  assert.match(html,/request-hub-group-title">Your requests/);
@@ -181,4 +181,17 @@ test('legacy navigation history remains readable',async()=>{
  for(const [old,expected] of [['accepted','ongoing'],['pending',null],['all',null],['sent','sent'],['received','received']]){
   assert.equal(context.requestHistory({sathivoRequests:{view:old,fromMenu:true}}).view,expected);
  }
+});
+
+test('Five request icons use distinct accessible SVG shapes and a consistent outline style',async()=>{
+ const html=await read('requests.html');
+ const css=await read('requests-compact.css');
+ const shapes=[...html.matchAll(/class="request-hub-icon" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true">([\s\S]*?)<\/svg><\/span>/g)].map(m=>m[1]);
+ assert.equal(shapes.length,5);
+ assert.equal(new Set(shapes).size,5);
+ assert.match(shapes[1],/M12 3v10/);
+ assert.match(shapes[2],/<circle/);
+ assert.match(shapes[3],/m8 12 2.7 2.7/);
+ assert.match(shapes[4],/<circle/);
+ assert.match(css,/width:24px;height:24px;\s*fill:none;stroke:currentColor;stroke-width:1\.85/);
 });
