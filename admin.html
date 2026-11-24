@@ -10,7 +10,7 @@
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="stylesheet" href="admin-dashboard.css?v=20261122-remove-extra-quality-1">
   <script defer src="assets/vendor/supabase-2.116.0.js"></script>
-  <script type="module" src="js/admin-page.js?v=20261124-policy-warning-1"></script>
+  <script type="module" src="js/admin-page.js?v=20261125-feature-push-1"></script>
 </head>
 <body class="admin-body">
   <div class="admin-app">
@@ -93,6 +93,7 @@
               <article class="metric-card"><div class="metric-card-top"><span>Feedback</span><span class="metric-icon">★</span></div><strong id="metric-feedback">0</strong><small>Open / reviewed feedback</small></article>
             </div>
             <p id="gender-note" class="metric-note"></p>
+            <section class="data-panel" id="feature-push-panel" hidden aria-labelledby="feature-push-title" style="margin-top:18px;padding:18px"><div class="panel-head"><div><p class="panel-kicker">CHROME PUSH NOTIFICATIONS</p><h2 id="feature-push-title">Website Feature Announcement</h2><p class="panel-note">Send a new feature update to users with browser notifications enabled. No email is sent.</p></div></div><form id="feature-push-form"><label for="feature-push-body">Announcement message (10–180 characters)</label><textarea id="feature-push-body" required minlength="10" maxlength="180" rows="3" placeholder="We have introduced new features on Sathivo…" style="box-sizing:border-box;display:block;width:100%;max-width:640px;padding:12px;margin:8px 0;border:1px solid #d1d5db;border-radius:10px;font:inherit"></textarea><p class="panel-note">Title: Something new on Sathivo! ✨ · Opens Explore · Maximum one announcement per hour.</p><button class="refresh-btn" id="feature-push-send" type="submit">Send Feature Announcement</button><p id="feature-push-status" class="panel-note" role="status" aria-live="polite"></p></form></section>
           </section>
 
           <section class="data-panel dashboard-section" id="maintenance-section" aria-labelledby="maintenance-title">

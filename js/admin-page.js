@@ -406,6 +406,28 @@ async function refreshAll(){
   return dashboardRequest;
 }
 
+
+function initFeaturePush(){
+ const panel=$('feature-push-panel'),form=$('feature-push-form'),input=$('feature-push-body'),button=$('feature-push-send'),status=$('feature-push-status');
+ if(!panel||!form||!input||!button||!status)return;
+ panel.hidden=false;
+ form.addEventListener('submit',async e=>{
+  e.preventDefault();
+  if(button.disabled)return;
+  const message=input.value.trim();
+  if(message.length<10||message.length>180){status.textContent='Please enter 10–180 characters.';return}
+  if(!window.confirm('Send this feature announcement to all eligible browser subscribers?\n\nSomething new on Sathivo! ✨\n'+message+'\n\nNo email will be sent.'))return;
+  button.disabled=true;button.textContent='Queuing announcement…';status.textContent='';
+  try{
+   const {data,error}=await client.rpc('queue_sathivo_feature_push',{p_body:message});
+   if(error)throw error;
+   status.textContent='Announcement queued for '+Number(data||0)+' subscribed users. Browser delivery is not guaranteed.';
+   input.value='';
+  }catch(e){status.textContent=e?.message||'Could not queue announcement. Please retry.'}
+  finally{button.disabled=false;button.textContent='Send Feature Announcement'}
+ });
+}
+
 async function init(){
   initUi();
   try{
@@ -419,6 +441,7 @@ async function init(){
     $('admin-email').textContent=user.email||a.data.role||'Authorized admin';
     $('refresh-dashboard').addEventListener('click',()=>void refreshAll());
     initMaintenance(client,user.id);
+    initFeaturePush();
     await refreshAll();startPresence();
     const initialSection=location.hash.slice(1);
     if(initialSection&&sidebarBadgeSections[initialSection])void onSidebarSectionSelected(initialSection);
