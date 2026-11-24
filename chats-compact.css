@@ -136,3 +136,23 @@ body.sathivo-2d .chats-list-compact #chats-tab-panel{min-width:0}
 @media(max-width:360px){
  body.sathivo-2d .chats-list-compact .chat-status-tabs>[role="tab"]{font-size:.75rem;gap:5px;padding-inline:4px}
 }
+
+/* The inbox remains stationary on first load, tab changes and live refresh.
+   The loading/error feedback is below the panel, never above the first card. */
+body.sathivo-2d .chats-list-compact #chats .chat-list-card,
+body.sathivo-2d .chats-list-compact #chats .chat-list-card:hover,
+body.sathivo-2d .chats-list-compact #chats .chat-list-card:active{
+ opacity:1!important;transform:none!important;animation:none!important;transition:none!important;
+}
+body.sathivo-2d .chats-list-compact #chats .chat-list-card:focus-visible{
+ outline:2px solid #723e59;outline-offset:2px;
+}
+body.sathivo-2d .chats-list-compact .chats-load-feedback{
+ margin-top:0;
+}
+body.sathivo-2d .chats-list-compact .chats-load-feedback #status:not(:empty){
+ margin:10px 0 5px;
+}
+body.sathivo-2d .chats-list-compact #chats-retry[hidden]{
+ display:none!important;
+}
