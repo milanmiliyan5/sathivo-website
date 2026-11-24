@@ -1,7 +1,8 @@
 import {showChatAvatars} from './chat-avatars.js?v=20261123-avatar-square-1';
 import {withCurrentBookingNames} from './booking-name-sync.js?v=20261030-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
-import {sendMessagePush} from './push-events.js?v=20261004-2';
+import {sendMessagePush,sendBookingPush} from './push-events.js?v=20261004-2';
+import {confirmCompletion,completionState,completionLabel,submitCompletion} from './booking-recovery.js?v=20261124-mutual-completion-1';
 import {compressImageFile,formatBytes} from './image-compress.js?v=20261006-1';
 import {openSafetyReport,confirmSafetyBlock} from './safety-actions.js?v=20261018-1';
 
@@ -17,6 +18,7 @@ const heartSeenMessageIds=new Set();
 let heartHistoryReady=false;
 let desktopInboxLoaded=false,desktopInboxLoading=false;
 let selectedDeleteMessage=null,deleteRequestRunning=false;
+let completionBusy=false,completionReady=false;
 
 const el=(t,x,c)=>{const n=document.createElement(t);if(x!==undefined)n.textContent=x;if(c)n.className=c;return n};
 const fmt=d=>new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d));
@@ -305,7 +307,29 @@ async function loadMessages(initial=false){
  if(incomingHearts.length)setTimeout(()=>floatHeartMessage(incomingHearts[incomingHearts.length-1]),100);
  await markChatState(document.visibilityState==='visible');
 }
+function syncCompletion(){
+ const button=$('chat-complete-booking');
+ if(!button)return;
+ const state=completionState(booking,user?.id);
+ const visible=completionReady&&!blockedByMe&&!blockedByOther&&state!=='unavailable';
+ button.hidden=!visible;
+ button.disabled=completionBusy||state==='waiting';
+ button.dataset.state=state;
+ button.querySelector('[data-completion-label]').textContent=completionLabel(booking,user?.id,true);
+}
+async function completeFromChat(){
+ if(completionBusy||!completionReady||blockedByMe||blockedByOther||!['ready','confirm'].includes(completionState(booking,user?.id)))return;
+ completionBusy=true;syncCompletion();
+ try{
+  if(!await confirmCompletion())return;
+  const result=await submitCompletion(client,booking.id);
+  await loadBooking();
+  if(result==='completed'){void sendBookingPush(client,booking.id,'completed');}
+ }catch(error){$('status').textContent='Could not confirm completion. Please try again.';}
+ finally{completionBusy=false;syncCompletion();}
+}
 function syncComposer(){
+ syncCompletion();
  const open=booking?.status==='accepted'&&!blockedByMe&&!blockedByOther;$('message-form').hidden=!open;
  if(blockedByMe)$('status').textContent='You have blocked this user. Messaging is disabled.';
  else if(blockedByOther)$('status').textContent='Messaging is unavailable because one participant has blocked the other.';
@@ -391,7 +415,7 @@ async function init(){try{
  const desktopLayout=window.matchMedia('(min-width: 961px)');
  if(desktopLayout.matches)void loadDesktopInbox();
  desktopLayout.addEventListener('change',event=>{if(event.matches)void loadDesktopInbox()});
- const blockState=await client.from('user_blocks').select('blocker_id').or('and(blocker_id.eq.'+user.id+',blocked_id.eq.'+otherId+'),and(blocker_id.eq.'+otherId+',blocked_id.eq.'+user.id+')');if(!blockState.error){blockedByMe=(blockState.data||[]).some(b=>b.blocker_id===user.id);blockedByOther=(blockState.data||[]).some(b=>b.blocker_id===otherId);if(blockedByMe){$('block-user').disabled=true;$('block-user').textContent='User blocked'}if(blockedByMe||blockedByOther)syncComposer()}applySafetyWatermark();
+ const blockState=await client.from('user_blocks').select('blocker_id').or('and(blocker_id.eq.'+user.id+',blocked_id.eq.'+otherId+'),and(blocker_id.eq.'+otherId+',blocked_id.eq.'+user.id+')');if(!blockState.error){blockedByMe=(blockState.data||[]).some(b=>b.blocker_id===user.id);blockedByOther=(blockState.data||[]).some(b=>b.blocker_id===otherId);if(blockedByMe){$('block-user').disabled=true;$('block-user').textContent='User blocked'}if(blockedByMe||blockedByOther)syncComposer();completionReady=true;syncCompletion()}applySafetyWatermark();
  const safetyMenu=$('chat-safety-menu');
  const safetyActions=$('safety-actions');
  const safetySummary=safetyMenu.querySelector('summary');
@@ -450,7 +474,9 @@ async function init(){try{
  }
  protectPrivateMedia();setupPresence();await loadMessages(true);
  messageChannel=client.channel('booking-messages:'+booking.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_messages',filter:'booking_id=eq.'+booking.id},()=>void loadMessages(false)).subscribe();
- bookingChannel=client.channel('booking-status:'+booking.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'booking_requests',filter:'id=eq.'+booking.id},()=>void loadBooking()).subscribe();
+ bookingChannel=client.channel('booking-status:'+booking.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'booking_requests',filter:'id=eq.'+booking.id},()=>void loadBooking().catch(()=>{})).subscribe(status=>{if(status==='SUBSCRIBED')void loadBooking().catch(()=>{});});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&booking?.id)void loadBooking().catch(()=>{});});
+ $('chat-complete-booking').onclick=()=>void completeFromChat();
  const deleteDialog=$('message-delete-dialog');
  $('message-delete-me').onclick=()=>void deleteSelectedMessage('me');
  $('message-delete-everyone').onclick=()=>void deleteSelectedMessage('everyone');
