@@ -18,8 +18,8 @@ test('Both chat routes import cache-busted current-DP code',async()=>{
   const avatarImport='chat-avatars.js?v=20261123-avatar-square-1';
   assert.ok((await read('js/chat-page.js')).includes(avatarImport));
   assert.ok((await read('js/chats-page.js')).includes(avatarImport));
-  assert.ok((await read('chat.html')).includes('js/chat-page.js?v=20261123-avatar-square-1'));
-  assert.ok((await read('chats.html')).includes('js/chats-page.js?v=20261124-chat-list-first-1'));
+  assert.ok((await read('chat.html')).includes('js/chat-page.js?v=20261125-clean-photo-status-1'));
+  assert.ok((await read('chats.html')).includes('js/chats-page.js?v=20261125-stable-inbox-1'));
 });
 
 test('Chat-avatar DB access remains restricted to booking partners and private storage',async()=>{
@@ -55,7 +55,7 @@ test('Chat list displays a stable Explore-style serif heading above messages',as
  const title='<section class="chats-page-intro" aria-labelledby="chats-title"><h1 id="chats-title">Chats</h1></section>';
  assert.ok(html.includes(title));
  assert.ok(html.indexOf(title)<html.indexOf('id="chats" class="chat-list"'));
- assert.match(html,/chats-compact\.css\?v=20261124-compact-inbox-2/);
+ assert.match(html,/chats-compact\.css\?v=20261125-stable-inbox-1/);
  assert.doesNotMatch(html,/PRIVATE CONVERSATIONS|Your chats\.|7 chats/);
  const match=css.match(/body\.sathivo-2d \.chats-list-compact \.chats-page-intro h1\{([^}]+)\}/);
  assert.ok(match,'Chats title rule exists');

@@ -67,7 +67,7 @@ test('all public companion chips use isolated, non-stretching pill styling acros
  const css=await read('companions.css');
  for(const page of ['companions.html','companion.html']){
   const html=await read(page);
-  assert.match(html,/companions\.css\?v=20261123-explore-first-1/);
+  assert.match(html,/companions\.css\?v=20261124-own-profile-guard-1/);
   assert.match(html,/js\/companions-page\.js\?v=20261125-top-companions-1/);
  }
  // Card and full-profile rendering must share one properly scoped component.

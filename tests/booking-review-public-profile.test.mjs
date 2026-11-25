@@ -3,7 +3,7 @@ const read=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
 test('Card shows verified reviews alongside completed bookings',async()=>{
  const s=await read('js/companions-page.js');assert.match(s,/experienceAndRating\(row\)/);
  assert.match(s,/#ratings-and-reviews/);assert.match(s,/public_companion_review_comments/);
- assert.match(s,/No public written reviews yet/);assert.match(s,/No reviews yet/);
+ assert.match(s,/No written reviews yet/);assert.match(s,/No reviews yet/);
 });
 test('Only opt-in genuine booking reviews are shared without identities',async()=>{
  const sql=await read('supabase/migrations/20261122190000_review_public_comment_opt_in.sql');
