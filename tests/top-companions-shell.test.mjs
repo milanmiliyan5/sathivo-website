@@ -17,6 +17,12 @@ test('Top Companions preserves Explore controls and uses a daily real-data leade
  assert.match(css,/\.tc-tabs\{position:static;inset:auto;box-sizing:border-box;width:100%;display:grid/);
  assert.match(js,/rpc\('top_companions_rankings'/);
  assert.match(js,/slice\(0,20\)/);
+ assert.match(js,/browse_public_companions_v3/);
+ assert.match(js,/p_public_ids:rows\.map\(row=>row\.public_id\)/);
+ assert.match(js,/genderLabel\(row\.public_gender\)/);
+ assert.match(js,/value==='male'\?'Male':value==='female'\?'Female':value==='other'\?'Other':''/);
+ assert.match(js,/if\(gender\)identity\.append/);
+ assert.match(css,/\.tc-identity\{display:flex;flex-direction:column/);
  assert.match(js,/createSignedUrl\(row.photo_path,60\)/);
  assert.match(js,/avatarAsset\(row.photo_path\)/);
  assert.match(js,/top_companions_preference/);

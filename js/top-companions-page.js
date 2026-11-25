@@ -5,6 +5,20 @@ const tabs=[...document.querySelectorAll('[data-category]')];
 const list=$('tc-list'),status=$('tc-status'),retry=$('tc-retry');
 let client,category='active',seq=0;
 const node=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
+function genderLabel(value){return value==='male'?'Male':value==='female'?'Female':value==='other'?'Other':'';}
+async function withPublicGender(rows){
+ if(!rows.length)return rows;
+ try{
+  const publicClient=await getSathivoPublicClient();
+  const {data,error}=await publicClient.rpc('browse_public_companions_v3',{
+   p_location_ids:null,p_city:null,p_gender:null,p_category:null,p_mode:null,
+   p_sort:'newest',p_public_ids:rows.map(row=>row.public_id),p_offset:0,p_limit:rows.length
+  });
+  if(error)return rows;
+  const byId=new Map((data||[]).map(row=>[row.public_id,row.public_gender]));
+  return rows.map(row=>({...row,public_gender:byId.get(row.public_id)}));
+ }catch{return rows;}
+}
 function makeRow(row,index,kind){
  const li=node('li'),link=node('a','tc-row');
  link.href='companion.html?id='+encodeURIComponent(row.public_id);
@@ -16,7 +30,11 @@ function makeRow(row,index,kind){
  const value=kind==='active'?Number(row.points).toLocaleString('en-IN'):kind==='booked'?Number(row.completed_count).toLocaleString('en-IN'):'★ '+Number(row.average_rating).toFixed(1);
  metric.append(node('strong','',value),node('small','',kind==='active'?'Points':kind==='booked'?'Bookings':Number(row.review_count)+' reviews'));
  const arrow=node('span','tc-chevron','›');arrow.setAttribute('aria-hidden','true');
- link.append(rank,avatar,node('span','tc-name',name),metric,arrow);li.append(link);return li;
+ const identity=node('span','tc-identity');
+ identity.append(node('span','tc-name',name));
+ const gender=genderLabel(row.public_gender);
+ if(gender)identity.append(node('span','tc-gender',gender));
+ link.append(rank,avatar,identity,metric,arrow);li.append(link);return li;
 }
 async function load(kind=category){
  category=kind;const request=++seq;
@@ -26,7 +44,8 @@ async function load(kind=category){
   if(!client)throw Error('Connection unavailable');
   const {data,error}=await client.rpc('top_companions_rankings',{p_category:kind});
   if(request!==seq)return;if(error)throw error;
-  const rows=Array.isArray(data)?data.slice(0,20):[];
+  const rows=await withPublicGender(Array.isArray(data)?data.slice(0,20):[]);
+  if(request!==seq)return;
   list.replaceChildren(...rows.map((row,i)=>makeRow(row,i,kind)));
   status.textContent=rows.length?'':kind==='rated'?'No rated companions yet.':kind==='booked'?'No completed bookings yet.':'No active companions yet.';
  }catch{if(request===seq){status.textContent='Could not load rankings. Please try again.';retry.hidden=false;}}
