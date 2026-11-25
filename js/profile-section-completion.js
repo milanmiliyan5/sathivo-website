@@ -1,4 +1,4 @@
-// Compare section values against the last confirmed database save, not visits or drafts.
+// Draft comparisons enforce save order. Display ticks use savedProfileTicks below.
 const trim=value=>String(value??'').trim();
 const validText=(value,min,max)=>value.length>=min&&value.length<=max;
 const kinds=['customer','companion','both'];
@@ -24,19 +24,39 @@ export function profileSectionCompletion(saved,draft,{pendingPhoto=false}={}){
  return result;
 }
 
+// The indicators represent saved completion, never current edits or pending switches.
+// Legacy complete profiles predate setup_stage. An existing public/hidden listing
+// also proves previous publication, including users affected by a reset stage.
+// None of these UI flags authorizes publishing.
+export function savedProfileTicks(saved,{hasListing=false}={}){
+ const done=profileSectionCompletion(saved,saved);
+ if(!saved)return done;
+ if(isCompanion(saved.profile_kind)){
+  done.privacy=done.privacy&&done.personal&&done.companion&&(
+   saved.setup_stage==='complete'||saved.setup_stage==null||hasListing
+  );
+ }
+ return done;
+}
+
 // The optional database marker is UI progress, never an eligibility or permission flag.
-export function nextProfileStage(saved){
+export function nextProfileStage(saved,{hasListing=false}={}){
  if(!saved)return 'personal';
  const done=profileSectionCompletion(saved,saved);
  if(!done.personal)return 'personal';
  if(saved.profile_kind==='customer')return 'personal';
  if(!done.companion)return 'companion';
+ if(savedProfileTicks(saved,{hasListing}).privacy)return 'personal';
  if(saved.setup_stage==='companion')return 'companion';
  if(saved.setup_stage==='privacy'||!done.privacy)return 'privacy';
  return 'personal';
 }
-export function stageAfterSave(section,kind){
+export function stageAfterSave(section,kind,{saved=null,hasListing=false}={}){
  if(kind==='customer'||section==='privacy')return 'complete';
+ // A completed private companion without a listing need not repeat onboarding.
+ // For a listing, keep the existing pending-public-copy stage so final Privacy
+ // Save still refreshes the photo/details; savedProfileTicks stays complete.
+ if(!hasListing&&saved?.profile_kind!=='customer'&&savedProfileTicks(saved).privacy)return 'complete';
  return section==='personal'?'companion':'privacy';
 }
 

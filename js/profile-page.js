@@ -1,7 +1,7 @@
 import {createProfileScrollReset} from './profile-scroll.js?v=20261125-profile-scroll-1';
-import {profileSectionCompletion,nextProfileStage,stageAfterSave,availableProfileTabs,profileDraftChanged} from './profile-section-completion.js?v=20261125-profile-steps-2';
+import {profileSectionCompletion,savedProfileTicks,nextProfileStage,stageAfterSave,availableProfileTabs,profileDraftChanged} from './profile-section-completion.js?v=20261125-persistent-ticks-1';
 import {experienceCategoryGroups,experienceCategories,experienceLabel,experienceSafetyNote,experienceVisual} from './experience-categories.js?v=20261123-pastels-1';
-import { setupPublishing,publicationProblem } from './listing-publish.js?v=20261125-profile-steps-2';
+import { setupPublishing,publicationProblem } from './listing-publish.js?v=20261125-persistent-ticks-1';
 import {districtsByState,statesAndUTs} from './india-districts.js?v=20261015-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { getSathivoClient } from './supabase-client.js?v=20261025-polish-1';
@@ -222,11 +222,11 @@ function currentDraft(){
 }
 function currentCompletion(){return profileSectionCompletion(savedSectionProfile,currentDraft(),{pendingPhoto:!!$('photo').files[0]});}
 function updateSectionTicks(){
- const completed=currentCompletion();
+ const completed=savedProfileTicks(savedSectionProfile,{hasListing:publishing?.hasListing()===true});
  const allowed=availableProfileTabs(savedSectionProfile,$('profile_kind').value);
  document.querySelectorAll('[data-profile-tab]').forEach(button=>{
   button.disabled=!allowed.includes(button.dataset.profileTab);
-  const done=completed[button.dataset.profileTab]===true&&(button.dataset.profileTab!=='privacy'||(!publishing?.hasPendingChanges()&&!['companion','privacy','personal'].includes(savedSectionProfile?.setup_stage)));
+  const done=completed[button.dataset.profileTab]===true;
   button.querySelector('.profile-section-tick').toggleAttribute('hidden',!done);
   const label=button.querySelector('span').textContent;
   button.setAttribute('aria-label',label+(done?', completed':''));
@@ -316,10 +316,10 @@ form.addEventListener('submit',async event=>{
   let row;
   if(section==='personal'){
    if(file){preparedPhoto=await photoBlob(file);const path=user.id+'/avatar.webp';const upload=await client.storage.from('profile-photos').upload(path,preparedPhoto.blob,{upsert:true,contentType:preparedPhoto.type});if(upload.error)throw Error('Photo upload failed. Check your connection and try again.');avatarPath=path;}
-   row={user_id:user.id,profile_kind:kind,display_name:draft.display_name.trim(),gender:draft.gender,location_id:draft.location_id,city_name:draft.city_name.trim(),languages:draft.languages.trim(),interests:draft.interests.trim(),bio:companion?draft.bio.trim():'',avatar_path:companion?avatarPath:null,adult_confirmed:draft.adult_confirmed,boundaries_accepted:draft.boundaries_accepted,setup_stage:stageAfterSave(section,kind)};
+   row={user_id:user.id,profile_kind:kind,display_name:draft.display_name.trim(),gender:draft.gender,location_id:draft.location_id,city_name:draft.city_name.trim(),languages:draft.languages.trim(),interests:draft.interests.trim(),bio:companion?draft.bio.trim():'',avatar_path:companion?avatarPath:null,adult_confirmed:draft.adult_confirmed,boundaries_accepted:draft.boundaries_accepted,setup_stage:stageAfterSave(section,kind,{saved:savedSectionProfile,hasListing:publishing.hasListing()})};
    if(!companion||!savedSectionProfile||savedSectionProfile.profile_kind==='customer')Object.assign(row,{categories:[],meeting_mode:'online',availability:'',hourly_rate:null});
   }else if(section==='companion'){
-   row={categories:draft.categories,meeting_mode:draft.meeting_mode,availability:draft.availability.trim(),hourly_rate:Number(draft.hourly_rate),setup_stage:stageAfterSave(section,kind)};
+   row={categories:draft.categories,meeting_mode:draft.meeting_mode,availability:draft.availability.trim(),hourly_rate:Number(draft.hourly_rate),setup_stage:stageAfterSave(section,kind,{saved:savedSectionProfile,hasListing:publishing.hasListing()})};
   }else{
    row={adult_confirmed:draft.adult_confirmed,boundaries_accepted:draft.boundaries_accepted};
   }
@@ -406,7 +406,8 @@ async function init(){
       showSystemInfo(null);
     }
     syncModeUI();markSafetySaved(p);syncSafetyPlacement();
-    const resume=nextProfileStage(savedSectionProfile);
+    publishing=await setupPublishing({client,user,isCompanion:isCompanionKind,canShowGender:()=>['male','female','other'].includes($('gender').value),onDraftChange:()=>{dirty=true;updateSectionTicks();}});
+    const resume=nextProfileStage(savedSectionProfile,{hasListing:publishing.hasListing()});
     if(!p||resume!=='personal'||!isCompanionKind())showProfileTab(resume,{record:false,resetScroll:true});
     else showProfileTab(initialProfileTab,{record:false});
     message(p?'':'Complete your profile to get started.');
@@ -421,7 +422,6 @@ async function init(){
       });
     }
     if(isCompanionKind()&&avatarPath)await showPhoto(avatarPath);updateCompleteness();
-    publishing=await setupPublishing({client,user,isCompanion:isCompanionKind,canShowGender:()=>['male','female','other'].includes($('gender').value),onDraftChange:()=>{dirty=true;updateSectionTicks();}});
     publishing.syncMode();updateSectionTicks();
     $('fields').disabled=false;profileLoaded=true;
     $('publication').hidden=!isCompanionKind();

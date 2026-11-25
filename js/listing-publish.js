@@ -130,7 +130,7 @@ export async function setupPublishing({client,user,onDraftChange,isCompanion,can
  gender.addEventListener('click',()=>{if(!busy&&known&&isCompanion())change('gender');});
  try{await refresh();}catch(error){status.textContent=error.message;}
  return {
-  isKnown:()=>known,selection:()=>({...draft}),hasPendingChanges:pending,
+  isKnown:()=>known,hasListing:()=>known&&!!listing,selection:()=>({...draft}),hasPendingChanges:pending,
   setBusy(value){busy=value;render();},
   syncMode(){if(!isCompanion())change('private');else if(!canShowGender())change('no-gender');render();},
   prepareSave,saveVisibility,
