@@ -252,16 +252,10 @@ async function refreshAccountActions(user,epoch){
   const current=()=>epoch===accountEpoch&&activePanel==='account'&&document.querySelector('#account-email').textContent===(user.email??'');
   try{
     const {data,error}=await appClient.from('member_profiles')
-      .select('profile_kind,display_name,avatar_path').eq('user_id',user.id).maybeSingle();
+      .select('display_name,avatar_path').eq('user_id',user.id).maybeSingle();
     if(error||!current())return;
     const latestName=typeof data?.display_name==='string'?data.display_name.trim():'';
     if(latestName){document.querySelector('#account-name').textContent=latestName;resetAccountPhoto(latestName);}
-    const link=document.querySelector('#account-companion-link');
-    if(link){
-      const isCompanion=['companion','both'].includes(data?.profile_kind);
-      link.querySelector('strong').textContent=isCompanion?'Companion Profile':'Become a Companion';
-      link.querySelector('small').textContent=isCompanion?'Manage your public profile':'Set your profile, rate and availability';
-    }
     const path=data?.avatar_path;
     let src=avatarAsset(path);
     // Only request a private photo from the signed-in member's own folder.
