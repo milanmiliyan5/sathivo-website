@@ -43,9 +43,9 @@ test('all audited website Edge Function sources are tracked and use the pinned S
     const file=path.join(root,'supabase','functions',slug,'index.ts');
     await stat(file);
     const source=await readFile(file,'utf8');
-    if(slug==='send-nearby-email') {
+    if(['send-nearby-email','send-booking-email'].includes(slug)) {
       // Deliberately disabled endpoint: no Supabase SDK or email provider is needed.
-      assert.match(source,/nearby_email_disabled/);
+      assert.match(source,slug==='send-nearby-email'?/nearby_email_disabled/:/booking_email_disabled/);
       assert.doesNotMatch(source,/api\.resend\.com/);
     } else {
       assert.match(source,/npm:@supabase\/supabase-js@2\.116\.0/,slug+' must use the project-pinned Supabase JS version');

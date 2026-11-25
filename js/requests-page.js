@@ -5,7 +5,6 @@ import {confirmCompletion,appendRecoveryControls,runRecovery,completionState,com
 import {withCurrentBookingNames} from './booking-name-sync.js?v=20261030-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendBookingPush} from './push-events.js?v=20261004-1';
-import {sendBookingEmail} from './booking-email-events.js?v=20261017-1';
 import {askCancellationReason,cancellationLabel} from './booking-cancel.js?v=20261006-1';
 const $=id=>document.getElementById(id);let client,user,rows=[],view=null,channel,reviewedBookings=new Set(),reviewLookupOk=false,ratingPromptOpen=false;
 const validBookingId=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -210,7 +209,7 @@ async function update(id,status,extra={}){
   if(error)throw error;
   $('status').textContent='Sending notification…';
   if(status==='accepted'){
-   await Promise.all([sendBookingPush(client,id,status),sendBookingEmail(client,id,'accepted')]);
+   await sendBookingPush(client,id,status);
    location.href='chat.html?booking='+encodeURIComponent(id);return;
   }
   if(status==='completed'){offerCompletionFeedback(user);openView('completed',{focus:false});await load();void sendBookingPush(client,id,status).catch(()=>{});}else{if(cancelledStatuses.has(status))openView('cancelled',{focus:false});await sendBookingPush(client,id,status);await load();}

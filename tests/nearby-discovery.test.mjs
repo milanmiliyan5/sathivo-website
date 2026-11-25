@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 const read=path=>readFile(new URL('../'+path,import.meta.url),'utf8');
 
-test('nearby emails are disabled without touching booking or security email',async()=>{
+test('nearby and booking emails are disabled independently of authentication email',async()=>{
  const email=await read('supabase/functions/send-nearby-email/index.ts');
  const publish=await read('js/listing-publish.js');
  assert.match(email,/nearby_email_disabled/);
  assert.doesNotMatch(email,/api\.resend\.com/);
  assert.doesNotMatch(publish,/invoke\('send-nearby-email'/);
  assert.match(publish,/invoke\('send-nearby-push'/);
- assert.ok((await read('supabase/functions/send-booking-email/index.ts')).length>100);
+ assert.match(await read('supabase/functions/send-booking-email/index.ts'),/booking_email_disabled/);
 });
 test('nearby discovery only shows live listings after delay and keeps it per-user',async()=>{
  const code=await read('js/nearby-discovery.js');

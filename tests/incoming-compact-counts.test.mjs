@@ -84,7 +84,7 @@ test('Sent and received bookings keep their distinct actions and secured access'
   "update(r.id,'accepted')","update(r.id,'declined')","submitCompletion(client,id)",
   "Cancel Request","Open Chat ↗","cancelBooking(r)","renderBookingProgress(r,{compact:true})",
   "showCompletedBookingRating({client,user,booking:r})","appendRecoveryControls",
-  "sendBookingPush","sendBookingEmail","withCurrentBookingNames"
+  "sendBookingPush","withCurrentBookingNames"
  ])assert.ok(js.includes(action),'Missing action '+action);
  assert.match(js,/function render\(\)\{\s*syncRequestCounts\(\);/);
  assert.match(js,/\[data-view\]/);
