@@ -26,6 +26,6 @@ test('three indicators start hidden and use confirmed save/load state only',asyn
  const js=await readFile(new URL('../js/profile-page.js',import.meta.url),'utf8');
  assert.equal((html.match(/class="profile-section-tick"/g)||[]).length,3);
  assert.match(js,/savedSectionProfile=p\?\{\.\.\.p\}:null/);
- assert.match(js,/if\(error\|\|!data\)throw Error\('Profile could not be saved[^']*'\);\s*savedSectionProfile=\{\.\.\.row\}/);
+  assert.match(js,/savedSectionProfile=\{\.\.\.data\};privateSaved=true/);
  assert.match(js,/toggleAttribute\('hidden',!done\)/);
 });

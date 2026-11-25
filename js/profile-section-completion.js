@@ -23,3 +23,19 @@ export function profileSectionCompletion(saved,draft,{pendingPhoto=false}={}){
  result.privacy=a.privacy.adult&&a.privacy.boundaries&&equal('privacy');
  return result;
 }
+
+// The optional database marker is UI progress, never an eligibility or permission flag.
+export function nextProfileStage(saved){
+ if(!saved)return 'personal';
+ const done=profileSectionCompletion(saved,saved);
+ if(!done.personal)return 'personal';
+ if(saved.profile_kind==='customer')return 'personal';
+ if(!done.companion)return 'companion';
+ if(saved.setup_stage==='companion')return 'companion';
+ if(saved.setup_stage==='privacy'||!done.privacy)return 'privacy';
+ return 'personal';
+}
+export function stageAfterSave(section,kind){
+ if(kind==='customer'||section==='privacy')return 'complete';
+ return section==='personal'?'companion':'privacy';
+}

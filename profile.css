@@ -273,3 +273,8 @@ body.profile-clean .privacy-more-card .privacy-chevron svg{width:18px;height:18p
 
 body.profile-clean #publication .visibility-consent-note{font-size:.72rem;line-height:1.45;color:var(--muted);margin:9px 0 2px}
 body.profile-clean #publication .visibility-actions a{border-bottom:0}
+
+/* Customer-only setup has one tab. Safety confirmations move into Personal only when needed. */
+body.profile-clean .profile-editor-tabs button[hidden],body.profile-clean #profile-safety-section[hidden]{display:none!important}
+body.profile-clean[data-profile-mode="customer"] .profile-editor-tabs{grid-template-columns:minmax(0,1fr)}
+body.profile-clean #profile-panel-personal #profile-safety-section{margin:14px 0 0;padding:12px}

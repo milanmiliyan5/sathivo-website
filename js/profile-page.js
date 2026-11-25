@@ -1,6 +1,6 @@
-import {profileSectionCompletion} from './profile-section-completion.js?v=20261125-section-ticks-1';
+import {profileSectionCompletion,nextProfileStage,stageAfterSave} from './profile-section-completion.js?v=20261125-profile-steps-1';
 import {experienceCategoryGroups,experienceCategories,experienceLabel,experienceSafetyNote,experienceVisual} from './experience-categories.js?v=20261123-pastels-1';
-import { setupPublishing,publicationProblem } from './listing-publish.js?v=20261125-save-visibility-2';
+import { setupPublishing,publicationProblem } from './listing-publish.js?v=20261125-profile-steps-1';
 import {districtsByState,statesAndUTs} from './india-districts.js?v=20261015-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { getSathivoClient } from './supabase-client.js?v=20261025-polish-1';
@@ -22,7 +22,7 @@ function markSafetySaved(p){
 }
 const profileTabs=new Set(['personal','companion','privacy']);
 function showProfileTab(name,{record=false,focus=false}={}){
- if(!profileTabs.has(name))name='personal';
+ if(!profileTabs.has(name)||!isCompanionKind())name='personal';
  const changed=profileTab!==name;
  profileTab=name;
  document.querySelectorAll('[data-profile-tab]').forEach(button=>{
@@ -42,12 +42,19 @@ function revealProfileControl(control){
   control.focus();
  }
 }
-function validateProfileForm(){
- // A single form is intentionally kept enabled across tabs. Open the first
- // invalid control's tab BEFORE the native validation UI attempts to focus it.
- const invalid=[...form.elements].find(control=>control.willValidate&&!control.validity.valid);
+function validateProfileForm(section=profileTab){
+ const panel=$('profile-panel-'+section);
+ const invalid=[...form.elements].find(control=>panel.contains(control)&&control.willValidate&&!control.validity.valid);
  if(invalid){revealProfileControl(invalid);invalid.reportValidity();return false;}
- return form.reportValidity();
+ return true;
+}
+function syncSafetyPlacement(){
+ const safety=$('profile-safety-section');
+ const needsConfirmation=!savedSectionProfile?.adult_confirmed||!savedSectionProfile?.boundaries_accepted;
+ const personal=!isCompanionKind()||(needsConfirmation&&(!form.elements.adult_confirmed.checked||!form.elements.boundaries_accepted.checked));
+ const target=$('profile-panel-'+(personal?'personal':'privacy'));
+ if(safety.parentElement!==target)target.prepend(safety);
+ safety.hidden=!isCompanionKind()&&!needsConfirmation&&form.elements.adult_confirmed.checked&&form.elements.boundaries_accepted.checked;
 }
 function syncSummaryPhoto(){
  const source=$('avatar'),image=$('profile-summary-photo');
@@ -63,7 +70,7 @@ new MutationObserver(syncSummaryPhoto).observe($('avatar'),{attributes:true,attr
 document.querySelectorAll('[data-profile-tab]').forEach(button=>{
  button.addEventListener('click',()=>showProfileTab(button.dataset.profileTab,{record:true}));
  button.addEventListener('keydown',event=>{
-  const tabs=[...profileTabs],index=tabs.indexOf(profileTab);
+  const tabs=isCompanionKind()?[...profileTabs]:['personal'],index=tabs.indexOf(profileTab);
   const next=event.key==='ArrowRight'?tabs[(index+1)%tabs.length]:event.key==='ArrowLeft'?tabs[(index+tabs.length-1)%tabs.length]:event.key==='Home'?tabs[0]:event.key==='End'?tabs[tabs.length-1]:null;
   if(next){event.preventDefault();showProfileTab(next,{record:true,focus:true});}
  });
@@ -186,24 +193,30 @@ function syncModeUI(){
  setSectionDisabled('companion-details-section',!companion);
  $('hourly_rate').required=companion;
  $('publication').hidden=!companion;
- $('save-profile').textContent='Save Changes';
+ $('save-profile').textContent='Save';
+ for(const name of ['companion','privacy'])$('profile-tab-'+name).hidden=!companion;
+ if(!companion&&profileTab!=='personal')showProfileTab('personal');
+ syncSafetyPlacement();
  $('profile-customer-companion-note').hidden=companion;
  syncSummaryPhoto();
  $('profile-kind-hint').textContent=companion?'Manage public visibility in Privacy.':'Your customer profile stays private.';
  publishing?.syncMode();
  updateCompleteness();
 }
-function updateSectionTicks(){
- const draft={
+function currentDraft(){
+ return {
   profile_kind:$('profile_kind').value,display_name:$('display_name').value,gender:$('gender').value,
   location_id:$('location_id').value,city_name:$('city_name').value,languages:$('languages').value,interests:$('interests').value,
   avatar_path:avatarPath,bio:$('bio').value,meeting_mode:$('meeting_mode').value,availability:$('availability').value,hourly_rate:$('hourly_rate').value,
   categories:[...form.querySelectorAll('[name=categories]:checked')].map(input=>input.value),
   adult_confirmed:form.elements.adult_confirmed.checked,boundaries_accepted:form.elements.boundaries_accepted.checked
  };
- const completed=profileSectionCompletion(savedSectionProfile,draft,{pendingPhoto:!!$('photo').files[0]});
+}
+function currentCompletion(){return profileSectionCompletion(savedSectionProfile,currentDraft(),{pendingPhoto:!!$('photo').files[0]});}
+function updateSectionTicks(){
+ const completed=currentCompletion();
  document.querySelectorAll('[data-profile-tab]').forEach(button=>{
-  const done=completed[button.dataset.profileTab]===true&&(button.dataset.profileTab!=='privacy'||!publishing?.hasPendingChanges());
+  const done=completed[button.dataset.profileTab]===true&&(button.dataset.profileTab!=='privacy'||(!publishing?.hasPendingChanges()&&!['companion','privacy','personal'].includes(savedSectionProfile?.setup_stage)));
   button.querySelector('.profile-section-tick').toggleAttribute('hidden',!done);
   const label=button.querySelector('span').textContent;
   button.setAttribute('aria-label',label+(done?', completed':''));
@@ -258,66 +271,93 @@ async function photoBlob(file) {
 }
 
 form.addEventListener('submit',async event=>{
-  event.preventDefault();if(!user||!profileLoaded||$('fields').disabled||!validateProfileForm())return;
-  const values=new FormData(form);
-  const row={user_id:user.id};
-  row.display_name=String(values.get('display_name')||'').trim();
-  row.profile_kind=String(values.get('profile_kind')||'customer').trim();
-  row.gender=String(values.get('gender')||'').trim();
-  row.languages=String(values.get('languages')||'').trim();
-  row.interests=String(values.get('interests')||'').trim();
-  const companion=['companion','both'].includes(row.profile_kind);
-  row.bio=companion?String(values.get('bio')||'').trim():'';
-  row.meeting_mode=companion?String(values.get('meeting_mode')||'online').trim():'online';
-  row.availability=companion?String(values.get('availability')||'').trim():'';
-  const rateRaw=String(values.get('hourly_rate')||'').trim();row.hourly_rate=companion?Number(rateRaw):null;
-  if(['companion','both'].includes(row.profile_kind)&&(!Number.isInteger(row.hourly_rate)||row.hourly_rate<1||row.hourly_rate>100000)){message('Set a valid hourly companionship rate between ₹1 and ₹1,00,000.',true);revealProfileControl($('hourly_rate'));return;}
-  if(row.display_name.length<2||row.languages.length<2){message('Enter your name and languages (at least 2 characters).',true);revealProfileControl(row.display_name.length<2?$('display_name'):$('languages'));return;}
-  row.city_name=String(values.get('city_name')||'').trim();
-  if(row.city_name.length<2||row.city_name.length>80){message('Enter your city or town (2–80 characters).',true);revealProfileControl($('city_name'));return;}
-  resolveLocationId();row.location_id=Number($('location_id').value);row.categories=companion?values.getAll('categories'):[];
-  row.adult_confirmed=values.get('adult_confirmed')==='on';row.boundaries_accepted=values.get('boundaries_accepted')==='on';
-  if(!locations.some(r=>r.id===row.location_id&&r.state===$('state').value&&r.district===$('district').value)){message('Choose your state and district again, then enter your city or town.',true);revealProfileControl($('state'));return;}
-  if(!publishing?.isKnown()){message('Could not check profile visibility. Refresh before saving.',true);return;}
-  const selection=publishing.selection();
-  if(companion&&selection.published){
-   const problem=publicationProblem({...row,avatar_path:avatarPath||($('photo').files[0]?'pending-upload':null)});
-   if(problem){message(problem,true);showProfileTab(!row.adult_confirmed||!row.boundaries_accepted?'privacy':!row.categories.length?'companion':'personal',{record:true});return;}
+ event.preventDefault();
+ if(!user||!profileLoaded||$('fields').disabled)return;
+ const section=profileTab,companion=isCompanionKind(),draft=currentDraft(),kind=draft.profile_kind;
+ if(!validateProfileForm(section))return;
+ if(!publishing?.isKnown()){message('Could not check profile visibility. Refresh before saving.',true);return;}
+ const done=currentCompletion();
+ const fail=(text,tab,control)=>{showProfileTab(tab,{record:true});message(text,true);if(control)revealProfileControl(control);else $('profile-status').focus();};
+ if(section!=='personal'&&!done.personal){fail('Save your Personal details first.','personal');return;}
+ if(section==='privacy'&&!done.companion){fail('Save your Companion details first.','companion');return;}
+ if(section==='personal'){
+  if(draft.display_name.trim().length<2||draft.languages.trim().length<2){fail('Enter your name and languages (at least 2 characters).','personal');return;}
+  resolveLocationId();draft.location_id=Number($('location_id').value);
+  if(draft.city_name.trim().length<2||draft.city_name.trim().length>80||!locations.some(r=>r.id===draft.location_id&&r.state===$('state').value&&r.district===$('district').value)){fail('Choose your state and district and enter your city or town.','personal',$('city_name'));return;}
+  if(companion&&(!avatarPath&&!$('photo').files[0]||draft.bio.trim().length<20)){fail('Add a photo or avatar and a bio of at least 20 characters.','personal');return;}
+  if(!draft.adult_confirmed||!draft.boundaries_accepted){syncSafetyPlacement();fail('Confirm the 18+ declaration and platonic agreement.','personal');return;}
+ }
+ if(section==='companion'){
+  if(!draft.categories.length){fail('Choose at least one activity.','companion');return;}
+  const rate=Number(draft.hourly_rate);
+  if(!Number.isInteger(rate)||rate<1||rate>100000){fail('Set a valid hourly rate between ₹1 and ₹1,00,000.','companion',$('hourly_rate'));return;}
+ }
+ if(section==='privacy'&&(!draft.adult_confirmed||!draft.boundaries_accepted)){fail('Confirm both safety declarations.','privacy');return;}
+ const wasNew=!hadSavedProfile;
+ $('fields').disabled=true;publishing.setBusy(true);message('Saving…');
+ let privateSaved=false;
+ try{
+  const fresh=await client.auth.getUser();if(fresh.error||fresh.data.user?.id!==user.id)throw Error('Your session ended. Sign in again before saving.');
+  // Personal and Companion save only private data. Only Privacy applies new publication choices.
+  const final=section==='privacy'||!companion;
+  const file=section==='personal'&&companion?$('photo').files[0]:null;
+  let preparedPhoto=null;
+  await publishing.prepareSave({applyVisibility:final,photoChanged:section==='privacy'&&['companion','privacy'].includes(savedSectionProfile?.setup_stage)});
+  let row;
+  if(section==='personal'){
+   if(file){preparedPhoto=await photoBlob(file);const path=user.id+'/avatar.webp';const upload=await client.storage.from('profile-photos').upload(path,preparedPhoto.blob,{upsert:true,contentType:preparedPhoto.type});if(upload.error)throw Error('Photo upload failed. Check your connection and try again.');avatarPath=path;}
+   row={user_id:user.id,profile_kind:kind,display_name:draft.display_name.trim(),gender:draft.gender,location_id:draft.location_id,city_name:draft.city_name.trim(),languages:draft.languages.trim(),interests:draft.interests.trim(),bio:companion?draft.bio.trim():'',avatar_path:companion?avatarPath:null,adult_confirmed:draft.adult_confirmed,boundaries_accepted:draft.boundaries_accepted,setup_stage:stageAfterSave(section,kind)};
+   if(!companion||!savedSectionProfile||savedSectionProfile.profile_kind==='customer')Object.assign(row,{categories:[],meeting_mode:'online',availability:'',hourly_rate:null});
+  }else if(section==='companion'){
+   row={categories:draft.categories,meeting_mode:draft.meeting_mode,availability:draft.availability.trim(),hourly_rate:Number(draft.hourly_rate),setup_stage:stageAfterSave(section,kind)};
+  }else{
+   row={adult_confirmed:draft.adult_confirmed,boundaries_accepted:draft.boundaries_accepted};
   }
-  $('fields').disabled=true;publishing.setBusy(true);message('Saving your profile…');
-  let privateSaved=false;
-  try {
-    const fresh=await client.auth.getUser();if(fresh.error||fresh.data.user?.id!==user.id)throw Error('Your session ended. Sign in again before saving.');
-    const file=companion?$('photo').files[0]:null;let preparedPhoto=null;
-    await publishing.prepareSave({photoChanged:!!file||savedAvatarPath!==(companion?avatarPath:null)});
-    if(file){preparedPhoto=await photoBlob(file);const path=user.id+'/avatar.webp';const upload=await client.storage.from('profile-photos').upload(path,preparedPhoto.blob,{upsert:true,contentType:preparedPhoto.type});if(upload.error)throw Error('Photo upload failed. Check your connection and try again.');avatarPath=path;}
-    row.avatar_path=companion?avatarPath:null;
-    const {data,error}=await client.from('member_profiles').upsert(row,{onConflict:'user_id'}).select('*').single();
-    if(error||!data)throw Error('Profile could not be saved. Check your connection and try again.');
-     savedSectionProfile={...row};
-    privateSaved=true;
-    const photoChanged=!!preparedPhoto||savedAvatarPath!==row.avatar_path;
-    if(savedAvatarPath&&!isBuiltinAvatar(savedAvatarPath)&&savedAvatarPath!==row.avatar_path){
-      try{await client.storage.from('profile-photos').remove([savedAvatarPath])}catch{}
-    }
-    savedAvatarPath=row.avatar_path;avatarPath=row.avatar_path;markSafetySaved(row);$('photo').value='';
-    if(localPreviewUrl){URL.revokeObjectURL(localPreviewUrl);localPreviewUrl=null;}
-    showSystemInfo(data);
-    if(companion&&avatarPath)await showPhoto(avatarPath);else{$('avatar').hidden=true;syncAvatarChoice();}
-    updateCompleteness();
-    const result=await publishing.saveVisibility(data,{photoChanged,uploadedBlob:preparedPhoto?.blob||null});
-    dirty=false;updateCompleteness();
-    message(result.published?(result.active?'Profile saved and published.':'Profile saved. Public listing is subject to moderation.'):'Profile saved and kept private.');
-    if(companion)showProfileTab('privacy',{record:true});
-    else if(!hadSavedProfile)window.setTimeout(()=>location.assign('companions.html'),450);
-    hadSavedProfile=true;
-  }catch(error){
-    await publishing.recover();
-    if(error.message?.includes('Visibility changed in another session'))showProfileTab('privacy',{record:true});
-    if(privateSaved)hadSavedProfile=true;
-    message((privateSaved?'Profile details saved, but visibility update failed. ':'')+(error.message||'Could not save your profile. Please try again.'),true);
-    updateCompleteness();
-  }finally{$('fields').disabled=false;publishing.setBusy(false);$('profile-status').focus();}
+  const result=section==='personal'&&!savedSectionProfile
+   ?await client.from('member_profiles').upsert(row,{onConflict:'user_id'}).select('*').single()
+   :await client.from('member_profiles').update(row).eq('user_id',user.id).select('*').single();
+  const {data,error}=result;
+  if(error||!data)throw Error('Profile could not be saved. Check your connection and try again.');
+  savedSectionProfile={...data};privateSaved=true;hadSavedProfile=true;
+  if(section==='personal'){
+   if(savedAvatarPath&&!isBuiltinAvatar(savedAvatarPath)&&savedAvatarPath!==data.avatar_path){
+    try{await client.storage.from('profile-photos').remove([savedAvatarPath])}catch{}
+   }
+   savedAvatarPath=data.avatar_path;avatarPath=data.avatar_path;$('photo').value='';
+   if(localPreviewUrl){URL.revokeObjectURL(localPreviewUrl);localPreviewUrl=null;}
+   if(companion&&avatarPath)await showPhoto(avatarPath);else{$('avatar').hidden=true;syncAvatarChoice();}
+  }
+  markSafetySaved(data);syncSafetyPlacement();showSystemInfo(data);updateCompleteness();
+  if(final){
+   if(companion){
+    const confirmed=profileSectionCompletion(data,currentDraft());
+    if(!confirmed.personal||!confirmed.companion)throw Error('Profile details changed in another session. Reload and review your details before publishing.');
+   }
+   const visibility=await publishing.saveVisibility(data,{photoChanged:section==='privacy'&&['companion','privacy'].includes(data.setup_stage),uploadedBlob:preparedPhoto?.blob||null});
+   if(section==='privacy'){
+    const finish=await client.from('member_profiles').update({setup_stage:'complete'}).eq('user_id',user.id).select('*').single();
+    if(finish.error||!finish.data)throw Error('Visibility saved, but setup completion could not be recorded. Save again to retry.');
+    savedSectionProfile=finish.data;
+   }
+   message(visibility.published?(visibility.active?'Profile saved and published.':'Profile saved. Public listing is subject to moderation.'):'Profile saved and kept private.');
+   if(!companion&&wasNew)window.setTimeout(()=>location.assign('companions.html'),450);
+  }else{
+   showProfileTab(section==='personal'?'companion':'privacy',{record:true,focus:true});
+   message('');
+  }
+  const remaining=currentCompletion();
+  dirty=!remaining.personal||(companion&&(!remaining.companion&&section!=='personal'||publishing.hasPendingChanges()));
+  // Unfilled next steps are not unsaved edits. Keep actual unsaved drafts protected.
+  if(section==='personal'&&companion){
+   const saved=data;
+   dirty=publishing.hasPendingChanges()||draft.categories.length>0&&JSON.stringify([...draft.categories].sort())!==JSON.stringify([...(saved.categories||[])].sort())||!!draft.hourly_rate&&Number(draft.hourly_rate)!==Number(saved.hourly_rate);
+  }
+  updateCompleteness();
+ }catch(error){
+  await publishing.recover();
+  if(error.message?.includes('Visibility changed in another session'))showProfileTab('privacy',{record:true});
+  message((privateSaved?'Saved details. ':'')+(error.message||'Could not save. Please try again.'),true);updateCompleteness();
+ }finally{$('fields').disabled=false;publishing.setBusy(false);if($('profile-status').textContent)$('profile-status').focus();}
 });
 async function init(){
   try{
@@ -357,7 +397,10 @@ async function init(){
       form.elements.boundaries_accepted.checked=!!user.user_metadata?.community_rules_version;
       showSystemInfo(null);
     }
-    syncModeUI();markSafetySaved(p);
+    syncModeUI();markSafetySaved(p);syncSafetyPlacement();
+    const resume=nextProfileStage(savedSectionProfile);
+    if(!p||resume!=='personal'||!isCompanionKind())showProfileTab(resume,{record:false});
+    else showProfileTab(initialProfileTab,{record:false});
     message(p?'':'Complete your profile to get started.');
     // The 21-activity announcement deep-links here, after saved selections
     // are restored. Do not alter selections or force profile publishing.

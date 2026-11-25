@@ -1,6 +1,6 @@
 import { isBuiltinAvatar } from './avatar-utils.js?v=20261121-avatars-1';
 
-// Visibility switches edit a local draft. Only Save Changes can write it.
+// Visibility switches edit a local draft. Only final Privacy Save can enable publication.
 export function visibilityDraft(listing){
  const published=listing?.published===true;
  return {published,showGender:published&&['male','female','other'].includes(listing?.public_gender)};
@@ -53,7 +53,7 @@ export async function setupPublishing({client,user,onDraftChange,isCompanion,can
  }
  // Hide first when opting out, and remove gender before a saved gender change
  // can reach an old public card through the database identity-sync trigger.
- async function prepareSave({photoChanged=false}={}){
+ async function prepareSave({photoChanged=false,applyVisibility=true}={}){
   if(!known)throw Error('Visibility could not be verified. Refresh before saving.');
   const previous=visibilityDraft(listing);
   await refresh({preserveDraft:true});
@@ -62,6 +62,7 @@ export async function setupPublishing({client,user,onDraftChange,isCompanion,can
    throw Error('Visibility changed in another session. Review Privacy and save again.');
   }
   wasPublicAtSave=listing?.published===true;
+  if(!applyVisibility)return;
   if(listing?.published&&!draft.published){
    const {error}=await client.from('companion_listings').update({published:false,public_gender:null}).eq('user_id',user.id).select('public_id').single();
    if(error)throw Error('Could not hide your public profile. Try again.');
