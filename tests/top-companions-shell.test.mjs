@@ -1,0 +1,22 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+const read=p=>readFile(new URL('../'+p,import.meta.url),'utf8');
+test('Top Companions is a compact accessible empty shell with the selected heart',async()=>{
+ const html=await read('companions.html'),page=await read('top-companions.html'),css=await read('explore-compact-tools.css'),js=await read('js/companions-page.js');
+ assert.match(html,/class="top-companions-link" href="top-companions.html"/);
+ assert.ok(html.indexOf('class="top-companions-link"')<html.indexOf('id="directory-filters"'));
+ assert.match(html,/class="explore-sr-only">Explore Companions/);
+ assert.doesNotMatch(html,/Find company for your favourite activities/);
+ assert.match(html,/Location · Activity · Preferences/);
+ for(const id of ['state','district','city','category','mode','gender-filter','sort','saved-only','results','retry','status'])assert.match(html,new RegExp('id="'+id+'"'));
+ assert.match(js,/if\(rows.length\)\$\('status'\)\.textContent='';/);
+ assert.match(js,/Could not load companions/);
+ assert.match(css,/--top-tools-height:48px/);
+ assert.match(css,/#status:empty\{display:none/);
+ assert.match(page,/name="robots" content="noindex,follow"/);
+ assert.match(page,/href="companions.html" aria-label="Back to Explore"/);
+ assert.match(page,/<main aria-label="Top Companions"><\/main>/);
+ assert.doesNotMatch(page,/<script|<form|Today|Weekly|Monthly|Yearly|All Time/);
+ const icon=await read('assets/top-companions-heart.svg');assert.match(icon,/#96365E/);assert.match(icon,/#C79A43/);
+});

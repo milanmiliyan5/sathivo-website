@@ -314,7 +314,7 @@ async function list({fromPagination=false}={}){
    if(all.length>24)discoverCursors.set(page+1,all[23].public_id);
   }
   $('results').replaceChildren(...feedNodes(rows));$('empty').hidden=rows.length>0;
-  if(rows.length)$('status').textContent=(savedOnly?'Saved companions':'Explore companions')+' · '+scopeName()+' · '+sortLabel()+'.';
+  if(rows.length)$('status').textContent='';
   else showDirectoryEmpty(savedOnly?'savedFiltered':'search');
   $('previous').disabled=page===0;$('next').disabled=all.length<=24;$('page-label').textContent='';
   if(fromPagination)scrollToDirectoryResults(rows.length>0);
