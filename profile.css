@@ -280,3 +280,6 @@ body.profile-clean[data-profile-mode="customer"] .profile-editor-tabs{grid-templ
 body.profile-clean #profile-panel-personal #profile-safety-section{margin:14px 0 0;padding:12px}
 
 body.profile-clean .profile-editor-tabs button:disabled{opacity:.55;cursor:default}
+
+/* Do not anchor the viewport to a hidden profile section during tab swaps. */
+body.profile-clean{overflow-anchor:none}

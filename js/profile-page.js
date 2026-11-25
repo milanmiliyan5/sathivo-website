@@ -1,3 +1,4 @@
+import {createProfileScrollReset} from './profile-scroll.js?v=20261125-profile-scroll-1';
 import {profileSectionCompletion,nextProfileStage,stageAfterSave,availableProfileTabs,profileDraftChanged} from './profile-section-completion.js?v=20261125-profile-steps-2';
 import {experienceCategoryGroups,experienceCategories,experienceLabel,experienceSafetyNote,experienceVisual} from './experience-categories.js?v=20261123-pastels-1';
 import { setupPublishing,publicationProblem } from './listing-publish.js?v=20261125-profile-steps-2';
@@ -8,6 +9,7 @@ import { avatarOptions, avatarMarker, avatarAsset, isBuiltinAvatar } from './ava
 import { compressImageFile } from './image-compress.js?v=20261006-1';
 const $ = id => document.getElementById(id);
 const form = $('profile-form');
+const profileScroll=createProfileScrollReset(window,document);
 const categories = experienceCategories;
 const el=(tag,text,cssClass)=>{const element=document.createElement(tag);if(text!==undefined)element.textContent=text;if(cssClass)element.className=cssClass;return element;};
 let client, user, locations = [], avatarPath = null, savedAvatarPath = null, dirty = false, publishing = null;
@@ -21,7 +23,8 @@ function markSafetySaved(p){
  }
 }
 const profileTabs=new Set(['personal','companion','privacy']);
-function showProfileTab(name,{record=false,focus=false}={}){
+function showProfileTab(name,{record=false,focus=false,resetScroll=false}={}){
+ profileScroll.cancel();
  const allowed=availableProfileTabs(savedSectionProfile,$('profile_kind').value);
  if(!allowed.includes(name))name=allowed[allowed.length-1];
  const changed=profileTab!==name;
@@ -34,8 +37,10 @@ function showProfileTab(name,{record=false,focus=false}={}){
  document.querySelectorAll('[data-profile-extra]').forEach(panel=>{panel.hidden=panel.dataset.profileExtra!==name;});
  if(record&&changed)history.pushState({...history.state,sathivoProfileTab:name},'',location.href);
  if(focus)$('profile-tab-'+name)?.focus({preventScroll:true});
+ if(resetScroll)profileScroll.reset();
 }
 function revealProfileControl(control){
+ profileScroll.cancel();
  const panel=control?.closest('[data-profile-panel]');
  if(panel)showProfileTab(panel.dataset.profilePanel,{record:true});
  if(control){
@@ -69,18 +74,20 @@ $('profile-summary-photo').addEventListener('load',()=>{if(isCompanionKind()&&!$
 $('profile-summary-photo').addEventListener('error',()=>{$('profile-summary-photo').hidden=true;});
 new MutationObserver(syncSummaryPhoto).observe($('avatar'),{attributes:true,attributeFilter:['src','hidden']});
 document.querySelectorAll('[data-profile-tab]').forEach(button=>{
- button.addEventListener('click',()=>showProfileTab(button.dataset.profileTab,{record:true}));
+ button.addEventListener('click',()=>showProfileTab(button.dataset.profileTab,{record:true,resetScroll:true}));
  button.addEventListener('keydown',event=>{
   const tabs=availableProfileTabs(savedSectionProfile,$('profile_kind').value),index=tabs.indexOf(profileTab);
   const next=event.key==='ArrowRight'?tabs[(index+1)%tabs.length]:event.key==='ArrowLeft'?tabs[(index+tabs.length-1)%tabs.length]:event.key==='Home'?tabs[0]:event.key==='End'?tabs[tabs.length-1]:null;
-  if(next){event.preventDefault();showProfileTab(next,{record:true,focus:true});}
+  if(next){event.preventDefault();showProfileTab(next,{record:true,focus:true,resetScroll:true});}
  });
 });
 $('profile-choose-companion').addEventListener('click',()=>revealProfileControl($('profile_kind')));
 window.addEventListener('popstate',event=>{
  const tab=event.state?.sathivoProfileTab;
- if(profileTabs.has(tab))showProfileTab(tab);
+ if(profileTabs.has(tab))showProfileTab(tab,{resetScroll:true});
 });
+// Tab history must not restore the previous section's vertical position.
+if('scrollRestoration' in history)history.scrollRestoration='manual';
 const initialProfileTab=profileTabs.has(history.state?.sathivoProfileTab)?history.state.sathivoProfileTab:(location.hash==='#your-kind-of-company'?'companion':'personal');
 history.replaceState({...history.state,sathivoProfileTab:initialProfileTab},'',location.href);
 showProfileTab(initialProfileTab);
@@ -298,7 +305,7 @@ form.addEventListener('submit',async event=>{
  if(section==='privacy'&&(!draft.adult_confirmed||!draft.boundaries_accepted)){fail('Confirm both safety declarations.','privacy');return;}
  const wasNew=!hadSavedProfile;
  $('fields').disabled=true;publishing.setBusy(true);message('Saving…');
- let privateSaved=false;
+ let privateSaved=false,advance=false;
  try{
   const fresh=await client.auth.getUser();if(fresh.error||fresh.data.user?.id!==user.id)throw Error('Your session ended. Sign in again before saving.');
   // Personal and Companion save only private data. Only Privacy applies new publication choices.
@@ -345,8 +352,8 @@ form.addEventListener('submit',async event=>{
    message(visibility.published?(visibility.active?'Profile saved and published.':'Profile saved. Public listing is subject to moderation.'):'Profile saved and kept private.');
    if(!companion&&wasNew)window.setTimeout(()=>location.assign('companions.html'),450);
   }else{
-   showProfileTab(section==='personal'?'companion':'privacy',{record:true,focus:true});
    message('');
+   advance=true;
   }
   dirty=profileDraftChanged(savedSectionProfile,currentDraft(),{pendingPhoto:!!$('photo').files[0]})||publishing.hasPendingChanges();
   updateCompleteness();
@@ -354,7 +361,11 @@ form.addEventListener('submit',async event=>{
   await publishing.recover();
   if(error.message?.includes('Visibility changed in another session'))showProfileTab('privacy',{record:true});
   message((privateSaved?'Saved details. ':'')+(error.message||'Could not save. Please try again.'),true);updateCompleteness();
- }finally{$('fields').disabled=false;publishing.setBusy(false);if($('profile-status').textContent)$('profile-status').focus();}
+ }finally{
+  $('fields').disabled=false;publishing.setBusy(false);
+  if(advance)showProfileTab(section==='personal'?'companion':'privacy',{record:true,focus:true,resetScroll:true});
+  else if($('profile-status').textContent)$('profile-status').focus();
+ }
 });
 async function init(){
   try{
@@ -396,12 +407,13 @@ async function init(){
     }
     syncModeUI();markSafetySaved(p);syncSafetyPlacement();
     const resume=nextProfileStage(savedSectionProfile);
-    if(!p||resume!=='personal'||!isCompanionKind())showProfileTab(resume,{record:false});
+    if(!p||resume!=='personal'||!isCompanionKind())showProfileTab(resume,{record:false,resetScroll:true});
     else showProfileTab(initialProfileTab,{record:false});
     message(p?'':'Complete your profile to get started.');
     // The 21-activity announcement deep-links here, after saved selections
     // are restored. Do not alter selections or force profile publishing.
     if(location.hash==='#your-kind-of-company'&&profileTab==='companion'&&isCompanionKind()){
+      profileScroll.cancel();
       requestAnimationFrame(()=>{
         const heading=$('your-kind-of-company');
         heading?.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});
