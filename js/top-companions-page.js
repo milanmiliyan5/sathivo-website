@@ -56,17 +56,7 @@ async function init(){
   const auth=await getSathivoClient(),{data}=await auth.auth.getSession();
   client=data?.session?auth:await getSathivoPublicClient();
   await load();
-  if(data?.session){
-   const checkbox=$('tc-opt-out'),prefStatus=$('tc-pref-status');
-   const {data:opt,error}=await auth.rpc('top_companions_preference',{p_opt_out:null});
-   if(!error){checkbox.checked=opt===true;$('tc-preference').hidden=false;
-    checkbox.addEventListener('change',async()=>{
-     const wanted=checkbox.checked;checkbox.disabled=true;prefStatus.textContent='';
-     try{const {data:actual,error:e}=await auth.rpc('top_companions_preference',{p_opt_out:wanted});if(e)throw e;checkbox.checked=actual===true;prefStatus.textContent='Preference saved.';await load();}
-     catch{checkbox.checked=!wanted;prefStatus.textContent='Could not save. Try again.';}finally{checkbox.disabled=false;}
-    });
-   }
-  }
+
  }catch{status.textContent='Could not connect to Sathivo. Please try again.';retry.hidden=false;list.setAttribute('aria-busy','false');}
 }
 tabs.forEach(tab=>tab.addEventListener('click',()=>void load(tab.dataset.category)));

@@ -25,7 +25,12 @@ test('Top Companions preserves Explore controls and uses a daily real-data leade
  assert.match(css,/\.tc-identity\{display:flex;flex-direction:column/);
  assert.match(js,/createSignedUrl\(row.photo_path,60\)/);
  assert.match(js,/avatarAsset\(row.photo_path\)/);
- assert.match(js,/top_companions_preference/);
+ assert.doesNotMatch(page,/About rankings|tc-info|tc-opt-out/);
+ assert.doesNotMatch(js,/top_companions_preference/);
+ const account=await read('account.html'),accountJs=await read('js/account-page.js');
+ assert.match(account,/id="tc-opt-out"/);
+ assert.match(accountJs,/top_companions_preference/);
+ assert.match(accountJs,/void loadRankingPreference\(\)/);
  assert.doesNotMatch(js,/setInterval|sendBookingEmail|api\.resend\.com/);
  for(const n of [1,2,3])assert.match(css,new RegExp('tc-rank-'+n+'\\{[^}]*text-shadow'));
  const sql=await read('supabase/migrations/20261125082518_top_companions_daily_rankings.sql');

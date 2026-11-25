@@ -185,6 +185,33 @@ document.querySelector('#public-preview-copy').onclick=async()=>{
 document.addEventListener('visibilitychange',()=>{
  if(!document.hidden&&activePanel==='account'&&accountView==='public-preview')void refreshPublicPreview();
 });
+let rankingPreferenceSequence=0;
+const rankingPreference=document.querySelector('#tc-opt-out');
+const rankingPreferenceStatus=document.querySelector('#tc-pref-status');
+async function loadRankingPreference(){
+ const sequence=++rankingPreferenceSequence,owner=accountRecoveryUser?.id;
+ if(!rankingPreference||!appClient||!owner)return;
+ rankingPreference.disabled=true;rankingPreference.checked=false;
+ rankingPreferenceStatus.textContent='Loading…';
+ try{
+  const {data,error}=await appClient.rpc('top_companions_preference',{p_opt_out:null});
+  if(sequence!==rankingPreferenceSequence||accountRecoveryUser?.id!==owner||activePanel!=='account'||accountView!=='privacy')return;
+  if(error)throw error;
+  rankingPreference.checked=data===true;rankingPreference.disabled=false;rankingPreferenceStatus.textContent='';
+ }catch{if(sequence===rankingPreferenceSequence&&accountRecoveryUser?.id===owner)rankingPreferenceStatus.textContent='Could not load. Reopen Privacy & Safety to retry.';}
+}
+rankingPreference?.addEventListener('change',async()=>{
+ const sequence=++rankingPreferenceSequence,owner=accountRecoveryUser?.id,wanted=rankingPreference.checked;
+ if(!appClient||!owner||activePanel!=='account'||accountView!=='privacy'){rankingPreference.checked=!wanted;return;}
+ rankingPreference.disabled=true;rankingPreferenceStatus.textContent='';
+ try{
+  const {data,error}=await appClient.rpc('top_companions_preference',{p_opt_out:wanted});
+  if(sequence!==rankingPreferenceSequence||accountRecoveryUser?.id!==owner)return;
+  if(error)throw error;
+  rankingPreference.checked=data===true;rankingPreferenceStatus.textContent='Saved.';
+ }catch{if(sequence===rankingPreferenceSequence&&accountRecoveryUser?.id===owner){rankingPreference.checked=!wanted;rankingPreferenceStatus.textContent='Could not save. Try again.';}}
+ finally{if(sequence===rankingPreferenceSequence&&accountRecoveryUser?.id===owner)rankingPreference.disabled=false;}
+});
 function showAccountView(name,{focus=true}={}){
   const screens=[...document.querySelectorAll('[data-account-screen]')];
   if(!screens.some(screen=>screen.dataset.accountScreen===name))return;
@@ -194,6 +221,7 @@ function showAccountView(name,{focus=true}={}){
   if(name==='public-preview')void refreshPublicPreview();
   else clearPublicPreview();
   if(name==='privacy'){
+    void loadRankingPreference();
     const boundaries=document.querySelector('#account-boundaries');
     if(boundaries)boundaries.open=false;
   }
