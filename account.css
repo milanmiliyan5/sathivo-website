@@ -351,3 +351,12 @@ body.account-page .account-public-preview #results .card-copy h2{font-size:1.7re
 .account-preview-actions #public-preview-share-status:empty{display:none}
 .account-preview-edit{display:inline-block;margin-top:16px;font-size:.82rem}
 @media(max-width:340px){.account-identity-status-row{gap:4px 6px}.account-preview-actions{grid-template-columns:1fr}}
+
+/* Account home: single-line menu labels with consistent, compact touch targets. */
+body.account-page.sathivo-2d [data-account-screen="home"] .account-hub-row,
+body.account-page.sathivo-2d .account-skeleton-row{min-height:58px;padding:8px 12px;gap:12px;border:1px solid #E8D6E0;border-radius:12px;box-shadow:none}
+body.account-page.sathivo-2d [data-account-screen="home"] .account-hub-list{gap:6px}
+body.account-page.sathivo-2d [data-account-screen="home"] .account-hub-copy{display:flex;align-items:center;gap:0}
+body.account-page.sathivo-2d [data-account-screen="home"] .account-hub-icon{flex-basis:38px;width:38px;height:38px;border-radius:10px}
+body.account-page.sathivo-2d [data-account-screen="home"] .account-hub-row:hover{transform:none;background:#FDF6F9}
+@media(max-width:380px){body.account-page.sathivo-2d [data-account-screen="home"] .account-hub-row,body.account-page.sathivo-2d .account-skeleton-row{padding:8px 10px;gap:10px}}

@@ -8,6 +8,6 @@ test('mobile account story resets inherited desktop inset and stays in normal fl
  assert.match(css,/@media\(max-width:850px\)\{\s*body\.account-page\.sathivo-2d:not\(\.home-2d\) \.account-story\{[^}]*position:static;\s*top:auto;/);
  assert.match(css,/body\.account-page \.account-layout\{[^}]*padding-block-start:24px;[^}]*row-gap:20px/);
  assert.match(css,/body\.account-page \.account-story h1 br\{display:initial\}/);
- assert.match(html,/account\.css\?v=20261124-public-preview-1/);
+ assert.match(html,/account\.css\?v=20261126-clean-menu-1/);
  assert.match(html,/Good company\.<br><em>A fresh chapter\.<\/em>/);
 });

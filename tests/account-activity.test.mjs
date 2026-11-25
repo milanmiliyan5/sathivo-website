@@ -9,7 +9,8 @@ test('account hub retains SVG actions and navigation badges after compact redesi
  assert.equal(rows.length,9);
  for(const row of rows){
   assert.match(row,/class="account-hub-icon[^"]*"[\s\S]*?<svg/);
-  assert.match(row,/<strong>[^<]+<\/strong><small>[^<]+<\/small>/);
+  assert.match(row,/<span class="account-hub-copy"><strong>[^<]+<\/strong><\/span>/);
+  assert.doesNotMatch(row,/<small>/);
   assert.match(row,/href="[^"]+"|data-account-open="[^"]+"/);
  }
  for(const label of ['My Profile','Saved Companions','Settings','Notifications','Nearby Discovery','Help &amp; Support','Feedback','Support Sathivo','Privacy &amp; Safety'])assert.ok(home.includes('<strong>'+label+'</strong>'),label);
