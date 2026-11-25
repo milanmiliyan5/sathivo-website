@@ -278,3 +278,5 @@ body.profile-clean #publication .visibility-actions a{border-bottom:0}
 body.profile-clean .profile-editor-tabs button[hidden],body.profile-clean #profile-safety-section[hidden]{display:none!important}
 body.profile-clean[data-profile-mode="customer"] .profile-editor-tabs{grid-template-columns:minmax(0,1fr)}
 body.profile-clean #profile-panel-personal #profile-safety-section{margin:14px 0 0;padding:12px}
+
+body.profile-clean .profile-editor-tabs button:disabled{opacity:.55;cursor:default}

@@ -1,6 +1,6 @@
-import {profileSectionCompletion,nextProfileStage,stageAfterSave} from './profile-section-completion.js?v=20261125-profile-steps-1';
+import {profileSectionCompletion,nextProfileStage,stageAfterSave,availableProfileTabs,profileDraftChanged} from './profile-section-completion.js?v=20261125-profile-steps-2';
 import {experienceCategoryGroups,experienceCategories,experienceLabel,experienceSafetyNote,experienceVisual} from './experience-categories.js?v=20261123-pastels-1';
-import { setupPublishing,publicationProblem } from './listing-publish.js?v=20261125-profile-steps-1';
+import { setupPublishing,publicationProblem } from './listing-publish.js?v=20261125-profile-steps-2';
 import {districtsByState,statesAndUTs} from './india-districts.js?v=20261015-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { getSathivoClient } from './supabase-client.js?v=20261025-polish-1';
@@ -22,7 +22,8 @@ function markSafetySaved(p){
 }
 const profileTabs=new Set(['personal','companion','privacy']);
 function showProfileTab(name,{record=false,focus=false}={}){
- if(!profileTabs.has(name)||!isCompanionKind())name='personal';
+ const allowed=availableProfileTabs(savedSectionProfile,$('profile_kind').value);
+ if(!allowed.includes(name))name=allowed[allowed.length-1];
  const changed=profileTab!==name;
  profileTab=name;
  document.querySelectorAll('[data-profile-tab]').forEach(button=>{
@@ -70,7 +71,7 @@ new MutationObserver(syncSummaryPhoto).observe($('avatar'),{attributes:true,attr
 document.querySelectorAll('[data-profile-tab]').forEach(button=>{
  button.addEventListener('click',()=>showProfileTab(button.dataset.profileTab,{record:true}));
  button.addEventListener('keydown',event=>{
-  const tabs=isCompanionKind()?[...profileTabs]:['personal'],index=tabs.indexOf(profileTab);
+  const tabs=availableProfileTabs(savedSectionProfile,$('profile_kind').value),index=tabs.indexOf(profileTab);
   const next=event.key==='ArrowRight'?tabs[(index+1)%tabs.length]:event.key==='ArrowLeft'?tabs[(index+tabs.length-1)%tabs.length]:event.key==='Home'?tabs[0]:event.key==='End'?tabs[tabs.length-1]:null;
   if(next){event.preventDefault();showProfileTab(next,{record:true,focus:true});}
  });
@@ -215,7 +216,9 @@ function currentDraft(){
 function currentCompletion(){return profileSectionCompletion(savedSectionProfile,currentDraft(),{pendingPhoto:!!$('photo').files[0]});}
 function updateSectionTicks(){
  const completed=currentCompletion();
+ const allowed=availableProfileTabs(savedSectionProfile,$('profile_kind').value);
  document.querySelectorAll('[data-profile-tab]').forEach(button=>{
+  button.disabled=!allowed.includes(button.dataset.profileTab);
   const done=completed[button.dataset.profileTab]===true&&(button.dataset.profileTab!=='privacy'||(!publishing?.hasPendingChanges()&&!['companion','privacy','personal'].includes(savedSectionProfile?.setup_stage)));
   button.querySelector('.profile-section-tick').toggleAttribute('hidden',!done);
   const label=button.querySelector('span').textContent;
@@ -345,13 +348,7 @@ form.addEventListener('submit',async event=>{
    showProfileTab(section==='personal'?'companion':'privacy',{record:true,focus:true});
    message('');
   }
-  const remaining=currentCompletion();
-  dirty=!remaining.personal||(companion&&(!remaining.companion&&section!=='personal'||publishing.hasPendingChanges()));
-  // Unfilled next steps are not unsaved edits. Keep actual unsaved drafts protected.
-  if(section==='personal'&&companion){
-   const saved=data;
-   dirty=publishing.hasPendingChanges()||draft.categories.length>0&&JSON.stringify([...draft.categories].sort())!==JSON.stringify([...(saved.categories||[])].sort())||!!draft.hourly_rate&&Number(draft.hourly_rate)!==Number(saved.hourly_rate);
-  }
+  dirty=profileDraftChanged(savedSectionProfile,currentDraft(),{pendingPhoto:!!$('photo').files[0]})||publishing.hasPendingChanges();
   updateCompleteness();
  }catch(error){
   await publishing.recover();

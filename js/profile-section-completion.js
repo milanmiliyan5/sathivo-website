@@ -39,3 +39,14 @@ export function stageAfterSave(section,kind){
  if(kind==='customer'||section==='privacy')return 'complete';
  return section==='personal'?'companion':'privacy';
 }
+
+export function availableProfileTabs(saved,kind){
+ if(kind==='customer')return ['personal'];
+ const done=profileSectionCompletion(saved,saved);
+ if(!done.personal||saved?.profile_kind==='customer')return ['personal'];
+ return done.companion?['personal','companion','privacy']:['personal','companion'];
+}
+export function profileDraftChanged(saved,draft,{pendingPhoto=false}={}){
+ if(!saved||!draft)return true;
+ return pendingPhoto||JSON.stringify(sectionValues(saved))!==JSON.stringify(sectionValues(draft));
+}
