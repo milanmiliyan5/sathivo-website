@@ -6,6 +6,13 @@ import {openSafetyReport,confirmSafetyBlock} from './safety-actions.js?v=2026101
 import {districtsByState,statesAndUTs,popularIndianCities} from './india-districts.js?v=20261015-1';
 
 const $=id=>document.getElementById(id),directory=!!$('filters');
+const savedView=directory&&new URLSearchParams(location.search).get('saved')==='1';
+if(savedView){
+ document.body.classList.add('saved-companions-view');
+ document.title='Saved Companions — Sathivo';
+ $('saved-heading').hidden=false;$('explore-title').hidden=true;
+ $('saved-only').checked=true;$('results').setAttribute('aria-label','Saved companions');
+}
 const fields='public_id,display_name,bio,location_id,city_name,languages,interests,categories,meeting_mode,availability,hourly_rate,photo_path,safety_id,joined_at,email_verified_at,adult_confirmed,boundaries_accepted,public_gender';
 let client,publicClient,locations=[],locationsLoaded=false,page=0,request=0,currentUser=null,favoriteIds=new Set(),citySuggestionRequest=0,authStarted=false,filtersReady=false;
 
@@ -245,8 +252,21 @@ function card(row){
  });
  return n;
 }
+function savedCard(row){
+ const n=el('article',undefined,'saved-companion-row');
+ const link=el('a',undefined,'saved-companion-link');link.href='companion.html?id='+encodeURIComponent(row.public_id);
+ const copy=el('div',undefined,'saved-companion-copy');
+ copy.append(el('h2',row.display_name),el('p',row.city_name||locationName(row.location_id),'saved-location'));
+ const activities=(Array.isArray(row.categories)?row.categories:[]).map(experienceLabel);
+ if(activities.length)copy.append(el('p',activities.join(' · '),'saved-activities'));
+ copy.append(el('strong',Number(row.hourly_rate)>0?'₹'+Number(row.hourly_rate).toLocaleString('en-IN')+'/hr':'Rate not set','saved-rate'));
+ link.append(portrait(row),copy);
+ const button=favoriteButton(row);button.classList.add('saved-row-heart');button.classList.toggle('saved',favoriteIds.has(row.public_id));
+ button.setAttribute('aria-label','Remove '+row.display_name+' from saved companions');
+ n.append(link,button);return n;
+}
 function feedNodes(rows){
- return rows.map(card);
+ return rows.map(savedView?savedCard:card);
 }
 function sortLabel(){return {discover:'Discover',newest:'Newest',price_asc:'Price: low to high',price_desc:'Price: high to low',rating:'Top rated'}[$('sort')?.value]||'Discover';}
 // Pagination lands at the start of the new results, not the previous scroll offset.
@@ -263,15 +283,17 @@ function showDirectoryEmpty(kind){
  }[kind];
  $('empty').dataset.emptyKind=copy[0];
  $('directory-empty-title').textContent=copy[1];
- $('directory-empty-copy').textContent=copy[2];
- $('directory-empty-action').textContent=copy[3];
+ $('directory-empty-copy').textContent=savedView?(kind==='saved'?'Save your favourite profiles here.':'Your saved profiles may no longer be available.'):copy[2];
+ if(savedView&&kind==='savedFiltered')$('directory-empty-title').textContent='No available saved companions';
+ $('directory-empty-action').textContent=savedView?'Explore':copy[3];
  $('status').textContent='';
  $('empty').hidden=false;
 }
 async function list({fromPagination=false}={}){
- const seq=++request;$('empty').hidden=true;$('retry').hidden=true;$('previous').disabled=$('next').disabled=true;$('status').textContent='Finding good company…';
- $('results').replaceChildren(...Array.from({length:6},()=>{const n=el('article',undefined,'companion-card companion-skeleton');n.innerHTML='<div class="portrait skeleton-block"></div><div class="card-copy"><i></i><i></i><i></i><i></i></div>';return n}));
- const savedOnly=$('saved-only').checked;
+ const seq=++request;$('empty').hidden=true;$('retry').hidden=true;$('previous').disabled=$('next').disabled=true;$('status').textContent=savedView?'Loading saved companions…':'Finding good company…';
+ if(savedView)$('saved-pagination').hidden=true;
+ $('results').replaceChildren(...Array.from({length:6},()=>{const n=el('article',undefined,savedView?'saved-companion-row saved-row-skeleton':'companion-card companion-skeleton');n.innerHTML='<div class="portrait skeleton-block"></div><div class="card-copy"><i></i><i></i><i></i><i></i></div>';return n}));
+ const savedOnly=savedView||$('saved-only').checked;
  if(savedOnly&&!currentUser){location.href='account.html#login';return}
  if(savedOnly&&!favoritesLoaded){
   try{await loadFavorites({strict:true});}
@@ -279,6 +301,7 @@ async function list({fromPagination=false}={}){
   if(seq!==request)return;
  }
  const savedIds=savedOnly?[...favoriteIds]:null;
+ if(savedView)$('saved-count').textContent=savedIds.length+' saved';
  if(savedOnly&&!savedIds.length){$('results').replaceChildren();showDirectoryEmpty('saved');$('previous').disabled=$('next').disabled=true;$('page-label').textContent='';return}
  if(!locationsLoaded&&($('state').value||$('district').value)){
   $('results').replaceChildren();$('status').textContent='Location filters are temporarily unavailable. Please try again.';$('retry').hidden=false;$('page-label').textContent='';return;
@@ -286,7 +309,7 @@ async function list({fromPagination=false}={}){
  const locationIds=selectedLocationIds();
  if(locationIds!==null&&!locationIds.length){$('results').replaceChildren();showDirectoryEmpty(savedOnly?'savedFiltered':'search');$('previous').disabled=$('next').disabled=true;$('page-label').textContent='';return;}
  try{
-  const sort=$('sort').value||'discover',discover=sort==='discover';
+  const sort=savedView?'newest':($('sort').value||'discover'),discover=sort==='discover';
   const filters={
    p_location_ids:locationIds?.length?locationIds:null,
    p_city:selectedCity()||null,
@@ -307,7 +330,7 @@ async function list({fromPagination=false}={}){
    p_limit:25
   });
   if(seq!==request)return;if(error)throw error;
-  const all=data||[],rows=await withCompletedCounts(all.slice(0,24));
+  const all=data||[],rows=savedView?all.slice(0,24):await withCompletedCounts(all.slice(0,24));
   if(seq!==request)return;
   if(discover){
    for(const key of discoverCursors.keys())if(key>page)discoverCursors.delete(key);
@@ -317,6 +340,7 @@ async function list({fromPagination=false}={}){
   if(rows.length)$('status').textContent='';
   else showDirectoryEmpty(savedOnly?'savedFiltered':'search');
   $('previous').disabled=page===0;$('next').disabled=all.length<=24;$('page-label').textContent='';
+  if(savedView)$('saved-pagination').hidden=page===0&&all.length<=24;
   if(fromPagination)scrollToDirectoryResults(rows.length>0);
  }catch(error){if(seq!==request)return;$('results').replaceChildren();$('status').textContent='Could not load companions. Please try again.';$('retry').hidden=false;if(fromPagination)scrollToDirectoryResults(false);}
 }
@@ -525,7 +549,7 @@ function setupDirectory(){
   $('category').append(options);
  }
  const requestedCategory=new URLSearchParams(location.search).get('category');
- if(requestedCategory&&experienceCategoryGroups.some(group=>group.items.includes(requestedCategory)))$('category').value=requestedCategory;
+ if(!savedView&&requestedCategory&&experienceCategoryGroups.some(group=>group.items.includes(requestedCategory)))$('category').value=requestedCategory;
  $('filters').onsubmit=e=>{e.preventDefault();page=0;const mobile=window.matchMedia('(max-width: 640px)').matches;if(mobile&&disclosure)disclosure.open=false;void list({fromPagination:mobile});};
  $('filters').onchange=e=>{
   if(e.target.id==='state')districts();
@@ -579,7 +603,7 @@ async function init(){
    locationsLoaded=false;
    console.warn('Sathivo location index temporarily unavailable:',error?.code||error?.message||'network error');
   }
-  if(directory&&new URLSearchParams(location.search).get('saved')==='1'){
+  if(savedView){
    // Saved profiles are private account data. Authenticate before applying
    // the existing saved-only filter; ordinary Explore remains public-first.
    client=await getSathivoClient();
