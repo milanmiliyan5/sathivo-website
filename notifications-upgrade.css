@@ -46,3 +46,38 @@
  .notify-mark-single{text-align:center}
 }
 @media(max-width:390px){.notification-shortcut{width:35px;height:35px;min-width:35px}.notify-filter-group{width:100%}.notify-mark-all{width:100%}}
+
+/* Compact important-updates feed */
+body.sathivo-2d main.notification-center{max-width:760px;padding-top:18px}
+.notification-center .notify-heading{font-family:inherit;font-size:1.3rem;line-height:1.3;margin:0 0 12px;letter-spacing:-.025em;color:#43283A}
+.notification-center .notify-toolbar{margin:0 0 14px;gap:8px}
+.notification-center .notify-filter-group{gap:6px;flex-wrap:nowrap}
+.notification-center .notify-filter{padding:7px 12px;min-height:36px}
+.notification-center .notify-mark-all{background:none;border:none;min-height:36px;padding:6px 0;color:#6B2146;white-space:nowrap;font-size:.76rem}
+.notification-center .notify-summary{gap:3px;font-size:.72rem;white-space:nowrap}
+.notification-center .notify-summary-count{background:transparent;min-width:0;min-height:0;padding:0;color:inherit}
+.notification-center #notifications{display:flex;flex-direction:column;gap:0;border-radius:14px;overflow:hidden}
+.notification-center #notifications:empty{display:none}
+body.sathivo-2d .notification-center .notify-card{display:block;padding:0;gap:0;border:0;border-bottom:1px solid #F0E5EB;border-radius:0;background:#fff;box-shadow:none}
+body.sathivo-2d .notification-center .notify-card:last-child{border-bottom:0}
+body.sathivo-2d .notification-center .notify-card.is-unread{background:#fffafd}
+.notification-center .notify-row{display:flex;align-items:center;gap:11px;width:100%;min-height:70px;padding:12px;box-sizing:border-box;border:0;background:transparent;text-align:left;color:inherit;font:inherit;text-decoration:none;cursor:pointer}
+.notification-center .notify-row:disabled{cursor:default;opacity:1}
+.notification-center .notify-row:focus-visible{outline:2px solid #985483;outline-offset:-2px}
+.notification-center .notify-card-icon{flex:0 0 38px;width:38px;height:38px;border-radius:50%;background:#F3E5ED;color:#6B2146}
+.notification-center .notify-card-icon svg{width:20px;height:20px}
+.notification-center .is-message .notify-card-icon{background:#EBF2FF;color:#285984}
+.notification-center .is-accepted .notify-card-icon{background:#E7F6ED;color:#276247}
+.notification-center .is-closed .notify-card-icon{background:#FFF0E9;color:#A45C4E}
+.notification-center .is-nearby .notify-card-icon{background:#FBE9EF;color:#843950}
+.notification-center .is-support .notify-card-icon{background:#F0E9F9;color:#68478A}
+.notification-center .is-system .notify-card-icon{background:#FFF2DD;color:#8C5B18}
+.notification-center .notify-card-body{flex:1;min-width:0;display:grid;gap:3px}
+.notification-center .notify-card-title{font-size:.92rem;font-weight:650;color:#43283A;overflow-wrap:anywhere}
+.notification-center .notify-card-description{font-size:.76rem;line-height:1.45;color:#806C78;overflow-wrap:anywhere}
+.notification-center .notify-card-date{font-size:.72rem;color:#806C78}
+.notification-center .notify-unread-dot{width:7px;height:7px;margin:0;box-shadow:none;background:#A73F68}
+.notification-center .notify-row-chevron{width:15px;height:15px;flex:0 0 15px;color:#927684}
+.notification-center .notify-row-chevron svg{width:100%;height:100%}
+.notification-center #notify-error:empty,.notification-center #status:empty{display:none}
+@media(max-width:400px){.notification-center .notify-filter-group{width:auto;flex:1 1 auto}.notification-center .notify-mark-all{width:auto}.notification-center .notify-row{padding:10px;gap:9px}.notification-center .notify-toolbar{flex-wrap:wrap}}

@@ -1,3 +1,4 @@
+import {importantNotificationQuery} from './notification-feed.js?v=20261126-notify-compact-1';
 import {createRefreshQueue} from './refresh-queue.js?v=20261118-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import './incoming-booking-popup.js?v=20261122-4sec';
@@ -51,7 +52,7 @@ async function init(){
   const chatBadges=chatLinks.map(a=>addBadge(a,'chat'));
   let active=true,channel=null;
   const noticesRefresh=createRefreshQueue(async()=>{
-   const [notices,website]=await Promise.all(['notifications','website_notifications'].map(table=>client.from(table).select('id',{count:'exact',head:true}).eq('user_id',user.id).is('read_at',null)));
+   const [notices,website]=await Promise.all(['notifications','website_notifications'].map(table=>importantNotificationQuery(client.from(table).select('id',{count:'exact',head:true}).eq('user_id',user.id),table).is('read_at',null)));
    if(!active||notices.error)return;
    const n=(notices.count||0)+(website.error?0:website.count||0);
    notificationBadges.forEach(b=>{b.textContent=n>99?'99+':String(n);b.hidden=n===0});

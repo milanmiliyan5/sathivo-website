@@ -7,7 +7,7 @@ test('web-only alerts participate in website badge, list, read and realtime upda
  for(const src of [header,page])assert.ok(src.includes("'website_notifications'"));
  assert.ok(page.includes("if(link==='index.html')return './';"));
  assert.ok(page.includes("r.source==='website_notifications'?'website_notifications':'notifications'"));
- assert.ok(page.includes("Open Sathivo Home"));
- assert.ok(page.includes("card.addEventListener('click'"));
+ assert.ok(page.includes("if(link)control.href=link;"));
+ assert.ok(page.includes("void openNotification(r,link,control)"));
  assert.ok(header.includes("(website.error?0:website.count||0)"));
 });

@@ -4,16 +4,17 @@ import vm from 'node:vm';
 import {readFile} from 'node:fs/promises';
 import {setTimeout as sleep} from 'node:timers/promises';
 import {createRefreshQueue} from '../js/refresh-queue.js';
+import {importantNotificationQuery} from '../js/notification-feed.js';
 
 test('header scopes refreshes by event and restores a single channel after Back',async()=>{
  const handlers={},channels=[];let notices=0,chats=0,removed=0;
  const client={auth:{getUser:async()=>({data:{user:{id:'test-user'}}})},
-  from(){return {select(){return this},eq(){return this},async is(){notices++;return {count:2}}}},
+  from(){return {select(){return this},eq(){return this},not(){return this},async is(){notices++;return {count:2}}}},
   rpc:async()=>{chats++;return {data:3}},
   channel(name){const c={name,events:[],on(type,filter,fn){this.events.push({filter,fn});return this},subscribe(fn){fn('SUBSCRIBED');return this}};channels.push(c);return c},
   async removeChannel(){removed++}
  };
- const context={getSathivoClient:async()=>client,createRefreshQueue:task=>createRefreshQueue(task,{delay:1}),
+ const context={importantNotificationQuery,getSathivoClient:async()=>client,createRefreshQueue:task=>createRefreshQueue(task,{delay:1}),
   document:{hidden:false,querySelector:()=>null,querySelectorAll:()=>[],addEventListener:(n,f)=>{handlers[n]=f}},
   window:{addEventListener:(n,f)=>{handlers[n]=f}}};
  let source=await readFile(new URL('../js/header-notifications.js',import.meta.url),'utf8');
