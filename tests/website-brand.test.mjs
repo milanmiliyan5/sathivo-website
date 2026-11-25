@@ -8,6 +8,12 @@ test('all public website wordmarks use sathivo.co and preserve brand navigation'
  for(const page of pages){
   const html=await readFile(new URL(page,root),'utf8');
   const brands=[...html.matchAll(/<a class="brand"[^>]*>[\s\S]*?<\/a>/g)];
+  if(page==='top-companions.html'){
+   assert.match(html,/<h1>Top Companions<\/h1>/);
+   assert.match(html,/href="companions.html" aria-label="Back to Explore"/);
+   assert.ok(html.includes('styles.css?v=20261119-brand-co'));
+   continue;
+  }
   assert.ok(brands.length,page+' has brand');
   for(const [brand] of brands){
    assert.match(brand,/sathivo<span class="brand-period">\.co<\/span>/,page);

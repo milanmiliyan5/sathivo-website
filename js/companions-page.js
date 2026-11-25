@@ -251,7 +251,7 @@ function feedNodes(rows){
 function sortLabel(){return {discover:'Discover',newest:'Newest',price_asc:'Price: low to high',price_desc:'Price: high to low',rating:'Top rated'}[$('sort')?.value]||'Discover';}
 // Pagination lands at the start of the new results, not the previous scroll offset.
 function scrollToDirectoryResults(hasProfiles){
- const target=hasProfiles?$('results'):$('status');
+ const target=hasProfiles?$('results'):($('empty').hidden?$('status'):$('empty'));
  target.focus({preventScroll:true});
  target.scrollIntoView({block:'start',inline:'nearest',behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
 }

@@ -2,21 +2,23 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
 const read=p=>readFile(new URL('../'+p,import.meta.url),'utf8');
-test('account activity cards have consistent SVG icons, actions and badge placeholders',async()=>{
+test('account hub retains SVG actions and navigation badges after compact redesign',async()=>{
  const html=await read('account.html');
- const grid=html.match(/<div class="account-activity-grid">[\s\S]*?<\/div>/)[0];
- const cards=[...grid.matchAll(/<a\b[\s\S]*?<\/a>/g)].map(m=>m[0]);
- assert.equal(cards.length,4);
- for(const [i,href] of ['bookings','requests','chats','notifications'].entries()){
-  assert.match(cards[i],new RegExp('href="'+href+'\\.html"'));
-  assert.match(cards[i],/class="activity-icon"[\s\S]*?<svg/);
-  assert.match(cards[i],/<strong>[^<]+<\/strong><small>[^<]+<\/small>/);
+ const home=html.split('data-account-screen="home"')[1].split('data-account-screen="public-preview"')[0];
+ const rows=[...home.matchAll(/<(a|button) class="account-hub-row"[^>]*>[\s\S]*?<\/\1>/g)].map(m=>m[0]);
+ assert.equal(rows.length,10);
+ for(const row of rows){
+  assert.match(row,/class="account-hub-icon[^"]*"[\s\S]*?<svg/);
+  assert.match(row,/<strong>[^<]+<\/strong><small>[^<]+<\/small>/);
+  assert.match(row,/href="[^"]+"|data-account-open="[^"]+"/);
  }
- assert.match(cards[1],/id="account-incoming-requests" hidden/);
- for(const [i,cls] of ['request-badge','chat-header-badge','notification-badge'].entries())assert.match(cards[i+1],new RegExp('activity-count '+cls+'" hidden'));
+ for(const label of ['My Profile','Companion Profile','Saved Companions','Settings','Notifications','Nearby Discovery','Help &amp; Support','Feedback','Support Sathivo','Privacy &amp; Safety'])assert.ok(home.includes('<strong>'+label+'</strong>'),label);
  const css=await read('account.css');
- assert.match(css,/\.account-activity-grid > a\.activity-card\s*\{[^}]*display:flex!important;flex-direction:column/);
- assert.match(css,/\.activity-card\[hidden\]\{display:none!important\}/);
- assert.match(css,/\.activity-count \{[^}]*position:absolute/);
+ assert.match(css,/\.account-hub-list\{display:grid;grid-template-columns:minmax\(0,1fr\)/);
+ assert.match(css,/\.account-hub-row\{[^}]*display:flex;align-items:center/);
+ assert.match(css,/\.account-hub-row:focus-visible/);
+ const nav=await read('js/mobile-nav.js');
+ assert.match(nav,/refs\.Requests\.hidden=rn===0/);
+ assert.match(nav,/refs\.Chats\.hidden=cn===0/);
  assert.match(await read('js/header-requests.js'),/indicators\.forEach/);
 });
