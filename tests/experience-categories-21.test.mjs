@@ -35,7 +35,7 @@ test('profile form and Explore use the same categories and preserve published va
  assert.match(browse,/for\(const group of experienceCategoryGroups\)/);
  assert.match(browse,/document\.createElement\('optgroup'\)/);
  assert.match(browse,/new Option\(experienceLabel\(value\),value\)/);
- assert.match(browse,/p_category:\$\('category'\)\.value\|\|null/);
+ assert.ok(browse.includes("p_category:savedView?null:($('category').value||null)"));
  assert.match(browse,/r\.categories\.forEach\(v=>category\.add\(new Option\(experienceLabel\(v\),v\)\)\)/);
  assert.match(browse,/p_category:category\.value/);
 });
