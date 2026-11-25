@@ -25,7 +25,7 @@ export function publicationProblem(p){
 export async function setupPublishing({client,user,onDraftChange,isCompanion,canShowGender}){
  const $=id=>document.getElementById(id);
  const status=$('listing-status'),publish=$('publish-listing'),gender=$('public-gender-consent'),view=$('view-listing');
- let busy=false,known=false,listing=null,draft=visibilityDraft(null);
+ let busy=false,known=false,listing=null,draft=visibilityDraft(null),wasPublicAtSave=false;
  const same=(a,b)=>a.published===b.published&&a.showGender===b.showGender;
  const pending=()=>known&&!same(draft,visibilityDraft(listing));
  function render(){
@@ -53,8 +53,15 @@ export async function setupPublishing({client,user,onDraftChange,isCompanion,can
  }
  // Hide first when opting out, and remove gender before a saved gender change
  // can reach an old public card through the database identity-sync trigger.
- async function prepareSave(){
+ async function prepareSave({photoChanged=false}={}){
   if(!known)throw Error('Visibility could not be verified. Refresh before saving.');
+  const previous=visibilityDraft(listing);
+  await refresh({preserveDraft:true});
+  if(!same(previous,visibilityDraft(listing))){
+   draft=visibilityDraft(listing);render();onDraftChange();
+   throw Error('Visibility changed in another session. Review Privacy and save again.');
+  }
+  wasPublicAtSave=listing?.published===true;
   if(listing?.published&&!draft.published){
    const {error}=await client.from('companion_listings').update({published:false,public_gender:null}).eq('user_id',user.id).select('public_id').single();
    if(error)throw Error('Could not hide your public profile. Try again.');
@@ -64,12 +71,16 @@ export async function setupPublishing({client,user,onDraftChange,isCompanion,can
    if(error)throw Error('Could not hide your public gender. Try again.');
    listing={...listing,public_gender:null};
   }
+  if(listing?.published&&draft.published&&photoChanged){
+   const {error}=await client.from('companion_listings').update({published:false}).eq('user_id',user.id).select('public_id').single();
+   if(error)throw Error('Could not prepare your public photo update. Try again.');
+   listing={...listing,published:false};
+  }
  }
  async function saveVisibility(p,{photoChanged=false,uploadedBlob=null}={}){
   if(!known)throw Error('Visibility could not be verified. Refresh before saving.');
   if(!draft.published||!['companion','both'].includes(p.profile_kind)){
    // No listing is ever created for a private profile.
-   await prepareSave();
    await refresh();
    if(listing?.published)throw Error('Could not confirm your profile is private.');
    return {published:false};
@@ -109,7 +120,7 @@ export async function setupPublishing({client,user,onDraftChange,isCompanion,can
   await refresh();
   if(!listing?.published)throw Error('Could not confirm publication. Save again to retry.');
   // Existing nearby push remains restricted to first publication/re-enabling.
-  if(!wasPublished&&saved.data.public_id){
+  if(!wasPublicAtSave&&saved.data.public_id){
    void client.functions.invoke('send-nearby-push',{body:{public_id:saved.data.public_id}}).catch(()=>{});
   }
   return {published:true,active:listing.moderation_status==='active'};

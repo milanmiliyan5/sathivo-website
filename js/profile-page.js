@@ -1,6 +1,6 @@
 import {profileSectionCompletion} from './profile-section-completion.js?v=20261125-section-ticks-1';
 import {experienceCategoryGroups,experienceCategories,experienceLabel,experienceSafetyNote,experienceVisual} from './experience-categories.js?v=20261123-pastels-1';
-import { setupPublishing,publicationProblem } from './listing-publish.js?v=20261125-save-visibility-1';
+import { setupPublishing,publicationProblem } from './listing-publish.js?v=20261125-save-visibility-2';
 import {districtsByState,statesAndUTs} from './india-districts.js?v=20261015-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { getSathivoClient } from './supabase-client.js?v=20261025-polish-1';
@@ -288,8 +288,8 @@ form.addEventListener('submit',async event=>{
   let privateSaved=false;
   try {
     const fresh=await client.auth.getUser();if(fresh.error||fresh.data.user?.id!==user.id)throw Error('Your session ended. Sign in again before saving.');
-    await publishing.prepareSave();
     const file=companion?$('photo').files[0]:null;let preparedPhoto=null;
+    await publishing.prepareSave({photoChanged:!!file||savedAvatarPath!==(companion?avatarPath:null)});
     if(file){preparedPhoto=await photoBlob(file);const path=user.id+'/avatar.webp';const upload=await client.storage.from('profile-photos').upload(path,preparedPhoto.blob,{upsert:true,contentType:preparedPhoto.type});if(upload.error)throw Error('Photo upload failed. Check your connection and try again.');avatarPath=path;}
     row.avatar_path=companion?avatarPath:null;
     const {data,error}=await client.from('member_profiles').upsert(row,{onConflict:'user_id'}).select('*').single();
@@ -313,6 +313,7 @@ form.addEventListener('submit',async event=>{
     hadSavedProfile=true;
   }catch(error){
     await publishing.recover();
+    if(error.message?.includes('Visibility changed in another session'))showProfileTab('privacy',{record:true});
     if(privateSaved)hadSavedProfile=true;
     message((privateSaved?'Profile details saved, but visibility update failed. ':'')+(error.message||'Could not save your profile. Please try again.'),true);
     updateCompleteness();
