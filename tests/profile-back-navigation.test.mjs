@@ -24,7 +24,9 @@ test('legacy same-document Back exits to Account, and header back uses the accou
  const end=js.indexOf('// Preserve the current view',start);
  assert.ok(start>=0&&end>start);
  let handler,destination;
- vm.runInNewContext(js.slice(start,end),{window:{addEventListener(name,fn){assert.equal(name,'popstate');handler=fn;}},profileScroll:{cancel(){}},location:{replace(url){destination=url;}}});
+ vm.runInNewContext(js.slice(start,end),{window:{addEventListener(name,fn){assert.equal(name,'popstate');handler=fn;}},profileTabs:new Set(['personal','companion','privacy']),profileScroll:{cancel(){}},location:{replace(url){destination=url;}}});
+ handler({state:null});
+ assert.equal(destination,undefined);
  handler({state:{sathivoProfileTab:'personal'}});
  assert.equal(destination,'account.html#account');
  assert.match(html,/class="profile-account-back" href="account\.html#account"/);

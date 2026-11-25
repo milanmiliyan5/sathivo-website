@@ -85,7 +85,8 @@ document.querySelectorAll('[data-profile-tab]').forEach(button=>{
 $('profile-choose-companion').addEventListener('click',()=>revealProfileControl($('profile_kind')));
 // Older releases created same-document history entries for each tab.
 // If Back reaches one of those entries, leave the editor rather than reopening a tab.
-window.addEventListener('popstate',()=>{
+window.addEventListener('popstate',event=>{
+ if(!profileTabs.has(event.state?.sathivoProfileTab))return;
  profileScroll.cancel();
  location.replace('account.html#account');
 });
