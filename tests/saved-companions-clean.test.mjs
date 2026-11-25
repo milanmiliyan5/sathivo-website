@@ -14,3 +14,5 @@ test('Saved Companions uses a separate compact renderer and existing private fav
  assert.match(c,/body.saved-companions-view #results\{display:flex/);
  assert.match(j,/await loadFavorites\(\{strict:true\}\)/);
 });
+
+test('hidden Explore filters cannot restrict the saved profile view',async()=>{const j=await read('js/companions-page.js');assert.match(j,/const locationIds=savedView\?null:selectedLocationIds\(\)/);for(const key of ['p_city','p_gender','p_category','p_mode'])assert.ok(j.includes(key+':savedView?null:'));});

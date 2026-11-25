@@ -9,7 +9,7 @@ test('public directory and detail render Active Member only when public API conf
  assert.match(script,/is_active_member:recognized\.has\(row\.public_id\)/);
  assert.match(script,/if\(row\.is_active_member!==true\)return null/);
  assert.match(script,/heading\.append\(document\.createTextNode\(' '\),activity\)/);
- assert.ok(script.includes('const all=data||[],rows=await withCompletedCounts(all.slice(0,24));'));
+ assert.ok(script.includes('const all=data||[],rows=savedView?all.slice(0,24):await withCompletedCounts(all.slice(0,24));'));
  assert.ok(script.includes('const [current]=await withCompletedCounts([r]);'));
  assert.match(script,/Not identity or safety verification/);
  assert.doesNotMatch(script,/\b(?:Gold|Silver|Bronze)\b.*badge/);

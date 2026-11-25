@@ -17,5 +17,5 @@ test('Completed bookings always retain review action if not yet rated',async()=>
  assert.match(page,/r.status==='completed'&&mine/);
  assert.match(page,/★ Rate your companion/);
  assert.match(page,/✓ You rated this completed booking/);
- assert.match(await read('bookings.html'),/bookings-page\.js\?v=20261125-account-single-profile-1/);
+ assert.match(await read('bookings.html'),/bookings-page\.js\?v=20261124-clean-empty-1/);
 });

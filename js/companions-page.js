@@ -303,19 +303,19 @@ async function list({fromPagination=false}={}){
  const savedIds=savedOnly?[...favoriteIds]:null;
  if(savedView)$('saved-count').textContent=savedIds.length+' saved';
  if(savedOnly&&!savedIds.length){$('results').replaceChildren();showDirectoryEmpty('saved');$('previous').disabled=$('next').disabled=true;$('page-label').textContent='';return}
- if(!locationsLoaded&&($('state').value||$('district').value)){
+ if(!savedView&&!locationsLoaded&&($('state').value||$('district').value)){
   $('results').replaceChildren();$('status').textContent='Location filters are temporarily unavailable. Please try again.';$('retry').hidden=false;$('page-label').textContent='';return;
  }
- const locationIds=selectedLocationIds();
+ const locationIds=savedView?null:selectedLocationIds();
  if(locationIds!==null&&!locationIds.length){$('results').replaceChildren();showDirectoryEmpty(savedOnly?'savedFiltered':'search');$('previous').disabled=$('next').disabled=true;$('page-label').textContent='';return;}
  try{
   const sort=savedView?'newest':($('sort').value||'discover'),discover=sort==='discover';
   const filters={
    p_location_ids:locationIds?.length?locationIds:null,
-   p_city:selectedCity()||null,
-   p_gender:$('gender-filter').value||null,
-   p_category:$('category').value||null,
-   p_mode:$('mode').value||null,
+   p_city:savedView?null:(selectedCity()||null),
+   p_gender:savedView?null:($('gender-filter').value||null),
+   p_category:savedView?null:($('category').value||null),
+   p_mode:savedView?null:($('mode').value||null),
    p_public_ids:savedIds
   };
   const filterKey=JSON.stringify([sort,filters]);

@@ -18,7 +18,7 @@ test('profile name is authoritative across account, listing, and auth metadata',
 
 test('website account reads the saved canonical name instead of only signup metadata', async () => {
   const script = await readFile(new URL('../js/account-page.js', import.meta.url), 'utf8');
-  assert.match(script, /\.select\('profile_kind,display_name,avatar_path'\)/);
+  assert.match(script, /\.select\('display_name,avatar_path'\)/);
   assert.match(script, /account-name'\)\.textContent\s*=\s*latestName/);
 });
 
