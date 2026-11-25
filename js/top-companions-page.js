@@ -2,7 +2,7 @@ import {getSathivoClient,getSathivoPublicClient} from './supabase-client.js?v=20
 import {avatarAsset} from './avatar-utils.js?v=20261121-avatars-1';
 const $=id=>document.getElementById(id);
 const tabs=[...document.querySelectorAll('[data-category]')];
-const list=$('tc-list'),status=$('tc-status'),retry=$('tc-retry'),updated=$('tc-updated');
+const list=$('tc-list'),status=$('tc-status'),retry=$('tc-retry');
 let client,category='active',seq=0;
 const node=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n};
 function makeRow(row,index,kind){
@@ -22,7 +22,6 @@ async function load(kind=category){
  category=kind;const request=++seq;
  tabs.forEach(tab=>tab.setAttribute('aria-pressed',String(tab.dataset.category===kind)));
  status.textContent='Loading companions…';retry.hidden=true;list.replaceChildren();list.setAttribute('aria-busy','true');
- updated.textContent='Rankings update daily at midnight IST.';
  try{
   if(!client)throw Error('Connection unavailable');
   const {data,error}=await client.rpc('top_companions_rankings',{p_category:kind});
@@ -30,7 +29,6 @@ async function load(kind=category){
   const rows=Array.isArray(data)?data.slice(0,20):[];
   list.replaceChildren(...rows.map((row,i)=>makeRow(row,i,kind)));
   status.textContent=rows.length?'':kind==='rated'?'No rated companions yet.':kind==='booked'?'No completed bookings yet.':'No active companions yet.';
-  if(rows[0]?.calculated_at){const date=new Date(rows[0].calculated_at);if(!Number.isNaN(date.getTime()))updated.textContent='Updated '+new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeZone:'Asia/Kolkata'}).format(date)+' · Daily at midnight IST';}
  }catch{if(request===seq){status.textContent='Could not load rankings. Please try again.';retry.hidden=false;}}
  finally{if(request===seq)list.setAttribute('aria-busy','false');}
 }

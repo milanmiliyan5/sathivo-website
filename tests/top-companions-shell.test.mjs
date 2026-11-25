@@ -9,6 +9,9 @@ test('Top Companions preserves Explore controls and uses a daily real-data leade
  assert.match(page,/name="robots" content="noindex,follow"/);
  assert.match(page,/Back to Explore/);
  for(const label of ['Most Active','Most Booked','Top Rated'])assert.ok(page.includes(label));
+ assert.doesNotMatch(page,/tc-intro|tc-updated|Top 20 Companions|Find company for your favourite activities|midnight IST/);
+ assert.doesNotMatch(js,/tc-updated|updated\.textContent/);
+ assert.ok(page.indexOf('class="tc-tabs"')<page.indexOf('id="tc-list"'));
  assert.match(js,/rpc\('top_companions_rankings'/);
  assert.match(js,/slice\(0,20\)/);
  assert.match(js,/createSignedUrl\(row.photo_path,60\)/);
