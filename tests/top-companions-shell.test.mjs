@@ -12,6 +12,9 @@ test('Top Companions preserves Explore controls and uses a daily real-data leade
  assert.doesNotMatch(page,/tc-intro|tc-updated|Top 20 Companions|Find company for your favourite activities|midnight IST/);
  assert.doesNotMatch(js,/tc-updated|updated\.textContent/);
  assert.ok(page.indexOf('class="tc-tabs"')<page.indexOf('id="tc-list"'));
+ assert.match(page,/<div class="tc-tabs" role="group" aria-label="Ranking categories">/);
+ assert.doesNotMatch(page,/<nav class="tc-tabs"/);
+ assert.match(css,/\.tc-tabs\{position:static;inset:auto;box-sizing:border-box;width:100%;display:grid/);
  assert.match(js,/rpc\('top_companions_rankings'/);
  assert.match(js,/slice\(0,20\)/);
  assert.match(js,/createSignedUrl\(row.photo_path,60\)/);

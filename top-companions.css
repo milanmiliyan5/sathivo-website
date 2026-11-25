@@ -1,5 +1,5 @@
 .tc-main{max-width:620px;width:calc(100% - 28px);margin:0 auto;padding:10px 0 36px}
-.tc-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:4px;margin:0 0 10px;background:#F4E7EF;border:1px solid #E6D2DC;border-radius:12px}
+.tc-tabs{position:static;inset:auto;box-sizing:border-box;width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:5px;padding:4px;margin:0 0 10px;align-items:stretch;box-shadow:none;background:#F4E7EF;border:1px solid #E6D2DC;border-radius:12px}
 .tc-tabs button{min-height:40px;border:0;border-radius:8px;background:transparent;color:#6B2146;font:inherit;font-size:.77rem;font-weight:650;padding:5px 3px;cursor:pointer}
 .tc-tabs button[aria-pressed=true]{background:#6B2146;color:white}.tc-tabs button:focus-visible,.tc-row:focus-visible,.tc-retry:focus-visible{outline:2px solid #6B2146;outline-offset:2px}
 .tc-status{text-align:center;color:#75636F;font-size:.85rem;margin:20px 0}.tc-status:empty{display:none}
