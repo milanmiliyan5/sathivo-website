@@ -1,11 +1,11 @@
 import {profileSectionCompletion} from './profile-section-completion.js?v=20261125-section-ticks-1';
 import {experienceCategoryGroups,experienceCategories,experienceLabel,experienceSafetyNote,experienceVisual} from './experience-categories.js?v=20261123-pastels-1';
-import { setupPublishing,syncPublishedCardPhoto } from './listing-publish.js?v=20261124-privacy-switch-1';
+import { setupPublishing,publicationProblem } from './listing-publish.js?v=20261125-save-visibility-1';
 import {districtsByState,statesAndUTs} from './india-districts.js?v=20261015-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { getSathivoClient } from './supabase-client.js?v=20261025-polish-1';
 import { avatarOptions, avatarMarker, avatarAsset, isBuiltinAvatar } from './avatar-utils.js?v=20261121-avatars-1';
-import { compressImageFile,formatBytes } from './image-compress.js?v=20261006-1';
+import { compressImageFile } from './image-compress.js?v=20261006-1';
 const $ = id => document.getElementById(id);
 const form = $('profile-form');
 const categories = experienceCategories;
@@ -189,7 +189,8 @@ function syncModeUI(){
  $('save-profile').textContent='Save Changes';
  $('profile-customer-companion-note').hidden=companion;
  syncSummaryPhoto();
- $('profile-kind-hint').textContent=companion?'Save, then publish to appear in Explore.':'Your customer profile stays private.';
+ $('profile-kind-hint').textContent=companion?'Manage public visibility in Privacy.':'Your customer profile stays private.';
+ publishing?.syncMode();
  updateCompleteness();
 }
 function updateSectionTicks(){
@@ -202,7 +203,7 @@ function updateSectionTicks(){
  };
  const completed=profileSectionCompletion(savedSectionProfile,draft,{pendingPhoto:!!$('photo').files[0]});
  document.querySelectorAll('[data-profile-tab]').forEach(button=>{
-  const done=completed[button.dataset.profileTab]===true;
+  const done=completed[button.dataset.profileTab]===true&&(button.dataset.profileTab!=='privacy'||!publishing?.hasPendingChanges());
   button.querySelector('.profile-section-tick').toggleAttribute('hidden',!done);
   const label=button.querySelector('span').textContent;
   button.setAttribute('aria-label',label+(done?', completed':''));
@@ -243,7 +244,7 @@ function showSystemInfo(p){
  $('joined-date').textContent=joined?'Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(joined)):'';
 }
 form.addEventListener('input',()=>{dirty=true;updateCompleteness();});
-form.addEventListener('change',e=>{if(e.target.id==='profile_kind')syncModeUI();else updateCompleteness();});
+form.addEventListener('change',e=>{if(e.target.id==='profile_kind')syncModeUI();else{if(e.target.id==='gender')publishing?.syncMode();updateCompleteness();}});
 window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
 async function showPhoto(path) {
   const builtIn=avatarAsset(path);
@@ -255,49 +256,6 @@ async function showPhoto(path) {
 async function photoBlob(file) {
   return compressImageFile(file,{maxBytes:300*1024,maxDimension:900,minDimension:480,maxInputBytes:50*1024*1024});
 }
-
-function openPublishPrompt(){
-  if(!publishing||!publishing.isKnown()||!isCompanionKind())return;
-  if(dirty){message('Save your changes before publishing.',true);$('profile-status').focus();return;}
-  const dialog=$('publish-prompt'), alreadyPublic=publishing.isPublished();
-  $('publish-prompt-title').textContent=alreadyPublic?'Publish your latest changes?':'Ready to go public?';
-  $('publish-prompt-copy').textContent=alreadyPublic
-    ? 'Your existing companion listing is public. Publish these saved changes to update what visitors see.'
-    : 'Publish your companion profile so people can discover you on Sathivo and send booking requests.';
-  $('publish-prompt-confirm').textContent=alreadyPublic?'Yes, Update My Public Profile ↗':'Yes, Publish My Profile ↗';
-  $('publish-prompt-later').textContent=alreadyPublic?'Not Now, Keep Current Listing':'Not Now, Keep It Private';
-  $('publish-consent').checked=false;
-  $('prompt-gender-consent').checked=publishing.showGender();
-  $('publish-prompt-error').hidden=true;
-  $('publish-prompt-error').textContent='';
-  if(!dialog.open)dialog.showModal();
-}
-function initPublishPrompt(){
-  const dialog=$('publish-prompt'),confirm=$('publish-prompt-confirm');
-  $('update-public-listing').addEventListener('click',openPublishPrompt);
-  const dismiss=()=>{if(!confirm.disabled)dialog.close();};
-  $('publish-prompt-close').addEventListener('click',dismiss);
-  $('publish-prompt-later').addEventListener('click',dismiss);
-  dialog.addEventListener('cancel',event=>{if(confirm.disabled)event.preventDefault();});
-  dialog.addEventListener('close',()=>{$('publish-consent').checked=false;$('publish-prompt-error').hidden=true;});
-  confirm.addEventListener('click',async()=>{
-    const error=$('publish-prompt-error');
-    if(!$('publish-consent').checked){
-      error.textContent='Please confirm that your saved companion details and photo/avatar may be public.';
-      error.hidden=false;$('publish-consent').focus();return;
-    }
-    if(!publishing)return;
-    confirm.disabled=true;$('publish-prompt-later').disabled=true;$('publish-prompt-close').disabled=true;
-    error.hidden=true;error.textContent='';
-    try{
-      const ok=await publishing.publishSavedProfile({confirmedInPrompt:true,showGender:$('prompt-gender-consent').checked});
-      if(ok){dialog.close();message('Your companion profile is now public on Sathivo.');}
-      else{error.textContent=$('listing-status').textContent||'Could not publish. Please try again.';error.hidden=false;}
-    }catch(e){error.textContent=e.message||'Could not publish. Please try again.';error.hidden=false;}
-    finally{confirm.disabled=false;$('publish-prompt-later').disabled=false;$('publish-prompt-close').disabled=false;}
-  });
-}
-initPublishPrompt();
 
 form.addEventListener('submit',async event=>{
   event.preventDefault();if(!user||!profileLoaded||$('fields').disabled||!validateProfileForm())return;
@@ -320,42 +278,45 @@ form.addEventListener('submit',async event=>{
   resolveLocationId();row.location_id=Number($('location_id').value);row.categories=companion?values.getAll('categories'):[];
   row.adult_confirmed=values.get('adult_confirmed')==='on';row.boundaries_accepted=values.get('boundaries_accepted')==='on';
   if(!locations.some(r=>r.id===row.location_id&&r.state===$('state').value&&r.district===$('district').value)){message('Choose your state and district again, then enter your city or town.',true);revealProfileControl($('state'));return;}
-  $('fields').disabled=true;message('Saving your profile…');
+  if(!publishing?.isKnown()){message('Could not check profile visibility. Refresh before saving.',true);return;}
+  const selection=publishing.selection();
+  if(companion&&selection.published){
+   const problem=publicationProblem({...row,avatar_path:avatarPath||($('photo').files[0]?'pending-upload':null)});
+   if(problem){message(problem,true);showProfileTab(!row.adult_confirmed||!row.boundaries_accepted?'privacy':!row.categories.length?'companion':'personal',{record:true});return;}
+  }
+  $('fields').disabled=true;publishing.setBusy(true);message('Saving your profile…');
+  let privateSaved=false;
   try {
     const fresh=await client.auth.getUser();if(fresh.error||fresh.data.user?.id!==user.id)throw Error('Your session ended. Sign in again before saving.');
+    await publishing.prepareSave();
     const file=companion?$('photo').files[0]:null;let preparedPhoto=null;
     if(file){preparedPhoto=await photoBlob(file);const path=user.id+'/avatar.webp';const upload=await client.storage.from('profile-photos').upload(path,preparedPhoto.blob,{upsert:true,contentType:preparedPhoto.type});if(upload.error)throw Error('Photo upload failed. Check your connection and try again.');avatarPath=path;}
     row.avatar_path=companion?avatarPath:null;
-    const {data,error}=await client.from('member_profiles').upsert(row,{onConflict:'user_id'}).select('user_id,safety_id,joined_at,email_verified_at').single();
+    const {data,error}=await client.from('member_profiles').upsert(row,{onConflict:'user_id'}).select('*').single();
     if(error||!data)throw Error('Profile could not be saved. Check your connection and try again.');
      savedSectionProfile={...row};
-    if(savedAvatarPath&&!isBuiltinAvatar(savedAvatarPath)&&savedAvatarPath!==avatarPath){
+    privateSaved=true;
+    const photoChanged=!!preparedPhoto||savedAvatarPath!==row.avatar_path;
+    if(savedAvatarPath&&!isBuiltinAvatar(savedAvatarPath)&&savedAvatarPath!==row.avatar_path){
       try{await client.storage.from('profile-photos').remove([savedAvatarPath])}catch{}
     }
-    // Updating the account photo must update an ALREADY published card too.
-    // The DB trigger handles display_name; all other public edits still
-    // require the explicit Publish action.
-    let publicCardNote='',publicSyncFailed=false;
-    try{
-      const result=await syncPublishedCardPhoto(client,user.id,row.avatar_path,
-        !!preparedPhoto||savedAvatarPath!==row.avatar_path,preparedPhoto?.blob||null);
-      if(result.updated)publicCardNote=' Your public companion card photo is updated.';
-      if(result.hidden)publicCardNote=' Your public listing was hidden because it has no photo or is now a customer profile.';
-    }catch(error){
-      publicSyncFailed=true;
-      publicCardNote=' Profile saved, but the public card could not be updated. Please retry saving or use Update My Public Profile.';
-    }
-    savedAvatarPath=companion?avatarPath:null;dirty=false;markSafetySaved(row);$('photo').value='';if(localPreviewUrl){URL.revokeObjectURL(localPreviewUrl);localPreviewUrl=null;}showSystemInfo(data);
-    if(preparedPhoto)message('Your profile is saved. Photo compressed '+formatBytes(preparedPhoto.originalBytes)+' → '+formatBytes(preparedPhoto.outputBytes)+'.'+publicCardNote,publicSyncFailed);
-    else message((companion?'Your companion profile is saved. Review it, then publish other changes when you are ready.':(hadSavedProfile?'Your profile changes are saved.':'Your customer profile is saved. Taking you to Find a companion…'))+publicCardNote,publicSyncFailed);
+    savedAvatarPath=row.avatar_path;avatarPath=row.avatar_path;markSafetySaved(row);$('photo').value='';
+    if(localPreviewUrl){URL.revokeObjectURL(localPreviewUrl);localPreviewUrl=null;}
+    showSystemInfo(data);
     if(companion&&avatarPath)await showPhoto(avatarPath);else{$('avatar').hidden=true;syncAvatarChoice();}
     updateCompleteness();
-    if(publishing)await publishing.refreshStatus();
-    if(companion){showProfileTab('privacy',{record:true});if(avatarPath&&!publicSyncFailed)openPublishPrompt();}
-     else if(!hadSavedProfile&&!publicSyncFailed)window.setTimeout(()=>location.assign('companions.html'),450);
+    const result=await publishing.saveVisibility(data,{photoChanged,uploadedBlob:preparedPhoto?.blob||null});
+    dirty=false;updateCompleteness();
+    message(result.published?(result.active?'Profile saved and published.':'Profile saved. Public listing is subject to moderation.'):'Profile saved and kept private.');
+    if(companion)showProfileTab('privacy',{record:true});
+    else if(!hadSavedProfile)window.setTimeout(()=>location.assign('companions.html'),450);
     hadSavedProfile=true;
-  }catch(error){message(error.message||'Could not save your profile. Please try again.',true);}
-  finally{$('fields').disabled=false;if(!$('publish-prompt').open)$('profile-status').focus();}
+  }catch(error){
+    await publishing.recover();
+    if(privateSaved)hadSavedProfile=true;
+    message((privateSaved?'Profile details saved, but visibility update failed. ':'')+(error.message||'Could not save your profile. Please try again.'),true);
+    updateCompleteness();
+  }finally{$('fields').disabled=false;publishing.setBusy(false);$('profile-status').focus();}
 });
 async function init(){
   try{
@@ -407,7 +368,8 @@ async function init(){
       });
     }
     if(isCompanionKind()&&avatarPath)await showPhoto(avatarPath);updateCompleteness();
-    publishing=await setupPublishing({client,user,isDirty:()=>dirty,onRequestPublish:openPublishPrompt});
+    publishing=await setupPublishing({client,user,isCompanion:isCompanionKind,canShowGender:()=>['male','female','other'].includes($('gender').value),onDraftChange:()=>{dirty=true;updateSectionTicks();}});
+    publishing.syncMode();updateSectionTicks();
     $('fields').disabled=false;profileLoaded=true;
     $('publication').hidden=!isCompanionKind();
     client.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){dirty=false;location.replace('account.html');}});

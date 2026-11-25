@@ -270,3 +270,6 @@ body.profile-clean .privacy-more-card :is(a,summary):focus-visible,body.profile-
 body.profile-clean.sathivo-2d #publication #update-public-listing{width:100%;min-height:50px;display:flex;align-items:center;gap:10px;padding:9px 0;margin:0;border:0;border-radius:0;background:transparent;color:#43283A;font:inherit;text-align:left;text-decoration:none;box-shadow:none}
 body.profile-clean .privacy-safety .safety-confirmed-row>.visibility-icon{color:#723e59}
 body.profile-clean .privacy-more-card .privacy-chevron svg{width:18px;height:18px}
+
+body.profile-clean #publication .visibility-consent-note{font-size:.72rem;line-height:1.45;color:var(--muted);margin:9px 0 2px}
+body.profile-clean #publication .visibility-actions a{border-bottom:0}

@@ -91,7 +91,7 @@ test('Profile tabs keep one form and preserve validation, publish and browser hi
  assert.match(js,/window\.addEventListener\('popstate'/);
  assert.match(js,/beforeunload/);
  assert.match(js,/from\('member_profiles'\)\.upsert\(row/);
- assert.match(js,/publishing\.publishSavedProfile/);
+ assert.match(js,/publishing\.saveVisibility/);
  assert.doesNotMatch(html,/nearby_email_opt_in/);
  assert.doesNotMatch(js,/nearby_alert_preferences/);
  assert.match(css,/grid-template-columns:repeat\(3,minmax\(0,1fr\)\)/);
