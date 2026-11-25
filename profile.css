@@ -265,3 +265,8 @@ body.profile-clean .privacy-info-body p{margin:6px 0 9px}
 body.profile-clean .privacy-info-body h3{font-size:.8rem;color:#43283A;margin:10px 0 5px}
 body.profile-clean .privacy-info-body small{font-size:inherit}
 body.profile-clean .privacy-more-card :is(a,summary):focus-visible,body.profile-clean #publication .visibility-actions :is(a,button):focus-visible{outline:2px solid #A35D80;outline-offset:2px;border-radius:6px}
+
+/* Override the previous inline public-update link styling. */
+body.profile-clean.sathivo-2d #publication #update-public-listing{width:100%;min-height:50px;display:flex;align-items:center;gap:10px;padding:9px 0;margin:0;border:0;border-radius:0;background:transparent;color:#43283A;font:inherit;text-align:left;text-decoration:none;box-shadow:none}
+body.profile-clean .privacy-safety .safety-confirmed-row>.visibility-icon{color:#723e59}
+body.profile-clean .privacy-more-card .privacy-chevron svg{width:18px;height:18px}
