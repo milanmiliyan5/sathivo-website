@@ -35,7 +35,8 @@ function showProfileTab(name,{record=false,focus=false,resetScroll=false}={}){
  });
  document.querySelectorAll('[data-profile-panel]').forEach(panel=>{panel.hidden=panel.dataset.profilePanel!==name;});
  document.querySelectorAll('[data-profile-extra]').forEach(panel=>{panel.hidden=panel.dataset.profileExtra!==name;});
- if(record&&changed)history.pushState({...history.state,sathivoProfileTab:name},'',location.href);
+ // Profile tabs are views of one page, not navigation destinations.
+ if(record&&changed)history.replaceState({...history.state,sathivoProfileTab:name},'',location.href);
  if(focus)$('profile-tab-'+name)?.focus({preventScroll:true});
  if(resetScroll)profileScroll.reset();
 }
@@ -82,11 +83,13 @@ document.querySelectorAll('[data-profile-tab]').forEach(button=>{
  });
 });
 $('profile-choose-companion').addEventListener('click',()=>revealProfileControl($('profile_kind')));
-window.addEventListener('popstate',event=>{
- const tab=event.state?.sathivoProfileTab;
- if(profileTabs.has(tab))showProfileTab(tab,{resetScroll:true});
+// Older releases created same-document history entries for each tab.
+// If Back reaches one of those entries, leave the editor rather than reopening a tab.
+window.addEventListener('popstate',()=>{
+ profileScroll.cancel();
+ location.replace('account.html#account');
 });
-// Tab history must not restore the previous section's vertical position.
+// Preserve the current view on refresh without adding browser Back entries.
 if('scrollRestoration' in history)history.scrollRestoration='manual';
 const initialProfileTab=profileTabs.has(history.state?.sathivoProfileTab)?history.state.sathivoProfileTab:(location.hash==='#your-kind-of-company'?'companion':'personal');
 history.replaceState({...history.state,sathivoProfileTab:initialProfileTab},'',location.href);

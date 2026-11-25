@@ -87,7 +87,8 @@ test('Profile tabs keep one form and preserve validation, publish and browser hi
  assert.match(html,/data-profile-extra="privacy"/);
  assert.match(html,/id="profile-form" novalidate/);
  assert.match(js,/revealProfileControl\(invalid\);invalid\.reportValidity\(\)/);
- assert.match(js,/history\.pushState/);
+ assert.doesNotMatch(js,/history\.pushState/);
+ assert.match(js,/history\.replaceState\(\{\.\.\.history\.state,sathivoProfileTab:name\}/);
  assert.match(js,/window\.addEventListener\('popstate'/);
  assert.match(js,/beforeunload/);
  assert.match(js,/from\('member_profiles'\)\.upsert\(row/);
