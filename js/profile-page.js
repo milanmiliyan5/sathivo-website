@@ -1,3 +1,4 @@
+import {profileSectionCompletion} from './profile-section-completion.js?v=20261125-section-ticks-1';
 import {experienceCategoryGroups,experienceCategories,experienceLabel,experienceSafetyNote,experienceVisual} from './experience-categories.js?v=20261123-pastels-1';
 import { setupPublishing,syncPublishedCardPhoto } from './listing-publish.js?v=20261124-privacy-switch-1';
 import {districtsByState,statesAndUTs} from './india-districts.js?v=20261015-1';
@@ -11,6 +12,7 @@ const categories = experienceCategories;
 const el=(tag,text,cssClass)=>{const element=document.createElement(tag);if(text!==undefined)element.textContent=text;if(cssClass)element.className=cssClass;return element;};
 let client, user, locations = [], avatarPath = null, savedAvatarPath = null, dirty = false, publishing = null;
 let profileTab='personal',profileLoaded=false,hadSavedProfile=false;
+let savedSectionProfile=null;
 function markSafetySaved(p){
  for(const [name,prefix] of [['adult_confirmed','adult'],['boundaries_accepted','boundaries']]){
   const confirmed=p?.[name]===true&&form.elements[name].checked;
@@ -190,6 +192,22 @@ function syncModeUI(){
  $('profile-kind-hint').textContent=companion?'Save, then publish to appear in Explore.':'Your customer profile stays private.';
  updateCompleteness();
 }
+function updateSectionTicks(){
+ const draft={
+  profile_kind:$('profile_kind').value,display_name:$('display_name').value,gender:$('gender').value,
+  location_id:$('location_id').value,city_name:$('city_name').value,languages:$('languages').value,interests:$('interests').value,
+  avatar_path:avatarPath,bio:$('bio').value,meeting_mode:$('meeting_mode').value,availability:$('availability').value,hourly_rate:$('hourly_rate').value,
+  categories:[...form.querySelectorAll('[name=categories]:checked')].map(input=>input.value),
+  adult_confirmed:form.elements.adult_confirmed.checked,boundaries_accepted:form.elements.boundaries_accepted.checked
+ };
+ const completed=profileSectionCompletion(savedSectionProfile,draft,{pendingPhoto:!!$('photo').files[0]});
+ document.querySelectorAll('[data-profile-tab]').forEach(button=>{
+  const done=completed[button.dataset.profileTab]===true;
+  button.querySelector('.profile-section-tick').toggleAttribute('hidden',!done);
+  const label=button.querySelector('span').textContent;
+  button.setAttribute('aria-label',label+(done?', completed':''));
+ });
+}
 function updateCompleteness(){
  const companion=isCompanionKind();
  const values=[
@@ -214,6 +232,7 @@ function updateCompleteness(){
  const pct=Math.round(values.filter(Boolean).length/values.length*100);
  $('profile-percent').textContent=pct+'%';$('profile-progress-bar').style.width=pct+'%';
  $('profile-progress-copy').textContent=pct===100?'':'Complete the remaining profile details.';
+ updateSectionTicks();
 }
 function showSystemInfo(p){
  $('safety-id').textContent=p?.safety_id||'Assigned after first save';
@@ -309,6 +328,7 @@ form.addEventListener('submit',async event=>{
     row.avatar_path=companion?avatarPath:null;
     const {data,error}=await client.from('member_profiles').upsert(row,{onConflict:'user_id'}).select('user_id,safety_id,joined_at,email_verified_at').single();
     if(error||!data)throw Error('Profile could not be saved. Check your connection and try again.');
+     savedSectionProfile={...row};
     if(savedAvatarPath&&!isBuiltinAvatar(savedAvatarPath)&&savedAvatarPath!==avatarPath){
       try{await client.storage.from('profile-photos').remove([savedAvatarPath])}catch{}
     }
@@ -350,6 +370,7 @@ async function init(){
     locations=loc.data;states();districts();
     const p=profile.data;
     hadSavedProfile=!!p;
+    savedSectionProfile=p?{...p}:null;
     if(p){
       for(const name of ['display_name','profile_kind','gender','bio','languages','interests','meeting_mode','availability'])$(name).value=p[name]||'';
       $('hourly_rate').value=p.hourly_rate||'';
@@ -357,9 +378,11 @@ async function init(){
       if(loc){
         $('state').value=loc.state;districts();$('district').value=loc.district;
         const savedCity=p.city_name||((loc.city&&loc.city!=='District-wide')?loc.city:'');
+        savedSectionProfile.city_name=savedCity;
         $('city_name').value=savedCity;
         resolveLocationId();
         if(!$('location_id').value)$('location_id').value=String(loc.id);
+        savedSectionProfile.location_id=$('location_id').value;
       }
       form.querySelectorAll('[name=categories]').forEach(input=>input.checked=p.categories.includes(input.value));updateCategoryGroupCounts();
       form.elements.adult_confirmed.checked=p.adult_confirmed;form.elements.boundaries_accepted.checked=p.boundaries_accepted;
