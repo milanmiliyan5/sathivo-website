@@ -22,7 +22,7 @@ function runSplash({external=false,pending=false,path='/',seen=true,handoff=null
  if(handoff)values.set('sathivo.launch-splash.handoff.v1',JSON.stringify(handoff));
  const screens=[],timers=[],styles={};const root={classList:{contains:x=>x==='sathivo-entry-launch'?external:x==='sathivo-entry-pending'?pending:false}};
  const win={matchMedia:()=>({matches:false}),addEventListener(){}};
- const screen={style:{setProperty:(k,v)=>styles[k]=v},addEventListener(){},remove(){}};
+ const screen={style:{setProperty:(k,v)=>styles[k]=v},setAttribute(){},addEventListener(){},remove(){}};
  vm.runInNewContext(source,{window:win,document:{documentElement:root,body:{prepend:n=>screens.push(n)},createElement:()=>screen},location:{pathname:path},sessionStorage:{getItem:k=>values.get(k),setItem:(k,v)=>values.set(k,v),removeItem:k=>values.delete(k)},Date:{now:()=>now},MutationObserver:class{observe(){} disconnect(){}},setTimeout:(fn,ms)=>{timers.push(ms);return 1},clearTimeout(){}});
  return {screens,timers,styles,values,win};
 }

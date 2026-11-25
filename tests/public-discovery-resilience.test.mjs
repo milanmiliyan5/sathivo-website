@@ -41,7 +41,7 @@ test('public directory can initialize filters and profiles without a valid login
  assert.match(source,/publicClient\.rpc\('browse_public_city_suggestions'/);
  assert.match(source,/publicClient\.storage\.from\('listing-photos'\)/);
  assert.match(source,/publicClient\.from\('companion_listings'\)/);
- assert.match(source,/void client\.auth\.getUser\(\)\.then/);
+ assert.match(source,/function refreshAccountInBackground\(\)[\s\S]*?void \(async\(\)=>\{[\s\S]*?await client\.auth\.getUser\(\)/);
  assert.ok(source.indexOf('setupDirectory();')<source.indexOf('publicClient=await getSathivoPublicClient()'));
  assert.match(source,/\$\('retry'\)\.onclick=\(\)=>void init\(\)/);
  assert.match(source,/if\(!locationsLoaded&&\(\$\('state'\)\.value/);

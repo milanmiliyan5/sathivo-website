@@ -167,7 +167,7 @@ test('favorites, sharing, discovery sorting and cancellation reasons are wired',
   const bookings=await read('js/bookings-page.js');
   const requests=await read('js/requests-page.js');
   assert.match(bookings,/cancel_reason/);
-  assert.match(requests,/Cancel booking/);
+  assert.match(requests,/Cancel Request/);
 
   const migration=await read('supabase/migrations/20261006182143_favorites_discovery_and_cancel_reasons.sql');
   assert.match(migration,/create table if not exists public\.companion_favorites/);

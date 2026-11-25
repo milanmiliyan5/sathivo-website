@@ -26,7 +26,7 @@ test('Requests is a vertically stacked five-card hub with a same-page Back view'
   assert.ok(html.includes('class="request-hub-name">'+labels[i]+'</span>'));
  }
  assert.match(html,/requests-compact\.css\?v=20261125-icons-1/);
- assert.match(html,/requests-page\.js\?v=20261124-five-sections-1/);
+ assert.match(html,/requests-page\.js\?v=20261125-no-booking-email-1/);
  assert.equal((html.match(/class="request-hub-card" data-view=/g)||[]).length,5);
  assert.match(html,/request-hub-group-title">Your requests/);
  assert.match(html,/request-hub-group-divider">Booking status/);
