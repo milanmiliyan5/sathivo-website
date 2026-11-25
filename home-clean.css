@@ -1,0 +1,99 @@
+/* Home-only clean layout; existing entry, navigation and policy flows unchanged. */
+body.home-clean{background:#fffaf8;--home-line:#eadde2;--home-ink:#382630;--home-rose:#94375c}
+.home-clean .home-quiet-announcement{text-align:center;background:#f8eaf0;color:#70425a;font-size:.75rem;font-weight:650;padding:7px 12px;line-height:1.4}
+.home-clean .site-header{background:#fffdfa;border-bottom:1px solid var(--home-line);box-shadow:none}
+.home-clean .nav-wrap{height:72px}
+.home-clean .brand-mark{filter:none}
+.home-clean #navigation .nav-more-menu{box-shadow:0 8px 24px #48243713}
+.home-clean .hero{margin-block:18px 22px;padding:clamp(22px,4vw,50px);gap:clamp(22px,4vw,56px);border:1px solid var(--home-line);border-radius:24px;box-shadow:none;background:#fff6f4;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr)}
+.home-clean .hero::before,.home-clean .hero::after{display:none}
+.home-clean .hero-copy{padding:0;min-width:0}
+.home-clean .hero .eyebrow{padding:0;border:0;box-shadow:none;background:none;margin-bottom:12px;font-size:.68rem;letter-spacing:.1em}
+.home-clean .hero h1{font-size:clamp(2.5rem,5vw,4.4rem);line-height:1.06;letter-spacing:-.045em;max-width:650px}
+.home-clean .hero .title-heart,.home-clean .hero .floating-heart,.home-clean .hero .moment-tag,.home-clean .hero .photo-note{display:none}
+.home-clean .hero-description{margin-top:16px;font-size:1rem;line-height:1.6}
+.home-clean .hero-actions{margin-top:20px;gap:10px}
+.home-clean .button-primary,.home-clean .button-outline{border-width:1px;border-radius:11px;box-shadow:none;min-height:44px;gap:10px}
+.home-clean .button-primary{background:var(--home-rose);border-color:var(--home-rose)}
+.home-clean .button-outline{background:#fff;border-color:#d9b9c9;color:#75304f}
+.home-clean .button-primary:hover,.home-clean .button-outline:hover{box-shadow:none;transform:translateY(-1px)}
+.home-clean .button:active{box-shadow:none!important;transform:scale(.98)!important}
+.home-clean .hero-assurance{margin-top:16px;gap:6px}
+.home-clean .hero-assurance>span{background:none;padding:4px 7px;border:0}
+.home-clean .hero-visual{padding:0;min-width:0;max-width:none}
+.home-clean .hero-photo-wrap{border:0;box-shadow:none;transform:none;border-radius:18px;aspect-ratio:1.1;max-height:410px}
+.home-clean .hero-photo{transform:none;object-position:center 32%}
+.home-clean .photo-caption{left:20px;bottom:20px}
+.home-clean .photo-caption p{font-size:clamp(1.35rem,2.5vw,2rem);margin-top:5px}
+.home-clean #free-join-promo{grid-template-columns:minmax(0,1fr) minmax(180px,.65fr);grid-template-areas:"body benefits" "note note";gap:10px 24px;padding:18px 22px;margin-block:0 14px;border:1px solid var(--home-line);border-radius:17px;background:#fff;box-shadow:none;width:min(1200px,calc(100% - 40px))}
+.home-clean .free-join-promo-stamp{display:none}
+.home-clean .free-join-promo-body h2{font-size:clamp(1.35rem,3vw,1.85rem)}
+.home-clean .free-join-promo-benefits{grid-template-columns:1fr;gap:7px}
+.home-clean .free-join-promo-disclaimer{text-align:left;padding-top:8px}
+.home-clean .section{padding-block:clamp(32px,5vw,60px)}
+.home-clean .section-heading{margin-bottom:20px;gap:12px}
+.home-clean .section-heading .eyebrow{margin-bottom:7px}
+.home-clean h2{font-size:clamp(1.85rem,3.6vw,2.8rem)}
+.home-clean .home-activity-groups{display:grid;gap:18px}
+.home-clean .home-activity-group h3{font-size:.85rem;color:#715362;margin-bottom:8px;font-weight:750}
+.home-clean .home-activity-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.home-clean .home-activity{display:flex;align-items:center;gap:10px;min-height:58px;padding:9px 11px;border:1px solid var(--home-line);border-radius:13px;background:#fff;color:var(--home-ink);font-size:.82rem;font-weight:650;line-height:1.35;min-width:0;transition:background .16s,border-color .16s}
+.home-clean .home-activity:hover{background:#fff0f6;border-color:#dcb3c8}
+.home-clean .home-activity-icon{display:grid;place-items:center;background:#f8eef3;border-radius:10px;flex:0 0 34px;width:34px;height:34px;font-size:1.12rem}
+.home-clean .home-activity-arrow{margin-left:auto;color:#98617a;flex:none}
+.home-clean .availability-note{margin-top:12px}
+.home-clean .how-section{background:#fff5f6;border-block:1px solid var(--home-line)}
+.home-clean .sathivo-how .how-flow-shell{padding:clamp(16px,3vw,30px);border:1px solid var(--home-line);background:#fff;border-radius:20px;box-shadow:none}
+.home-clean .sathivo-how .how-flow-grid{gap:10px;margin-top:20px}
+.home-clean .sathivo-how .how-flow-card{box-shadow:none;border-radius:13px;padding:16px}
+.home-clean .sathivo-how .how-flow-bottom{margin-top:16px}
+.home-clean .how-flow-experiences,.home-clean .how-flow-heart{display:none}
+.home-clean .earning-promo{margin-block:24px 0;padding:24px;border:1px solid var(--home-line);border-radius:18px;box-shadow:none;background:#fff5f7;grid-template-columns:1fr}
+.home-clean .earning-promo::after,.home-clean .earning-rate-card{display:none}
+.home-clean .earning-promo h2{font-size:clamp(1.85rem,3.6vw,2.8rem)}
+.home-clean .earning-points{display:flex;gap:6px;margin:12px 0}
+.home-clean .earning-points span{box-shadow:none;border:1px solid var(--home-line);width:auto}
+.home-clean .guide-card,.home-clean .why-grid article,.home-clean .faq-items details,.home-clean .faq-help{box-shadow:none;border-radius:13px}
+.home-clean .why-grid{gap:12px}
+.home-clean .why-section{gap:clamp(20px,4vw,48px)}
+.home-clean .safety-section{border:0;box-shadow:none;border-radius:18px;padding:clamp(22px,4vw,42px);gap:25px;background:#513047}
+.home-clean .safety-points{gap:10px}
+.home-clean .companion-note{display:none}
+.home-clean .become-section{grid-template-columns:1fr;gap:12px}
+.home-clean .companion-perks{margin:12px 0}
+.home-clean .android-coming-soon{margin-block:10px 22px;padding:24px;box-shadow:none;border:1px solid var(--home-line);border-radius:18px;grid-template-columns:1fr}
+.home-clean .android-coming-soon-art{display:none}
+.home-clean .faq-section{background:#fff5f6}
+.home-clean .faq-items details{border:1px solid var(--home-line)!important;margin-bottom:7px}
+.home-clean .faq-items summary{padding-block:13px}
+.home-clean .faq-intro{position:static}
+.home-clean .contribution-invite{box-shadow:none;margin-block:24px;border-radius:16px}
+.home-clean .site-footer{padding-block:36px 18px;background:#faf0f3;border-top:1px solid var(--home-line)}
+.home-clean .footer-main{padding-bottom:24px;gap:30px}
+.home-clean .footer-links{gap:36px}
+.home-clean .home-social-link{display:inline-flex;align-items:center;gap:6px;color:var(--home-rose);font-weight:650;font-size:.85rem;margin-top:12px}
+.home-clean.sathivo-motion-ready [data-slide]{transform:translate3d(0,10px,0);transition-duration:.32s;transition-delay:0ms}
+.home-clean.sathivo-motion-ready [data-slide].is-visible{transform:none}
+.home-clean .hero-copy.is-visible,.home-clean .hero-visual.is-visible{animation:none}
+@media(max-width:850px){.home-clean .nav-wrap{height:64px}.home-clean .nav-wrap nav{top:64px}.home-clean .home-activity-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:640px){
+ .home-clean .container{width:calc(100% - 28px)}
+ .home-clean .hero{grid-template-columns:1fr;padding:18px;gap:18px;margin-block:12px 16px;border-radius:18px}
+ .home-clean .hero h1{font-size:clamp(2.25rem,10vw,3.2rem)}
+ .home-clean .hero-description{font-size:.89rem}
+ .home-clean .hero-actions{display:grid;grid-template-columns:1fr;gap:8px}
+ .home-clean .hero-photo-wrap{aspect-ratio:1.7;max-height:220px;border-radius:13px}
+ .home-clean .photo-caption{left:15px;bottom:13px}
+ .home-clean .photo-caption>span{font-size:.56rem}
+ .home-clean #free-join-promo{width:calc(100% - 28px);grid-template-columns:1fr;grid-template-areas:"body" "benefits" "note";padding:15px;gap:10px}
+ .home-clean .home-activity-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ .home-clean .home-activity{min-height:58px;padding:8px;gap:7px;font-size:.76rem}
+ .home-clean .home-activity-icon{flex-basis:29px;width:29px;height:29px;font-size:1rem}
+ .home-clean .home-activity-arrow{display:none}
+ .home-clean .sathivo-how .how-flow-card{padding:12px}
+ .home-clean .earning-promo,.home-clean .android-coming-soon{padding:18px}
+ .home-clean .why-grid{grid-template-columns:1fr}
+ .home-clean .footer-links{gap:15px}
+ .home-clean .footer-links>div{min-width:0}
+}
+@media(prefers-reduced-motion:reduce){.home-clean.sathivo-motion-ready [data-slide]{opacity:1!important;transform:none!important;transition:none!important}.home-clean .home-activity{transition:none}}

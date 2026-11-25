@@ -525,6 +525,8 @@ function setupDirectory(){
   group.items.forEach(value=>options.append(new Option(experienceLabel(value),value)));
   $('category').append(options);
  }
+ const requestedCategory=new URLSearchParams(location.search).get('category');
+ if(requestedCategory&&experienceCategoryGroups.some(group=>group.items.includes(requestedCategory)))$('category').value=requestedCategory;
  $('filters').onsubmit=e=>{e.preventDefault();page=0;const mobile=window.matchMedia('(max-width: 640px)').matches;if(mobile&&disclosure)disclosure.open=false;void list({fromPagination:mobile});};
  $('filters').onchange=e=>{
   if(e.target.id==='state')districts();
