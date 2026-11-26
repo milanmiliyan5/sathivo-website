@@ -11,7 +11,7 @@ const el=(tag,text,className)=>{
 import {notificationDate,notificationAge} from './notification-time.js?v=20261117-1';
 const uuid='[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
 const linkPattern=new RegExp('^(?:requests\\.html\\?id=|bookings\\.html\\?id=|chat\\.html\\?booking=|companion\\.html\\?id=)'+uuid+'$','i');
-const simpleRoutes=new Set(['requests.html','bookings.html','chats.html','support.html','companions.html','profile.html','account.html']);
+const simpleRoutes=new Set(['requests.html','bookings.html','chats.html','support.html','support-chat.html','companions.html','profile.html','account.html']);
 let client,user,channel,rows=[],unreadTotal=0,filter='all',seq=0,busy=false,notificationsLoaded=false,websiteNoticesAvailable=true;
 
 function safeLink(raw){

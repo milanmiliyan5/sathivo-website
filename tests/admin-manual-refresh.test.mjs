@@ -14,7 +14,7 @@ test('Admin has one global manual data refresh button covering every section',as
    assert.match(html,new RegExp('id="'+section+'"'));
  }
  assert.match(page,/\$\('refresh-dashboard'\)\.addEventListener\('click',\(\)=>void refreshAll\(\)\)/);
- assert.match(page,/Promise\.allSettled\(\[load\(\),loadStats\(\),refreshContributions\(client\),refreshSidebarBadges\(\),founder\?\.refresh\(\),refreshDeletions\(client\)\]\)/);
+ assert.match(page,/Promise\.allSettled\(\[load\(\),loadStats\(\),refreshContributions\(client\),refreshSidebarBadges\(\),founder\?\.refresh\(\),refreshDeletions\(client\),refreshOfficialInbox\(client\)\]\)/);
  assert.match(page,/await refreshAll\(\);startPresence\(\)/);
 });
 test('Admin does not automatically fetch all records every few seconds or on section navigation',async()=>{
