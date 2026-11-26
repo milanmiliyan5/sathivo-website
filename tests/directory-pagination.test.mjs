@@ -43,5 +43,5 @@ test('both pagination buttons opt in and directory scroll targets are focusable'
  assert.match(html,/id="results" tabindex="-1"/);
  assert.match(html,/id="status" tabindex="-1"/);
  assert.match(html,/id="empty" tabindex="-1"/);
- for(const page of ['companions.html','companion.html'])assert.match(await read(page),/companions-page\.js\?v=20261125-saved-clean-2/);
+ for(const page of ['companions.html','companion.html'])assert.match(await read(page),/companions-page\.js\?v=20261126-first-card-1/);
 });

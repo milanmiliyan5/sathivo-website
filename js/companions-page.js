@@ -323,9 +323,11 @@ async function list({fromPagination=false}={}){
   if(discover&&page>0&&!discoverCursors.has(page))page=0;
   if(page===0)discoverCursors.clear();
   const cursor=discoverCursors.get(page);
+  // Feature exactly one matching female card; explicit gender/saved filters retain ordinary shuffle.
+  const featuredDiscover=discover&&!filters.p_gender&&!filters.p_public_ids;
   const {data,error}=await publicClient.rpc('browse_public_companions_v3',{
    ...filters,
-   p_sort:discover?'discover:'+discoverSeed+(cursor?':'+cursor:''):sort,
+   p_sort:discover?(featuredDiscover?'discover-first:':'discover:')+discoverSeed+(cursor?':'+cursor:''):sort,
    p_offset:discover?0:page*24,
    p_limit:25
   });
@@ -334,7 +336,11 @@ async function list({fromPagination=false}={}){
   if(seq!==request)return;
   if(discover){
    for(const key of discoverCursors.keys())if(key>page)discoverCursors.delete(key);
-   if(all.length>24)discoverCursors.set(page+1,all[23].public_id);
+   if(all.length>24){
+    // Carry the first card ID through keyset pagination so new profiles cannot reshuffle it mid-visit.
+    const firstId=featuredDiscover?(page===0?all[0].public_id:cursor?.split(':')[1]):null;
+    discoverCursors.set(page+1,all[23].public_id+(firstId?':'+firstId:''));
+   }
   }
   $('results').replaceChildren(...feedNodes(rows));$('empty').hidden=rows.length>0;
   if(rows.length)$('status').textContent='';
