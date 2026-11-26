@@ -3,7 +3,7 @@ import {refreshContributions} from './admin-contributions.js?v=20261122-manual-r
 import {initMaintenance} from './admin-maintenance.js?v=20261122-manual-refresh-1';
 import {runRecovery} from './booking-recovery.js?v=20261116-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
-import {initFounder} from './founder-controls.js?v=20261126-1';
+import {initFounder} from './founder-controls.js?v=20261126-2';
 import {pageWindow} from './admin-table-pages.js?v=20261126-1';
 import {todayAccounts} from './admin-account-date.js?v=20261115-1';
 const $=id=>document.getElementById(id);
@@ -150,6 +150,8 @@ function showUserDetails(p){
  const listing=listings.find(r=>r.user_id===p.user_id);
  const fields=[['Member',p.display_name||'Unnamed member'],['Internal ID',p.user_id],['Safety ID',p.safety_id||'Not assigned'],['Profile type',p.profile_kind||'Signup only'],['Joined',fmtDateTime(p.joined_at)],['Email verification',p.email_verified_at?'Verified':'Not verified'],['Companion listing',listing?(listing.moderation_status+' · '+(listing.published?'Published':'Private')):'No listing in loaded snapshot'],['Loaded bookings',memberBookings.length],['Completed bookings in snapshot',memberBookings.filter(b=>b.status==='completed').length],['Reports received in snapshot',memberReports.length]];
  body.replaceChildren(...fields.map(([label,val])=>{const row=node('div',undefined,'founder-detail-row');row.append(node('strong',label),node('span',val));return row;}));
+ const actions=$('founder-member-actions');actions.replaceChildren();actions.hidden=!founder;
+ if(founder&&p.user_id!==user.id)void founder.attachMember(p,actions).catch(()=>{actions.textContent='Could not load member controls.';});
  if(!dialog.open)dialog.showModal();
 }
 function userRow(p){

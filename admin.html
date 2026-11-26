@@ -8,9 +8,9 @@
   <title>Sathivo Admin Dashboard</title>
   <link rel="icon" href="assets/favicon.svg">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="admin-dashboard.css?v=20261126-founder-1">
+  <link rel="stylesheet" href="admin-dashboard.css?v=20261126-founder-2">
   <script defer src="assets/vendor/supabase-2.116.0.js"></script>
-  <script type="module" src="js/admin-page.js?v=20261126-founder-1"></script>
+  <script type="module" src="js/admin-page.js?v=20261126-founder-2"></script>
 </head>
 <body class="admin-body">
   <div class="admin-app">
@@ -109,7 +109,7 @@
              <div class="table-wrap"><table class="admin-table founder-audit-table"><thead><tr><th>Date (IST)</th><th>Action</th><th>Target</th><th>Before</th><th>After</th></tr></thead><tbody id="founder-audit-body"></tbody></table></div>
             </div>
           </section>
-          <dialog id="founder-user-dialog" class="founder-user-dialog"><div class="founder-dialog-header"><h2>User Details</h2><button type="button" class="admin-btn" id="founder-user-close" aria-label="Close user details">Close</button></div><p class="panel-note">Based on the current admin snapshot; counts may be limited to recent records. No private messages are shown.</p><div id="founder-user-details"></div></dialog>
+          <dialog id="founder-user-dialog" class="founder-user-dialog"><div class="founder-dialog-header"><h2>User Details</h2><button type="button" class="admin-btn" id="founder-user-close" aria-label="Close user details">Close</button></div><p class="panel-note">Based on the current admin snapshot; counts may be limited to recent records. No private messages are shown.</p><div id="founder-user-details"></div><div id="founder-member-actions" class="founder-member-actions" hidden></div></dialog>
           <section class="data-panel dashboard-section" id="maintenance-section" aria-labelledby="maintenance-title">
             <div class="panel-head"><div><p class="panel-kicker">SYSTEM HEALTH</p><h2 id="maintenance-title">Cleanup &amp; Optimization</h2><p class="panel-note">Manual scan only. No automatic resource polling or user-data deletion.</p></div></div>
             <div class="maintenance-body">
