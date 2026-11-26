@@ -3,14 +3,17 @@ import {refreshContributions} from './admin-contributions.js?v=20261122-manual-r
 import {initMaintenance} from './admin-maintenance.js?v=20261122-manual-refresh-1';
 import {runRecovery} from './booking-recovery.js?v=20261116-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
+import {pageWindow} from './admin-table-pages.js?v=20261126-1';
 import {todayAccounts} from './admin-account-date.js?v=20261115-1';
 const $=id=>document.getElementById(id);
 let client,user,profiles=[],bookings=[],supports=[],reports=[],listings=[],presenceChannel;
 let policyWarnings=[];
 let registeredUsersAvailable=false,accountRequest=null;
 const nf=new Intl.NumberFormat('en-IN');
-const fmt=d=>d?new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeZone:'Asia/Kolkata'}).format(new Date(d)):'—';
-const fmtDateTime=d=>d?new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d)):'—';
+const dateFormatter=new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeZone:'Asia/Kolkata'});
+const dateTimeFormatter=new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeStyle:'short',timeZone:'Asia/Kolkata'});
+const fmt=d=>d?dateFormatter.format(new Date(d)):'—';
+const fmtDateTime=d=>d?dateTimeFormatter.format(new Date(d)):'—';
 
 function node(tag,text,className){const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(className)n.className=className;return n}
 function td(label,content){const cell=node('td');cell.dataset.label=label;if(content instanceof Node)cell.append(content);else cell.textContent=content??'—';return cell}
@@ -22,7 +25,7 @@ function value(id){return $(id)?.value??'all'}
 function includesAny(values,q){return values.some(v=>String(v??'').toLowerCase().includes(q))}
 function setRefreshing(on){const b=$('refresh-dashboard');if(!b)return;b.classList.toggle('is-loading',on);b.disabled=on;b.textContent=on?'↻ Refreshing all…':'↻ Refresh All'}
 
-let badgeRequest=null,badgeSnapshot=null,badgeCounts=null;
+let badgeRequest=null,badgeSnapshot=null,badgeCounts=null,snapshotReady=false;
 const acknowledgingSections=new Set();
 async function refreshSidebarBadges(){
  if(!client||!user)return null;
@@ -45,7 +48,7 @@ async function refreshSidebarBadges(){
 // initial/manual snapshot; no new records are hidden without first being loaded.
 async function onSidebarSectionSelected(section){
   const key=sidebarBadgeSections[section];
-  if(!key||!sidebarReadAcknowledgements.includes(key)||!client||!user||!badgeSnapshot)return;
+  if(!key||!sidebarReadAcknowledgements.includes(key)||!client||!user||!badgeSnapshot||!snapshotReady||dashboardRequest)return;
   if(acknowledgingSections.has(key)||!safeBadgeCount(badgeCounts?.[key]))return;
   if(key==='users'&&!registeredUsersAvailable)return;
   if(key==='contributions'&&$('contribution-admin-status').textContent.includes('unavailable'))return;
@@ -149,13 +152,29 @@ function userRow(p){
   tr.append(td('User',who),td('Safety ID',sid),td('Type',type),td('Gender',gender),td('Email',email),td('Joined',fmt(p.joined_at)),td('Internal ID',node('span',p.user_id,'mono-id')));
   return tr;
 }
+const tablePages=new Map();
+function renderTablePage(id,rows,makeRow,columns,emptyMessage){
+ const state=tablePages.get(id)||{page:0};
+ const result=pageWindow(rows,state.page);
+ state.page=result.page;state.draw=()=>renderTablePage(id,rows,makeRow,columns,emptyMessage);tablePages.set(id,state);
+ $(id).replaceChildren(...(result.count?result.rows.map(makeRow):[emptyRow(columns,emptyMessage)]));
+ const bar=$(id+'-pager');
+ if(!bar)return;
+ bar.hidden=result.pages<=1;
+ const prev=bar.querySelector('[data-page-prev]'),next=bar.querySelector('[data-page-next]');
+ prev.disabled=result.page===0;next.disabled=result.page>=result.pages-1;
+ bar.querySelector('[data-page-label]').textContent=result.start+'–'+result.end+' of '+result.count+' · Page '+(result.page+1)+'/'+result.pages;
+ prev.onclick=()=>{if(state.page>0){state.page--;state.draw();}};
+ next.onclick=()=>{if(state.page<result.pages-1){state.page++;state.draw();}};
+}
+function resetTablePage(id){const state=tablePages.get(id);if(state)state.page=0;}
 function renderUsers(){
   const dateFilter=value('user-date-filter');
   const todays=registeredUsersAvailable?todayAccounts(profiles):null;
   if(todays===null)$('metric-accounts-today').textContent='—';
   else metric('metric-accounts-today',todays.length);
   if(dateFilter==='today'&&todays===null){
-    $('users').replaceChildren(emptyRow(7,'Today’s registered accounts are temporarily unavailable. Refresh to try again.'));
+    renderTablePage('users',[],userRow,7,'Today’s registered accounts are temporarily unavailable. Refresh to try again.');
     $('user-count').textContent='Daily signup count unavailable.';
     return;
   }
@@ -167,7 +186,7 @@ function renderUsers(){
     const tOk=type==='all'||p.profile_kind===type;
     return qOk&&gOk&&tOk;
   });
-  $('users').replaceChildren(...(rows.length?rows.map(userRow):[emptyRow(7,'No matching users found.')]));
+  renderTablePage('users',rows,userRow,7,'No matching users found.');
   $('user-count').textContent=rows.length+' of '+source.length+' registered account'+(source.length===1?'':'s')+(dateFilter==='today'?' today (IST)':'')+' shown. '+source.filter(p=>!p.has_profile).length+' incomplete profile(s).';
 }
 
@@ -204,7 +223,7 @@ function renderBookings(){
     const qOk=!q||includesAny([b.id,b.customer_display_name,b.companion_display_name,b.customer_id,b.companion_id,b.category,b.meeting_mode,b.status],q);
     return qOk&&(status==='all'||b.status===status)&&(mode==='all'||b.meeting_mode===mode);
   });
-  $('bookings').replaceChildren(...(rows.length?rows.map(bookingRow):[emptyRow(9,'No matching bookings found.')]));
+  renderTablePage('bookings',rows,bookingRow,9,'No matching bookings found.');
   $('booking-count').textContent=rows.length+' of '+bookings.length+' loaded booking'+(bookings.length===1?'':'s')+' shown. Latest 500 are loaded.';
 }
 
@@ -219,7 +238,7 @@ function supportRow(r){
 function renderSupport(){
   const q=$('support-search').value.trim().toLowerCase(),status=value('support-status-filter');
   const rows=supports.filter(r=>r.category!=='feedback'&&(!q||includesAny([r.subject,r.message,r.email,r.category,r.status],q))&&(status==='all'||r.status===status));
-  $('support-requests').replaceChildren(...(rows.length?rows.map(supportRow):[emptyRow(6,'No matching support requests.')]));
+  renderTablePage('support-requests',rows,supportRow,6,'No matching support requests.');
   const total=supports.filter(r=>r.category!=='feedback').length;
   $('support-count').textContent=rows.length+' of '+total+' support request'+(total===1?'':'s')+' shown.';
 }
@@ -242,7 +261,7 @@ function renderFeedback(){
     const ratingOk=rating==='all'||(rating==='none'?!r.rating:String(r.rating)===rating);
     return qOk&&ratingOk&&(status==='all'||r.status===status);
   });
-  $('feedback-requests').replaceChildren(...(rows.length?rows.map(feedbackRow):[emptyRow(7,'No matching feedback yet.')]));
+  renderTablePage('feedback-requests',rows,feedbackRow,7,'No matching feedback yet.');
   $('feedback-count').textContent=rows.length+' of '+all.length+' feedback item'+(all.length===1?'':'s')+' shown.';
   metric('metric-feedback',all.filter(r=>['open','reviewed'].includes(r.status)).length);
 }
@@ -261,7 +280,7 @@ function reportRow(r){
 function renderReports(){
   const q=$('report-search').value.trim().toLowerCase(),status=value('report-status-filter');
   const rows=reports.filter(r=>(!q||includesAny([r.reason,r.details,r.status,r.booking_id,r.reporter_id,r.reported_user_id],q))&&(status==='all'||r.status===status));
-  $('reports').replaceChildren(...(rows.length?rows.map(reportRow):[emptyRow(5,'No matching reports.')]));
+  renderTablePage('reports',rows,reportRow,5,'No matching reports.');
   $('report-count').textContent=rows.length+' of '+reports.length+' report'+(reports.length===1?'':'s')+' shown.';
 }
 
@@ -277,7 +296,7 @@ function listingRow(r){
 function renderListings(){
   const q=$('listing-search').value.trim().toLowerCase(),status=value('listing-status-filter');
   const rows=listings.filter(r=>(!q||includesAny([r.display_name,r.bio,r.user_id,r.moderation_status],q))&&(status==='all'||r.moderation_status===status));
-  $('listings').replaceChildren(...(rows.length?rows.map(listingRow):[emptyRow(5,'No matching companion listings.')]));
+  renderTablePage('listings',rows,listingRow,5,'No matching companion listings.');
   $('listing-count').textContent=rows.length+' of '+listings.length+' listing'+(listings.length===1?'':'s')+' shown.';
 }
 
@@ -306,12 +325,13 @@ function fetchRegisteredUsers(){
   return accountRequest;
 }
 async function load(){
-  const [rr,ll,pp,ss,bb]=await Promise.all([
+  const [rr,ll,pp,ss,bb,warnings]=await Promise.all([
     client.from('user_reports').select('id,reporter_id,reported_user_id,booking_id,reason,details,status,created_at').order('created_at',{ascending:false}).limit(250),
     client.from('companion_listings').select('user_id,display_name,bio,published,moderation_status,moderation_note').order('display_name').limit(500),
     fetchRegisteredUsers(),
     client.from('support_requests').select('id,email,category,subject,message,status,rating,feedback_type,created_at').order('created_at',{ascending:false}).limit(500),
-    client.from('booking_requests').select('id,customer_id,companion_id,category,meeting_mode,requested_for,duration_minutes,status,created_at,customer_display_name,companion_display_name,listed_hourly_rate,offered_hourly_rate,agreed_hourly_rate,cancel_reason,cancel_note,cancelled_by,cancelled_at').order('created_at',{ascending:false}).limit(500)
+    client.from('booking_requests').select('id,customer_id,companion_id,category,meeting_mode,requested_for,duration_minutes,status,created_at,customer_display_name,companion_display_name,listed_hourly_rate,offered_hourly_rate,agreed_hourly_rate,cancel_reason,cancel_note,cancelled_by,cancelled_at').order('created_at',{ascending:false}).limit(500),
+    client.from('account_policy_warnings').select('source_report_id,acknowledged_at,issued_at').order('issued_at',{ascending:false}).limit(250)
   ]);
   const failure=[rr,ll,ss,bb].find(x=>x.error);if(failure)throw failure.error;
   let users=!pp.error&&Array.isArray(pp.data?.users)?pp.data.users:null;
@@ -324,7 +344,6 @@ async function load(){
     users=(fallback.data||[]).map(p=>({...p,has_profile:true}));
     setStatus('Some new signups may be missing. Account list is temporarily using saved profiles.');
   }else setStatus('');
-  const warnings=await client.from('account_policy_warnings').select('source_report_id,acknowledged_at,issued_at').order('issued_at',{ascending:false}).limit(250);
   policyWarnings=warnings.error?[]:warnings.data||[];
   reports=rr.data||[];listings=ll.data||[];profiles=users;supports=ss.data||[];bookings=bb.data||[];
   renderAll();$('admin-content').hidden=false;
@@ -359,7 +378,7 @@ function initUi(){
     $('user-gender-filter').value='all';
     $('user-type-filter').value='all';
     $('user-date-filter').value='today';
-    renderUsers();
+    resetTablePage('users');renderUsers();
     const usersLink=document.querySelector('.sidebar-link[data-section="users-section"]');
     if(usersLink)usersLink.click();
     else location.hash='users-section';
@@ -373,18 +392,35 @@ function initUi(){
     ['report-search','input',renderReports],['report-status-filter','change',renderReports],
     ['listing-search','input',renderListings],['listing-status-filter','change',renderListings]
   ];
-  for(const [id,event,fn] of renderBindings)$(id).addEventListener(event,fn);
+  const tableForRender=new Map([[renderUsers,'users'],[renderBookings,'bookings'],[renderSupport,'support-requests'],[renderFeedback,'feedback-requests'],[renderReports,'reports'],[renderListings,'listings']]);
+  // Coalesce fast input events into at most one render per animation frame.
+  const pending=new Map();
+  for(const [id,event,fn] of renderBindings)$(id).addEventListener(event,()=>{
+    resetTablePage(tableForRender.get(fn));
+    if(event==='input'){
+      if(pending.has(fn))return;
+      pending.set(fn,requestAnimationFrame(()=>{pending.delete(fn);fn();}));
+    }else{
+      if(pending.has(fn)){cancelAnimationFrame(pending.get(fn));pending.delete(fn);}
+      fn();
+    }
+  });
 }
 
 let dashboardRequest=null;
 async function refreshAll(){
   // Coalesce double clicks and wait for *all* sections to finish.
   if(dashboardRequest)return dashboardRequest;
-  setRefreshing(true);
+  setRefreshing(true);snapshotReady=false;
   dashboardRequest=(async()=>{
     try{
-      const [, , , badges]=await Promise.all([load(),loadStats(),refreshContributions(client),refreshSidebarBadges()]);
+      // Wait for every request, even if one fails; never unlock Refresh while
+      // requests from the previous snapshot are still running.
+      const results=await Promise.allSettled([load(),loadStats(),refreshContributions(client),refreshSidebarBadges()]);
       updateOnline();
+      const failed=results.find(result=>result.status==='rejected');
+      if(failed)throw failed.reason;
+      const badges=results[3].value;
       if(!badges||$('contribution-admin-status').textContent.includes('unavailable')){
         setStatus('Some admin sections could not be refreshed. Try Refresh again.');
         return false;
@@ -393,6 +429,7 @@ async function refreshAll(){
         setStatus('Other sections updated, but the complete signup list is temporarily unavailable.');
         return false;
       }
+      snapshotReady=true;
       setStatus('All admin sections updated. Use Refresh to load new activity.');
       return true;
     }catch(e){
@@ -442,6 +479,8 @@ async function init(){
     $('refresh-dashboard').addEventListener('click',()=>void refreshAll());
     initMaintenance(client,user.id);
     initFeaturePush();
+    $('admin-content').hidden=false;
+    setStatus('Loading admin data…');
     await refreshAll();startPresence();
     const initialSection=location.hash.slice(1);
     if(initialSection&&sidebarBadgeSections[initialSection])void onSidebarSectionSelected(initialSection);

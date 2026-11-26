@@ -8,9 +8,9 @@
   <title>Sathivo Admin Dashboard</title>
   <link rel="icon" href="assets/favicon.svg">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="admin-dashboard.css?v=20261122-remove-extra-quality-1">
+  <link rel="stylesheet" href="admin-dashboard.css?v=20261126-optimized-1">
   <script defer src="assets/vendor/supabase-2.116.0.js"></script>
-  <script type="module" src="js/admin-page.js?v=20261125-feature-push-1"></script>
+  <script type="module" src="js/admin-page.js?v=20261126-optimized-1"></script>
 </head>
 <body class="admin-body">
   <div class="admin-app">
@@ -53,7 +53,7 @@
           <div>
             <span class="topbar-kicker">SATHIVO ADMIN</span>
             <h1>Dashboard</h1>
-            <p>All sections load once when you open Admin. Press Refresh to update all data; no automatic data polling.</p>
+            <p>All sections load once when you open Admin. Tables show 50 records per page. Refresh All updates data; no automatic data polling.</p>
           </div>
         </div>
         <div class="topbar-actions">
@@ -138,6 +138,7 @@
                 <tbody id="users"></tbody>
               </table>
             </div>
+            <div class="admin-table-pager" id="users-pager" hidden><button type="button" class="admin-btn" data-page-prev aria-label="Previous page">‹ Previous</button><span data-page-label role="status" aria-live="polite"></span><button type="button" class="admin-btn" data-page-next aria-label="Next page">Next ›</button></div>
           </section>
 
           <section class="data-panel dashboard-section" id="bookings-section">
@@ -159,6 +160,7 @@
                 <tbody id="bookings"></tbody>
               </table>
             </div>
+            <div class="admin-table-pager" id="bookings-pager" hidden><button type="button" class="admin-btn" data-page-prev aria-label="Previous page">‹ Previous</button><span data-page-label role="status" aria-live="polite"></span><button type="button" class="admin-btn" data-page-next aria-label="Next page">Next ›</button></div>
           </section>
 
           <section class="data-panel dashboard-section" id="support-section">
@@ -177,6 +179,7 @@
                 <tbody id="support-requests"></tbody>
               </table>
             </div>
+            <div class="admin-table-pager" id="support-requests-pager" hidden><button type="button" class="admin-btn" data-page-prev aria-label="Previous page">‹ Previous</button><span data-page-label role="status" aria-live="polite"></span><button type="button" class="admin-btn" data-page-next aria-label="Next page">Next ›</button></div>
           </section>
 
           <section class="data-panel dashboard-section" id="feedback-section">
@@ -198,6 +201,7 @@
                 <tbody id="feedback-requests"></tbody>
               </table>
             </div>
+            <div class="admin-table-pager" id="feedback-requests-pager" hidden><button type="button" class="admin-btn" data-page-prev aria-label="Previous page">‹ Previous</button><span data-page-label role="status" aria-live="polite"></span><button type="button" class="admin-btn" data-page-next aria-label="Next page">Next ›</button></div>
           </section>
 
           <section class="data-panel dashboard-section" id="contributions-section"><div class="panel-head"><div><p class="panel-kicker">VOLUNTARY PLATFORM SUPPORT</p><h2>Contributions</h2><p id="contribution-admin-status" class="panel-note">Not loaded.</p><p class="panel-note">Updated with the top Refresh All button.</p></div></div><div class="metrics-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px"><article class="metric-card"><span>All time (net of refunds)</span><strong id="contribution-total">—</strong></article><article class="metric-card"><span>Today (IST)</span><strong id="contribution-today">—</strong></article><article class="metric-card"><span>This month (IST)</span><strong id="contribution-month">—</strong></article><article class="metric-card"><span>Captured contributions</span><strong id="contribution-captured">—</strong></article><article class="metric-card"><span>Failed orders</span><strong id="contribution-failed">—</strong></article></div><p class="panel-note">Verified payments only; excludes gateway charges and bank settlement adjustments. Latest 100 orders below.</p><div class="table-wrap" style="overflow:auto"><table><thead><tr><th>Date (IST)</th><th>Contributor ID</th><th>Amount</th><th>Refunded</th><th>Status</th><th>Payment reference</th></tr></thead><tbody id="contribution-history"></tbody></table></div></section>
@@ -217,6 +221,7 @@
                 <tbody id="reports"></tbody>
               </table>
             </div>
+            <div class="admin-table-pager" id="reports-pager" hidden><button type="button" class="admin-btn" data-page-prev aria-label="Previous page">‹ Previous</button><span data-page-label role="status" aria-live="polite"></span><button type="button" class="admin-btn" data-page-next aria-label="Next page">Next ›</button></div>
           </section>
 
           <section class="data-panel dashboard-section" id="listings-section">
@@ -235,6 +240,7 @@
                 <tbody id="listings"></tbody>
               </table>
             </div>
+            <div class="admin-table-pager" id="listings-pager" hidden><button type="button" class="admin-btn" data-page-prev aria-label="Previous page">‹ Previous</button><span data-page-label role="status" aria-live="polite"></span><button type="button" class="admin-btn" data-page-next aria-label="Next page">Next ›</button></div>
           </section>
         </section>
       </main>
