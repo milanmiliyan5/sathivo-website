@@ -429,6 +429,16 @@ async function init(){
     publishing.syncMode();updateSectionTicks();
     $('fields').disabled=false;profileLoaded=true;
     $('publication').hidden=!isCompanionKind();
+    // Support photo retry deep link: restore Personal and reveal the upload control.
+    const revealPhotoSection=()=>{
+      if(location.hash!=='#companion-photo-section'||!isCompanionKind()||!profileLoaded)return;
+      showProfileTab('personal',{record:false});profileScroll.cancel();
+      requestAnimationFrame(()=>{
+        const section=$('companion-photo-section');section?.scrollIntoView({behavior:'instant',block:'center'});
+        if(section){section.tabIndex=-1;section.focus({preventScroll:true});}
+      });
+    };
+    revealPhotoSection();window.addEventListener('hashchange',revealPhotoSection);
     client.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT'){dirty=false;location.replace('account.html');}});
   }catch(error){message(error.message||'Profile services are unavailable. Please refresh.',true);}
 }
