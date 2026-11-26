@@ -1,0 +1,21 @@
+/* Approved Constitution Day popup: scoped colors, compact layout and local SVG. */
+dialog.constitution-day-popup{position:fixed;inset:0;margin:auto;width:min(396px,calc(100% - 26px));max-width:none;max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);box-sizing:border-box;overflow:auto;overscroll-behavior:contain;padding:24px 22px 21px;text-align:center;color:#6b2146;background:linear-gradient(160deg,#fff8ed,#fff 44%,#f3faf5);border:1px solid #e8dfdf;border-radius:26px;box-shadow:0 22px 74px #42213940;font-family:inherit}
+dialog.constitution-day-popup[open]{animation:cd-enter .26s ease-out both}
+dialog.constitution-day-popup::backdrop{background:#35232f77;backdrop-filter:blur(3px)}
+.constitution-day-popup *{box-sizing:border-box}
+.constitution-day-popup .cd-close{position:absolute;right:12px;top:12px;width:36px;height:36px;padding:0;border:0;border-radius:50%;background:#89708012;color:#75616c;font:23px/1 system-ui;cursor:pointer}
+.constitution-day-popup .cd-brand{font-size:10px;font-weight:750;letter-spacing:3px;color:#876779;margin:4px 0 0;line-height:1.5}
+.constitution-day-popup .cd-flag{display:block;width:min(235px,100%);height:auto;margin:6px auto 0}
+.constitution-day-popup .cd-date{font-size:10px;font-weight:750;letter-spacing:1.8px;color:#8d796f;margin:0}
+.constitution-day-popup h2{font-size:clamp(23px,6vw,27px);line-height:1.2;letter-spacing:-.8px;margin:12px 0 5px;color:#6b2146}
+.constitution-day-popup .cd-subtitle{font-size:14px;color:#856474;font-weight:500;margin:0}
+.constitution-day-popup .cd-divider{width:44px;height:3px;background:linear-gradient(90deg,#ff9933 33%,#e1dcd8 33%,#e1dcd8 66%,#138808 66%);margin:17px auto;border-radius:3px}
+.constitution-day-popup #cd-copy{padding:15px 10px;margin:0;background:linear-gradient(120deg,#fff3e5,#fff,#edf7ed);border:1px solid #e9e2d8;border-radius:14px;font-size:15px;line-height:1.85;color:#51434b}
+.constitution-day-popup #cd-copy strong{font-weight:750}
+.constitution-day-popup .cd-equality{color:#a65005}.constitution-day-popup .cd-dignity{color:#6b2146}.constitution-day-popup .cd-freedom{color:#203e87}.constitution-day-popup .cd-respect{color:#18783b}
+.constitution-day-popup .cd-team{font-size:12px;color:#806476;margin:18px 0}
+.constitution-day-popup .cd-continue{width:100%;min-height:46px;background:#6b2146;color:#fff;border:0;border-radius:13px;font:inherit;font-size:14px;font-weight:650;padding:13px 12px;cursor:pointer}
+.constitution-day-popup button:focus-visible{outline:2px solid #6b2146;outline-offset:3px}
+@keyframes cd-enter{from{opacity:0;transform:translateY(8px) scale(.98)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){dialog.constitution-day-popup[open]{animation:none}}
+@media(max-height:540px){dialog.constitution-day-popup{padding:15px 18px}.constitution-day-popup .cd-flag{width:170px}.constitution-day-popup .cd-divider{margin:10px auto}.constitution-day-popup .cd-team{margin:12px 0}}
