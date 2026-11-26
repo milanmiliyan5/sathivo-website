@@ -1,12 +1,12 @@
 import {createProfileScrollReset} from './profile-scroll.js?v=20261125-profile-scroll-1';
 import {profileSectionCompletion,savedProfileTicks,nextProfileStage,stageAfterSave,availableProfileTabs,profileDraftChanged} from './profile-section-completion.js?v=20261125-persistent-ticks-1';
 import {experienceCategoryGroups,experienceCategories,experienceLabel,experienceSafetyNote,experienceVisual} from './experience-categories.js?v=20261123-pastels-1';
-import { setupPublishing,publicationProblem } from './listing-publish.js?v=20261125-persistent-ticks-1';
+import { setupPublishing,publicationProblem } from './listing-publish.js?v=20261126-safari-photo-1';
 import {districtsByState,statesAndUTs} from './india-districts.js?v=20261015-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { getSathivoClient } from './supabase-client.js?v=20261025-polish-1';
 import { avatarOptions, avatarMarker, avatarAsset, isBuiltinAvatar } from './avatar-utils.js?v=20261121-avatars-1';
-import { compressImageFile } from './image-compress.js?v=20261006-1';
+import { compressImageFile } from './image-compress.js?v=20261126-safari-photo-1';
 const $ = id => document.getElementById(id);
 const form = $('profile-form');
 const profileScroll=createProfileScrollReset(window,document);
@@ -319,7 +319,7 @@ form.addEventListener('submit',async event=>{
   await publishing.prepareSave({applyVisibility:final,photoChanged:section==='privacy'&&['companion','privacy'].includes(savedSectionProfile?.setup_stage)});
   let row;
   if(section==='personal'){
-   if(file){preparedPhoto=await photoBlob(file);const path=user.id+'/avatar.webp';const upload=await client.storage.from('profile-photos').upload(path,preparedPhoto.blob,{upsert:true,contentType:preparedPhoto.type});if(upload.error)throw Error('Photo upload failed. Check your connection and try again.');avatarPath=path;}
+   if(file){preparedPhoto=await photoBlob(file);const path=user.id+'/avatar.webp';const upload=await client.storage.from('profile-photos').upload(path,preparedPhoto.blob,{upsert:true,contentType:preparedPhoto.type});if(upload.error){console.warn('Profile photo upload failed:',upload.error.statusCode||upload.error.name);throw Error('Photo upload failed. Please try a different photo or refresh and try again.');}avatarPath=path;}
    row={user_id:user.id,profile_kind:kind,display_name:draft.display_name.trim(),gender:draft.gender,location_id:draft.location_id,city_name:draft.city_name.trim(),languages:draft.languages.trim(),interests:draft.interests.trim(),bio:companion?draft.bio.trim():'',avatar_path:companion?avatarPath:null,adult_confirmed:draft.adult_confirmed,boundaries_accepted:draft.boundaries_accepted,setup_stage:stageAfterSave(section,kind,{saved:savedSectionProfile,hasListing:publishing.hasListing()})};
    if(!companion||!savedSectionProfile||savedSectionProfile.profile_kind==='customer')Object.assign(row,{categories:[],meeting_mode:'online',availability:'',hourly_rate:null});
   }else if(section==='companion'){

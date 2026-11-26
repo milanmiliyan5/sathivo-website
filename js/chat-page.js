@@ -3,7 +3,7 @@ import {withCurrentBookingNames} from './booking-name-sync.js?v=20261030-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
 import {sendMessagePush,sendBookingPush} from './push-events.js?v=20261004-2';
 import {confirmCompletion,completionState,completionLabel,submitCompletion} from './booking-recovery.js?v=20261124-companion-completion-1';
-import {compressImageFile} from './image-compress.js?v=20261006-1';
+import {compressImageFile} from './image-compress.js?v=20261126-safari-photo-1';
 import {openSafetyReport,confirmSafetyBlock} from './safety-actions.js?v=20261018-1';
 
 const $=id=>document.getElementById(id);

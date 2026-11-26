@@ -28,8 +28,28 @@ async function decode(file){
   }
 }
 
-function toWebp(canvas,quality){
-  return new Promise(resolve=>canvas.toBlob(resolve,'image/webp',quality));
+function encode(canvas,type,quality){
+  return new Promise(resolve=>canvas.toBlob(resolve,type,quality));
+}
+
+// Read encoded bytes, not the requested canvas format or object key.
+// Safari may return PNG when WebP encoding is unavailable.
+export async function encodedPhotoType(blob){
+  const h=new Uint8Array(await blob.slice(0,12).arrayBuffer());
+  if(h.length>=12&&String.fromCharCode(...h.slice(0,4))==='RIFF'&&String.fromCharCode(...h.slice(8,12))==='WEBP')return 'image/webp';
+  if(h.length>=3&&h[0]===255&&h[1]===216&&h[2]===255)return 'image/jpeg';
+  return null;
+}
+
+export async function encodePhoto(canvas,quality,preferred='image/webp'){
+  for(const type of preferred==='image/jpeg'?['image/jpeg']:['image/webp','image/jpeg']){
+    const blob=await encode(canvas,type,quality);
+    if(!blob)continue;
+    const actual=await encodedPhotoType(blob);
+    if(actual!==type)continue;
+    return {blob:blob.type===type?blob:blob.slice(0,blob.size,type),type,ext:type==='image/webp'?'webp':'jpg'};
+  }
+  throw Error('Photo compression is not supported in this browser. Try updating your browser.');
 }
 
 export async function compressImageFile(file,{
@@ -49,7 +69,7 @@ export async function compressImageFile(file,{
     const ratio=Math.min(1,maxDimension/Math.max(decoded.width,decoded.height));
     let width=Math.max(1,Math.round(decoded.width*ratio));
     let height=Math.max(1,Math.round(decoded.height*ratio));
-    let best=null;
+    let best=null,preferred='image/webp';
 
     for(let round=0;round<6;round++){
       const canvas=document.createElement('canvas');
@@ -60,11 +80,12 @@ export async function compressImageFile(file,{
       ctx.drawImage(decoded.source,0,0,width,height);
 
       for(const quality of [.84,.76,.68,.60,.52,.44]){
-        const blob=await toWebp(canvas,quality);
-        if(!blob)throw Error('Photo compression is not supported in this browser.');
+        const encoded=await encodePhoto(canvas,quality,preferred);
+        preferred=encoded.type;
+        const blob=encoded.blob;
         if(!best||blob.size<best.size)best=blob;
         if(blob.size<=maxBytes){
-          return {blob,ext:'webp',type:'image/webp',originalBytes:file.size,outputBytes:blob.size,width,height};
+          return {...encoded,originalBytes:file.size,outputBytes:blob.size,width,height};
         }
       }
 
@@ -80,10 +101,7 @@ export async function compressImageFile(file,{
       }
     }
 
-    if(best){
-      return {blob:best,ext:'webp',type:'image/webp',originalBytes:file.size,outputBytes:best.size,width,height};
-    }
-    throw Error('This photo could not be compressed. Try another photo.');
+    throw Error('This photo could not be compressed below '+formatBytes(maxBytes)+'. Try another photo.');
   }finally{
     decoded.close();
   }

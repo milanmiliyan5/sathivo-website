@@ -1,3 +1,4 @@
+import { encodedPhotoType } from './image-compress.js?v=20261126-safari-photo-1';
 import { isBuiltinAvatar } from './avatar-utils.js?v=20261121-avatars-1';
 
 // Visibility switches edit a local draft. Only final Privacy Save can enable publication.
@@ -106,7 +107,12 @@ export async function setupPublishing({client,user,onDraftChange,isCompanion,can
    if(replacePhoto){
     let blob=uploadedBlob;
     if(!blob){const image=await client.storage.from('profile-photos').download(p.avatar_path);if(image.error||!image.data)throw Error('Could not prepare your public photo. Save again to retry.');blob=image.data;}
-    const upload=await client.storage.from('listing-photos').upload(target,blob,{upsert:true,contentType:'image/webp',cacheControl:'0'});
+    const type=await encodedPhotoType(blob);
+    if(!type)throw Error('The saved photo format is unsupported. Choose a new photo and save again.');
+    // Keep the legacy stable avatar.webp object key for existing RLS and profile links.
+    // The actual response MIME type is determined by the encoded bytes.
+    if(blob.type!==type)blob=blob.slice(0,blob.size,type);
+    const upload=await client.storage.from('listing-photos').upload(target,blob,{upsert:true,contentType:type,cacheControl:'0'});
     if(upload.error)throw Error('Public photo upload failed. Save again to retry.');
    }
   }
