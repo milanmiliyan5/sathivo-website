@@ -8,9 +8,9 @@
   <title>Sathivo Admin Dashboard</title>
   <link rel="icon" href="assets/favicon.svg">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="stylesheet" href="admin-dashboard.css?v=20261126-visual-1">
+  <link rel="stylesheet" href="admin-dashboard.css?v=20261126-hourly-1">
   <script defer src="assets/vendor/supabase-2.116.0.js"></script>
-  <script type="module" src="js/admin-page.js?v=20261126-visual-1"></script>
+  <script type="module" src="js/admin-page.js?v=20261126-hourly-1"></script>
 </head>
 <body class="admin-body">
   <div class="admin-app">
@@ -84,11 +84,11 @@
             <div class="visual-intro"><div><p class="panel-kicker">PLATFORM ANALYTICS</p><h2>Performance overview</h2><p class="panel-note">Real data · India time · No automatic polling</p></div><small id="visual-status" role="status">Loading analytics…</small></div>
             <div class="visual-grid visual-main-grid">
               <article class="visual-card visual-growth">
-                <div class="visual-card-head"><div><h3>Platform growth</h3><p class="panel-note">Daily activity</p></div><div class="visual-segments" aria-label="Chart time range"><button type="button" data-chart-range="1" aria-pressed="false">Today</button><button type="button" data-chart-range="7" aria-pressed="true">7 days</button><button type="button" data-chart-range="30" aria-pressed="false">30 days</button></div></div>
+                <div class="visual-card-head"><div><h3>Platform growth</h3><p class="panel-note" id="visual-growth-description">Daily activity</p></div><div class="visual-segments" aria-label="Chart time range"><button type="button" data-chart-range="1" aria-pressed="false">Today</button><button type="button" data-chart-range="7" aria-pressed="true">7 days</button><button type="button" data-chart-range="30" aria-pressed="false">30 days</button></div></div>
                 <div class="visual-growth-stat"><strong id="visual-growth-total">—</strong><span id="visual-growth-label">Daily unique browsers</span></div>
                 <div class="visual-segments visual-series" aria-label="Chart metric"><button type="button" data-chart-series="visitors" aria-pressed="true">Visitors</button><button type="button" data-chart-series="signups" aria-pressed="false">Signups</button><button type="button" data-chart-series="bookings" aria-pressed="false">Bookings</button></div>
                 <div id="visual-growth-plot" class="visual-plot"><p class="panel-note">Waiting for data…</p></div>
-                <details class="visual-data"><summary>View daily values</summary><table><thead><tr><th>Date (IST)</th><th>Count</th></tr></thead><tbody id="visual-growth-table"></tbody></table></details>
+                <details class="visual-data"><summary id="visual-growth-summary">View daily values</summary><table><thead><tr><th id="visual-growth-date-heading">Date (IST)</th><th>Count</th></tr></thead><tbody id="visual-growth-table"></tbody></table></details>
               </article>
               <article class="visual-card"><div class="visual-card-head"><div><h3>Booking breakdown</h3><p class="panel-note">All-time request status</p></div></div><div class="visual-donut-wrap"><div id="visual-donut" class="visual-donut"><div class="visual-donut-hole"><strong id="visual-booking-total">—</strong><span>Total bookings</span></div></div></div><div id="visual-booking-legend" class="visual-legend"></div></article>
             </div>

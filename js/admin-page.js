@@ -1,5 +1,5 @@
 import {updateSidebarBadges,sidebarBadgeSections,sidebarReadAcknowledgements,safeBadgeCount} from './admin-sidebar-badges.js?v=20261122-manual-refresh-1';
-import {initAdminVisuals,renderAdminVisuals,visualUnavailable} from './admin-visuals.js?v=20261126-1';
+import {initAdminVisuals,renderAdminVisuals,visualUnavailable} from './admin-visuals.js?v=20261126-hourly-1';
 import {refreshContributions} from './admin-contributions.js?v=20261126-visual-1';
 import {initMaintenance} from './admin-maintenance.js?v=20261122-manual-refresh-1';
 import {runRecovery} from './booking-recovery.js?v=20261116-1';
@@ -513,6 +513,8 @@ async function init(){
     $('admin-content').hidden=false;
     setStatus('Loading admin data…');
     await refreshAll();startPresence();
+    // The hash target was hidden during authorization; align it after layout is available.
+    requestAnimationFrame(()=>{const target=document.getElementById(location.hash.slice(1));if(target&&target.closest('#admin-content')&&!target.hidden)target.scrollIntoView({block:'start',behavior:'instant'});});
     const initialSection=location.hash.slice(1);
     if(initialSection&&sidebarBadgeSections[initialSection])void onSidebarSectionSelected(initialSection);
     window.addEventListener('hashchange',()=>{const section=location.hash.slice(1);if(sidebarBadgeSections[section])void onSidebarSectionSelected(section)});
