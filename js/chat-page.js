@@ -398,7 +398,7 @@ async function sendStagedPhoto(){
  const up=await client.storage.from('booking-chat-photos').upload(path,prepared.blob,{contentType:prepared.type,cacheControl:'60',upsert:false});
  if(up.error){ps.textContent='Upload failed. Tap Send to retry.';return false}
  const msg=await client.from('booking_messages').insert({booking_id:booking.id,sender_id:user.id,message_type:'image',photo_path:path,body:caption,view_once:viewOnce}).select('id').single();
- if(msg.error){await client.storage.from('booking-chat-photos').remove([path]);ps.textContent='Send failed. Tap Send to retry.';return false}
+ if(msg.error){await client.storage.from('booking-chat-photos').remove([path]);ps.textContent=String(msg.error.message||'').startsWith('Sathivo: ')?msg.error.message.slice(9):'Send failed. Tap Send to retry.';return false}
  clearPhotoDraft();$('message').value='';fitComposer();void sendMessagePush(client,booking.id,msg.data.id);return true;
 }
 async function report(){const sent=await openSafetyReport({client,reporterId:user.id,reportedUserId:otherId,bookingId:booking.id});if(sent)$('status').textContent='Report submitted privately to Sathivo for review.';}

@@ -3,11 +3,12 @@ import {refreshContributions} from './admin-contributions.js?v=20261122-manual-r
 import {initMaintenance} from './admin-maintenance.js?v=20261122-manual-refresh-1';
 import {runRecovery} from './booking-recovery.js?v=20261116-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
+import {initFounder} from './founder-controls.js?v=20261126-1';
 import {pageWindow} from './admin-table-pages.js?v=20261126-1';
 import {todayAccounts} from './admin-account-date.js?v=20261115-1';
 const $=id=>document.getElementById(id);
 let client,user,profiles=[],bookings=[],supports=[],reports=[],listings=[],presenceChannel;
-let policyWarnings=[];
+let policyWarnings=[],founder=null;
 let registeredUsersAvailable=false,accountRequest=null;
 const nf=new Intl.NumberFormat('en-IN');
 const dateFormatter=new Intl.DateTimeFormat('en-IN',{dateStyle:'medium',timeZone:'Asia/Kolkata'});
@@ -115,7 +116,7 @@ async function setSupport(id,status){
   if(!error){
     const row=supports.find(r=>r.id===id);
     if(row)row.status=status;
-    renderSupport();renderFeedback();renderRecentActivity();
+    renderSupport();renderFeedback();renderRecentActivity();renderIssueSummary();
     setStatus('Support status saved. Use Refresh for updated dashboard totals.');
   }
 }
@@ -141,9 +142,20 @@ async function setListing(userId,status){
   }
 }
 
+function showUserDetails(p){
+ const dialog=$('founder-user-dialog'),body=$('founder-user-details');
+ if(!dialog||!body)return;
+ const memberBookings=bookings.filter(b=>b.customer_id===p.user_id||b.companion_id===p.user_id);
+ const memberReports=reports.filter(r=>r.reported_user_id===p.user_id);
+ const listing=listings.find(r=>r.user_id===p.user_id);
+ const fields=[['Member',p.display_name||'Unnamed member'],['Internal ID',p.user_id],['Safety ID',p.safety_id||'Not assigned'],['Profile type',p.profile_kind||'Signup only'],['Joined',fmtDateTime(p.joined_at)],['Email verification',p.email_verified_at?'Verified':'Not verified'],['Companion listing',listing?(listing.moderation_status+' · '+(listing.published?'Published':'Private')):'No listing in loaded snapshot'],['Loaded bookings',memberBookings.length],['Completed bookings in snapshot',memberBookings.filter(b=>b.status==='completed').length],['Reports received in snapshot',memberReports.length]];
+ body.replaceChildren(...fields.map(([label,val])=>{const row=node('div',undefined,'founder-detail-row');row.append(node('strong',label),node('span',val));return row;}));
+ if(!dialog.open)dialog.showModal();
+}
 function userRow(p){
   const tr=node('tr'),who=node('div',undefined,'user-cell');
   who.append(node('strong',p.display_name||'Unnamed member'),node('small',p.has_profile ? (p.profile_kind||'member') : 'Profile incomplete'));
+  const details=node('button','Details','admin-btn');details.type='button';details.onclick=()=>showUserDetails(p);who.append(details);
   const sid=node('code',p.safety_id||'No Safety ID','safety-code');
   const type=node('span',p.has_profile ? (p.profile_kind||'member') : 'Signup only','gender-pill');
   const gender=p.gender==='male'?'Male':p.gender==='female'?'Female':p.gender==='other'?'Other':p.gender==='prefer_not_to_say'?'Prefer not to say':'Not set';
@@ -317,7 +329,14 @@ function renderRecentActivity(){
   }));
 }
 
-function renderAll(){renderUsers();renderBookings();renderSupport();renderFeedback();renderReports();renderListings();renderRecentActivity()}
+function renderIssueSummary(){
+ const issues=supports.filter(r=>r.category==='technical'||r.feedback_type==='bug');
+ const open=issues.filter(r=>['open','reviewed'].includes(r.status));
+ metric('founder-open-issues',open.length);metric('founder-total-issues',issues.length);
+ const list=$('founder-issue-list');if(!list)return;
+ list.replaceChildren(...(open.length?open.slice(0,10).map(r=>{const row=node('div',undefined,'founder-detail-row');row.append(node('strong',r.subject||'Technical report'),node('span',r.status+' · '+fmtDateTime(r.created_at)));return row;}):[node('p','No open technical reports in the loaded snapshot.')]));
+}
+function renderAll(){renderUsers();renderBookings();renderSupport();renderFeedback();renderReports();renderListings();renderRecentActivity();renderIssueSummary()}
 
 // Initial load and explicit refresh share the authorized full signup API.
 function fetchRegisteredUsers(){
@@ -372,6 +391,7 @@ function initUi(){
   });
   $('sidebar-toggle').addEventListener('click',()=>{const open=!$('admin-sidebar').classList.contains('is-open');$('admin-sidebar').classList.toggle('is-open',open);$('sidebar-backdrop').hidden=!open;$('sidebar-toggle').setAttribute('aria-expanded',String(open))});
   $('sidebar-backdrop').addEventListener('click',closeSidebar);
+  $('founder-user-close').addEventListener('click',()=>$('founder-user-dialog').close());
   document.querySelectorAll('.sidebar-link').forEach(a=>a.addEventListener('click',()=>{document.querySelectorAll('.sidebar-link').forEach(x=>x.classList.remove('is-active'));a.classList.add('is-active');closeSidebar();void onSidebarSectionSelected(a.dataset.section)}));
   $('today-accounts-card').addEventListener('click',()=>{
     $('user-search').value='';
@@ -416,12 +436,12 @@ async function refreshAll(){
     try{
       // Wait for every request, even if one fails; never unlock Refresh while
       // requests from the previous snapshot are still running.
-      const results=await Promise.allSettled([load(),loadStats(),refreshContributions(client),refreshSidebarBadges()]);
+      const results=await Promise.allSettled([load(),loadStats(),refreshContributions(client),refreshSidebarBadges(),founder?.refresh()]);
       updateOnline();
       const failed=results.find(result=>result.status==='rejected');
       if(failed)throw failed.reason;
       const badges=results[3].value;
-      if(!badges||$('contribution-admin-status').textContent.includes('unavailable')){
+      if(!badges||results[4].value===false||$('contribution-admin-status').textContent.includes('unavailable')){
         setStatus('Some admin sections could not be refreshed. Try Refresh again.');
         return false;
       }
@@ -479,6 +499,7 @@ async function init(){
     $('refresh-dashboard').addEventListener('click',()=>void refreshAll());
     initMaintenance(client,user.id);
     initFeaturePush();
+    if(a.data.role==='owner')founder=initFounder(client);
     $('admin-content').hidden=false;
     setStatus('Loading admin data…');
     await refreshAll();startPresence();
