@@ -1,5 +1,6 @@
 import {updateSidebarBadges,sidebarBadgeSections,sidebarReadAcknowledgements,safeBadgeCount} from './admin-sidebar-badges.js?v=20261122-manual-refresh-1';
-import {refreshContributions} from './admin-contributions.js?v=20261122-manual-refresh-1';
+import {initAdminVisuals,renderAdminVisuals,visualUnavailable} from './admin-visuals.js?v=20261126-1';
+import {refreshContributions} from './admin-contributions.js?v=20261126-visual-1';
 import {initMaintenance} from './admin-maintenance.js?v=20261122-manual-refresh-1';
 import {runRecovery} from './booking-recovery.js?v=20261116-1';
 import {getSathivoClient} from './supabase-client.js?v=20261025-polish-1';
@@ -73,7 +74,9 @@ function loadStats(){
  return statsRequest;
 }
 async function fetchStats(){
-  const {data,error}=await client.functions.invoke('admin-dashboard-stats');
+  const [statsResult,visualResult]=await Promise.allSettled([client.functions.invoke('admin-dashboard-stats'),client.rpc('admin_visual_summary')]);
+  if(statsResult.status==='rejected'){visualUnavailable();throw statsResult.reason;}
+  const {data,error}=statsResult.value;
   if(error){$('metrics-updated').textContent='Dashboard refresh failed';throw error}
   const row=Array.isArray(data)?data[0]:data;
   if(!row)throw Error('Dashboard statistics unavailable');
@@ -89,9 +92,13 @@ async function fetchStats(){
   metric('metric-completed',row.completed_bookings);
   metric('metric-cancelled',row.cancelled_bookings);
   metric('metric-published-companions',row.published_companions);
-  metric('metric-open-reports',row.open_reports);
+  metric('metric-open-reports',row.open_reports);metric('metric-open-support',row.open_support);metric('visual-open-support',row.open_support);metric('visual-open-reports',row.open_reports);
   $('gender-note').textContent=nf.format(Number(row.gender_other_or_unset||0))+' account'+(Number(row.gender_other_or_unset||0)===1?'':'s')+' have Other / Prefer not to say / no gender selected. Open support: '+nf.format(Number(row.open_support||0))+'. Declined bookings: '+nf.format(Number(row.declined_bookings||0))+'.';
-  $('metrics-updated').textContent='Updated '+new Intl.DateTimeFormat('en-IN',{hour:'numeric',minute:'2-digit',second:'2-digit'}).format(new Date())+' · Manual refresh';
+  $('metrics-updated').textContent='Updated '+new Intl.DateTimeFormat('en-IN',{hour:'numeric',minute:'2-digit',second:'2-digit',timeZone:'Asia/Kolkata'}).format(new Date())+' IST · Manual refresh';
+  try{
+   if(visualResult.status==='rejected'||visualResult.value.error||!Array.isArray(visualResult.value.data?.days)||visualResult.value.data.days.length!==30)throw Error('Analytics unavailable');
+   renderAdminVisuals(visualResult.value.data,row);
+  }catch(e){visualUnavailable(row);throw Error('Dashboard charts could not be refreshed.');}
 }
 
 // The presence connection stays subscribed for accurate counts; the displayed
@@ -334,7 +341,7 @@ function renderRecentActivity(){
 function renderIssueSummary(){
  const issues=supports.filter(r=>r.category==='technical'||r.feedback_type==='bug');
  const open=issues.filter(r=>['open','reviewed'].includes(r.status));
- metric('founder-open-issues',open.length);metric('founder-total-issues',issues.length);
+ metric('visual-open-issues',open.length);metric('founder-open-issues',open.length);metric('founder-total-issues',issues.length);
  const list=$('founder-issue-list');if(!list)return;
  list.replaceChildren(...(open.length?open.slice(0,10).map(r=>{const row=node('div',undefined,'founder-detail-row');row.append(node('strong',r.subject||'Technical report'),node('span',r.status+' · '+fmtDateTime(r.created_at)));return row;}):[node('p','No open technical reports in the loaded snapshot.')]));
 }
@@ -372,6 +379,7 @@ async function load(){
 
 function closeSidebar(){$('admin-sidebar').classList.remove('is-open');$('sidebar-backdrop').hidden=true;$('sidebar-toggle').setAttribute('aria-expanded','false')}
 function initUi(){
+  initAdminVisuals();
   // Bind sign-out before authorization checks so a user without admin access
   // can always leave the current session and sign in with the owner account.
   $('admin-logout').addEventListener('click',async()=>{
@@ -501,7 +509,7 @@ async function init(){
     $('refresh-dashboard').addEventListener('click',()=>void refreshAll());
     initMaintenance(client,user.id);
     initFeaturePush();
-    if(a.data.role==='owner')founder=initFounder(client);
+    if(a.data.role==='owner'){founder=initFounder(client);$('visual-founder-link').hidden=false;}
     $('admin-content').hidden=false;
     setStatus('Loading admin data…');
     await refreshAll();startPresence();

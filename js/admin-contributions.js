@@ -6,10 +6,11 @@ export function refreshContributions(client){
  running=(async()=>{const status=$('contribution-admin-status');if(!status)return;
  try{status.textContent='Loading verified contribution records…';const {data,error}=await client.functions.invoke('sathivo-contribution-checkout',{body:{action:'admin'}});if(error||!data)throw Error('Unavailable');
  for(const [id,key] of [['contribution-total','total_paise'],['contribution-today','today_paise'],['contribution-month','month_paise']])$(id).textContent=currency(data[key]);
+ if($('metric-contributions-today'))$('metric-contributions-today').textContent=currency(data.today_paise);
  $('contribution-captured').textContent=String(data.captured_count||0);$('contribution-failed').textContent=String(data.failed_count||0);
  const tbody=$('contribution-history');tbody.replaceChildren();for(const r of data.recent||[]){const tr=document.createElement('tr');for(const val of [new Date(r.created_at).toLocaleString('en-IN',{timeZone:'Asia/Kolkata'}),r.user_id||'Deleted account',currency(r.amount_paise),currency(r.refunded_paise),r.status,r.payment_id||r.provider_order_id||'—']){const cell=document.createElement('td');cell.textContent=val;tr.append(cell)}tbody.append(tr)}
  if(!tbody.children.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=6;td.textContent='No contribution orders yet.';tr.append(td);tbody.append(tr)}
  status.textContent=(data.checkout_enabled?'Live checkout enabled.':'Live checkout locked pending approval.')+' '+(data.provider_configured?'Credential names configured.':'Razorpay credentials need checking.');
- }catch{status.textContent='Contribution records unavailable. Refresh to retry.'}
+ }catch{status.textContent='Contribution records unavailable. Refresh to retry.';if($('metric-contributions-today'))$('metric-contributions-today').textContent='—';}
  })().finally(()=>{running=null});return running;
 }
