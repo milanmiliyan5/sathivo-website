@@ -82,6 +82,22 @@ Deno.serve(async (req) => {
     if (!key) throw new Error("Server configuration unavailable");
     const admin = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 
+    // Snapshot non-identifying analytics before deletion. Analytics failure must not block deletion.
+    const allowedReasons = new Set(["no_companions","no_responses","not_interested","technical","privacy_safety","other","not_provided"]);
+    const reason = typeof body?.reason === "string" && allowedReasons.has(body.reason) ? body.reason : "not_provided";
+    let accountKind = "unknown";
+    let feedback = typeof body?.feedback === "string" && reason !== "not_provided" ? body.feedback.trim().slice(0,500) : "";
+    // Discard feedback that appears to contain contact information rather than retaining it.
+    if (/@|https?:|www\.|(?:\+?\d[\d\s().-]{7,}\d)/i.test(feedback)) feedback = "";
+    try {
+      const {data: profile,error: profileError} = await admin.from("member_profiles").select("profile_kind,display_name").eq("user_id",user.id).maybeSingle();
+      if (!profileError) accountKind = ["customer","companion","both"].includes(profile?.profile_kind) ? profile.profile_kind : "not_set";
+      const knownNames = [profile?.display_name,user.user_metadata?.display_name,user.user_metadata?.name,user.user_metadata?.full_name];
+      if(knownNames.some(n=>typeof n==="string"&&n.trim().length>=2&&feedback.toLowerCase().includes(n.trim().toLowerCase()))) feedback="";
+    } catch { /* leave unknown; never block account deletion */ }
+    const created = Date.parse(user.created_at);
+    const ageDays = Number.isFinite(created) ? Math.max(0,Math.floor((Date.now()-created)/86400000)) : null;
+
     const { data: bookings, error: bookingError } = await admin
       .from("booking_requests")
       .select("id")
@@ -102,6 +118,15 @@ Deno.serve(async (req) => {
 
     const { error: deleteError } = await admin.auth.admin.deleteUser(user.id);
     if (deleteError) throw deleteError;
+
+    // Only completed deletions are counted. No account ID or account details are written.
+    try {
+      const {error: analyticsError} = await admin.from("account_deletion_events").insert({
+        account_kind: accountKind, account_age_days: ageDays, reason, feedback: feedback || null,
+      });
+      if(analyticsError) console.warn("account_deletion_analytics_failed");
+    } catch { console.warn("account_deletion_analytics_failed"); }
+
 
     return Response.json({ ok: true }, { headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
   } catch (error) {

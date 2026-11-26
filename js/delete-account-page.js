@@ -20,7 +20,7 @@ async function submit(event){
     const login=await client.auth.signInWithPassword({email:user.email,password});
     if(login.error)throw Error('Password confirmation failed.');
     status('Deleting your account and associated data…');
-    const {error}=await client.functions.invoke('delete-my-account',{body:{confirmation:'DELETE'}});
+    const {error}=await client.functions.invoke('delete-my-account',{body:{confirmation:'DELETE',reason:$('delete-reason').value,feedback:$('delete-feedback').value.trim().slice(0,500)}});
     if(error)throw error;
     try{await client.auth.signOut({scope:'local'})}catch{}
     try{localStorage.removeItem('sathivo.auth.v1')}catch{}

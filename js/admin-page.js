@@ -1,3 +1,4 @@
+import {initDeletions,refreshDeletions} from './admin-deletions.js?v=20261126-1';
 import {updateSidebarBadges,sidebarBadgeSections,sidebarReadAcknowledgements,safeBadgeCount} from './admin-sidebar-badges.js?v=20261122-manual-refresh-1';
 import {initAdminVisuals,renderAdminVisuals,visualUnavailable} from './admin-visuals.js?v=20261126-hourly-1';
 import {refreshContributions} from './admin-contributions.js?v=20261126-visual-1';
@@ -446,12 +447,12 @@ async function refreshAll(){
     try{
       // Wait for every request, even if one fails; never unlock Refresh while
       // requests from the previous snapshot are still running.
-      const results=await Promise.allSettled([load(),loadStats(),refreshContributions(client),refreshSidebarBadges(),founder?.refresh()]);
+      const results=await Promise.allSettled([load(),loadStats(),refreshContributions(client),refreshSidebarBadges(),founder?.refresh(),refreshDeletions(client)]);
       updateOnline();
       const failed=results.find(result=>result.status==='rejected');
       if(failed)throw failed.reason;
       const badges=results[3].value;
-      if(!badges||results[4].value===false||$('contribution-admin-status').textContent.includes('unavailable')){
+      if(!badges||results[4].value===false||results[5].value===false||$('contribution-admin-status').textContent.includes('unavailable')){
         setStatus('Some admin sections could not be refreshed. Try Refresh again.');
         return false;
       }
@@ -509,7 +510,7 @@ async function init(){
     $('refresh-dashboard').addEventListener('click',()=>void refreshAll());
     initMaintenance(client,user.id);
     initFeaturePush();
-    if(a.data.role==='owner'){founder=initFounder(client);$('visual-founder-link').hidden=false;}
+    if(a.data.role==='owner'){founder=initFounder(client);$('visual-founder-link').hidden=false;initDeletions();}
     $('admin-content').hidden=false;
     setStatus('Loading admin data…');
     await refreshAll();startPresence();
