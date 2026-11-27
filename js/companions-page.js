@@ -115,12 +115,44 @@ function tags(row){
  for(const {label,visual} of values){
   const chip=el('span',undefined,'companion-activity-chip');
   chip.dataset.activityTone=visual.tone;
-  const icon=el('i',visual.icon,'companion-activity-icon');
+  const icon=el('i',undefined,'companion-activity-icon');
   icon.setAttribute('aria-hidden','true');
+  icon.innerHTML=activityOutline(label);
   chip.append(icon,document.createTextNode(label));
   n.append(chip);
  }
  return n;
+}
+// Match the homepage's classic 21 activity SVGs. Only trusted static shapes enter markup.
+function activityOutline(label){
+ const shapes={
+  "Conversation": "<path d=\"M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5Z\"/><path d=\"M8 12h.01M12 12h.01M16 12h.01\" stroke-width=\"2.6\"/>",
+  "Coffee": "<path d=\"M3 8h15v8a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4zM18 9h1a3 3 0 0 1 0 6h-1M2 22h19M7 2v3m4-3v3m4-3v3\"/>",
+  "Movies": "<rect x=\"3\" y=\"9\" width=\"18\" height=\"12\" rx=\"2\"/><path d=\"M3 9 2 5l17-3 1 4L3 9Zm4-5 3 4m4-5 3 4M3 13h18\"/>",
+  "Shopping": "<path d=\"M5 7h14l2 14H3L5 7Z\"/><path d=\"M9 10V6a3 3 0 0 1 6 0v4\"/>",
+  "Events": "<path d=\"M3 5h18v5a2 2 0 0 0 0 4v5H3v-5a2 2 0 0 0 0-4zM15 5v3m0 3v2m0 3v3\"/>",
+  "Walking": "<circle cx=\"13\" cy=\"4\" r=\"2\"/><path d=\"m8 21 3-7 3 2 2 5m-5-7 1-6m0 0 4 4h4m-8-4-4 3-2 4\"/>",
+  "City Exploration": "<path d=\"M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z\"/><circle cx=\"12\" cy=\"10\" r=\"2.5\"/>",
+  "College Projects Help": "<path d=\"m2 8 10-5 10 5-10 5L2 8Zm4 2v7c4 3 8 3 12 0v-7m4-2v8\"/>",
+  "Study Partner": "<path d=\"M12 6C9 4 5 4 2 5v14c4-1 7-1 10 1 3-2 6-2 10-1V5c-3-1-7-1-10 1Zm0 0v14\"/>",
+  "Language Practice": "<path d=\"M3 5h13v10H9l-4 4v-4H3zM16 8h5v11h-3l-3 3v-3h-3v-4M6 9h7m-7 3h4\"/>",
+  "Interview Practice": "<rect x=\"9\" y=\"2\" width=\"6\" height=\"13\" rx=\"3\"/><path d=\"M5 10v2a7 7 0 0 0 14 0v-2m-7 9v3m-4 0h8\"/>",
+  "Digital Help": "<rect x=\"4\" y=\"3\" width=\"16\" height=\"13\" rx=\"2\"/><path d=\"m4 16-2 4h20l-2-4M10 18h4\"/>",
+  "New City Buddy": "<circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"m16 8-2.5 5.5L8 16l2.5-5.5L16 8Z\"/>",
+  "Hospital Visit Companion": "<rect x=\"5\" y=\"3\" width=\"14\" height=\"18\" rx=\"2\"/><path d=\"M12 6v6m-3-3h6M9 21v-5h6v5M3 21h18\"/>",
+  "Appointment Companion": "<rect x=\"3\" y=\"5\" width=\"18\" height=\"16\" rx=\"2\"/><path d=\"M7 3v4m10-4v4M3 10h18m-12 6 2 2 4-4\"/>",
+  "Senior Social Companion": "<path d=\"M20.5 8.5c0 4-8.5 9-8.5 9s-8.5-5-8.5-9a4.5 4.5 0 0 1 8.5-2 4.5 4.5 0 0 1 8.5 2Z\"/><path d=\"m3 20 4-2m14 2-4-2\"/>",
+  "Sports & Fitness Partner": "<path d=\"M3 9v6m3-9v12m12-12v12m3-9v6M6 12h12\"/>",
+  "Gaming Partner": "<path d=\"M7 7h10c3 0 4 2 5 7l.5 3c.3 2-2 3-3.5 1.5L15 15H9l-4 3.5C3.5 20 1.2 19 1.5 17l.5-3c1-5 2-7 5-7Z\"/><path d=\"M6 11v4m-2-2h4m8-1h.01m3 2h.01\" stroke-width=\"2\"/>",
+  "Photography & Creative Partner": "<path d=\"M3 7h4l2-3h6l2 3h4v13H3z\"/><circle cx=\"12\" cy=\"13\" r=\"4\"/>",
+  "Online Chat": "<rect x=\"3\" y=\"4\" width=\"18\" height=\"14\" rx=\"3\"/><path d=\"m7 18-3 3v-3m3-7h.01m5 0h.01m5 0h.01\" stroke-width=\"2\"/>",
+  "Phone Conversation": "<path d=\"M5 3h4l2 5-3 2c1 3 3 5 6 6l2-3 5 2v4c0 2-2 2-3 2C10 20 4 14 3 6c0-1 0-3 2-3Z\"/>",
+  "Online": "<rect x=\"4\" y=\"3\" width=\"16\" height=\"13\" rx=\"2\"/><path d=\"m4 16-2 4h20l-2-4M10 18h4\"/>",
+  "In person": "<path d=\"M21 11.5a8.5 8.5 0 0 1-8.5 8.5 9 9 0 0 1-3.8-.9L3 21l1.9-5.7A8.5 8.5 0 1 1 21 11.5Z\"/><path d=\"M8 12h.01M12 12h.01M16 12h.01\" stroke-width=\"2.6\"/>",
+  "Online & in person": "<rect x=\"3\" y=\"4\" width=\"18\" height=\"13\" rx=\"2\"/><path d=\"M8 21h8m-4-4v4M7 10h10m-5-4v8\"/>"
+};
+ const shape=Object.hasOwn(shapes,label)?shapes[label]:'<circle cx="12" cy="12" r="8"/><path d="M12 8v8m-4-4h8"/>';
+ return '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6b2146" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false" aria-hidden="true" style="display:block">'+shape+'</svg>';
 }
 function portrait(row){
  const initial=row.display_name.slice(0,1).toUpperCase(),n=el('div',initial,'portrait');
