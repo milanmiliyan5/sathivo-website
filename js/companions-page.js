@@ -6,6 +6,24 @@ import {openSafetyReport,confirmSafetyBlock} from './safety-actions.js?v=2026101
 import {districtsByState,statesAndUTs,popularIndianCities} from './india-districts.js?v=20261015-1';
 
 const $=id=>document.getElementById(id),directory=!!$('filters');
+// The booking view is a separate, directly navigable URL, not an inline form.
+const bookingView=!directory&&!!$('detail')&&new URLSearchParams(location.search).get('view')==='booking';
+function bookingPageUrl(publicId){
+ return 'companion.html?id='+encodeURIComponent(publicId)+'&view=booking';
+}
+function profilePageUrl(publicId){
+ return 'companion.html?id='+encodeURIComponent(publicId);
+}
+if(bookingView){
+ document.body.classList.add('booking-page-view');
+ document.title='Booking Details — Sathivo';
+ $('detail').classList.remove('detail-card');
+ $('detail').classList.add('booking-page-content');
+ const back=$('main')?.querySelector(':scope > a.text-link');
+ const id=new URLSearchParams(location.search).get('id')||'';
+ if(back){back.textContent='← Back to profile';back.href=profilePageUrl(id);}
+ $('status').textContent='Loading booking details…';
+}
 const savedView=directory&&new URLSearchParams(location.search).get('saved')==='1';
 if(savedView){
  document.body.classList.add('saved-companions-view');
@@ -406,20 +424,26 @@ function bookingChoices(label,name,options,initial){
  fieldset.append(group);
  return {field:fieldset,inputs,get value(){return inputs.find(input=>input.checked)?.value||''}};
 }
+function profileBookingAction(r,access){
+ const wrap=el('div',undefined,'profile-booking-action');
+ if(['own','checking','unavailable'].includes(access)||!Number(r.hourly_rate)||!r.categories?.length||!['online','in-person','both'].includes(r.meeting_mode)){
+  const button=el('button','Book Now','button button-outline own-booking-disabled');
+  button.type='button';button.disabled=true;
+  wrap.append(button);
+  const reason=access==='own'?'You cannot book your own profile.':access==='checking'?'Checking booking access…':access==='unavailable'?'Booking temporarily unavailable.':'This companion is not currently available for booking.';
+  wrap.append(el('p',reason,'field-hint'));
+  return wrap;
+ }
+ const link=el('a','Book Now','button button-primary');link.href=bookingPageUrl(r.public_id);
+ wrap.append(link);return wrap;
+}
 function bookingForm(r,access='checking'){
  const wrap=el('section',undefined,'booking-form');
  if(['own','checking','unavailable'].includes(access))return disabledBookingPanel(wrap,access);
  wrap.classList.add('booking-compact');
- wrap.append(el('h2','Book your company'));
- if(!Number(r.hourly_rate)){wrap.append(el('p','This companion has not set a rate yet, so new booking requests are temporarily unavailable.','payment-note'));return wrap;}
+ wrap.append(el('h2','Booking Details'));
+ if(!Number(r.hourly_rate)||!r.categories?.length||!['online','in-person','both'].includes(r.meeting_mode)){wrap.append(el('p','This companion has not set a rate yet, so new booking requests are temporarily unavailable.','payment-note'));return wrap;}
  if(access==='guest'||!currentUser){const a=el('a','Sign in to send a request ↗','button button-primary');a.href='account.html#login';wrap.append(a);return wrap;}
- const companion=el('div',undefined,'booking-person'),photo=portrait(r);
- photo.classList.add('booking-person-photo');
- const identity=el('div',undefined,'booking-person-name');
- identity.append(el('strong',r.display_name),el('small','Public companion profile'));
- const listed=el('div',undefined,'booking-listed-rate');
- listed.append(el('strong',rateText(r.hourly_rate)),el('small','Listed rate'));
- companion.append(photo,identity,listed);wrap.append(companion);
  const form=document.createElement('form'),grid=el('div',undefined,'booking-grid');
  const category=document.createElement('select');category.required=true;r.categories.forEach(v=>category.add(new Option(experienceLabel(v),v)));
  const modes=[];if(['online','both'].includes(r.meeting_mode))modes.push(['online','Online']);if(['in-person','both'].includes(r.meeting_mode))modes.push(['in-person','In person']);
@@ -444,15 +468,16 @@ function bookingForm(r,access='checking'){
  const note=document.createElement('textarea');note.maxLength=1000;note.rows=2;note.placeholder='Anything about your plan…';
  const field=(label,input,full=false,helper='')=>{const box=el('div',undefined,'booking-field'+(full?' full':'')),lab=el('label',label);lab.append(input);box.append(lab);if(helper)box.append(el('small',helper,'booking-helper'));return box;};
  const schedule=el('div',undefined,'booking-field full booking-schedule');schedule.append(field('Date',date),field('Time',time));
- grid.append(field('Activity',category,true),mode.field,schedule,duration.field,field('Your hourly offer (₹)',offer,true,'You can change the offer. The companion must accept it.'),field('Note (optional)',note,true));
+ grid.append(field('Activity',category,true),mode.field,schedule,duration.field,field('Hourly offer (₹)',offer,true),field('Note (optional)',note,true));
  const total=el('div',undefined,'booking-total'),amount=el('div',undefined,'booking-total-copy'),fees=el('div',undefined,'booking-total-fees');
  amount.append(el('small','Estimated total'),estimate);fees.append(el('strong','₹0 platform fee'),length);total.append(amount,fees);
  const payment=el('details',undefined,'booking-safety-details');
- payment.append(el('summary','Payment & safety'),el('p','Sathivo does not collect, manage or process payments, hold funds, issue refunds or provide payment protection. Pay directly by UPI or cash; verify the recipient and amount. Never share UPI PINs, passwords, OTPs or your exact home address. For in-person plans, meet in a public place.'));
+ payment.append(el('summary','Payment & Safety'),el('p','Sathivo does not collect, manage or process payments, hold funds, issue refunds or provide payment protection. Pay directly by UPI or cash; verify the recipient and amount. Never share UPI PINs, passwords, OTPs or your exact home address. For in-person plans, meet in a public place.'));
  form.append(grid,total,bookingSafety,el('p','Pay directly to the companion. No payment protection.','booking-payment-short'),payment);
- const row=el('div',undefined,'booking-submit-row'),b=el('button','Send Request ↗','button button-primary'),status=el('p','', 'field-hint');b.type='submit';status.setAttribute('role','status');row.append(b,status);form.append(row,el('p','Booking confirmed only after acceptance.','booking-confirmation-note'));
+ const row=el('div',undefined,'booking-submit-row'),b=el('button','Send Request','button button-primary'),status=el('p','', 'field-hint');b.type='submit';status.setAttribute('role','status');row.append(b,status);form.append(row,el('p','Booking confirmed only after acceptance.','booking-confirmation-note'));
+ const bookingOwner=currentUser.id;
  form.onsubmit=async e=>{
-  e.preventDefault();if(access!=='other'||!currentUser)return;
+  e.preventDefault();if(access!=='other'||!currentUser||b.disabled||currentUser.id!==bookingOwner)return;
   updateMinimum();
   const chosen=bookingLocalDate(date.value,time.value);
   if(!chosen||chosen<bookingMinimum()){status.textContent='Choose a date and time at least 30 minutes from now.';date.focus();return}
@@ -460,6 +485,7 @@ function bookingForm(r,access='checking'){
   b.disabled=true;status.textContent='Sending request…';
   try{const iso=chosen.toISOString();const offerRate=Number(offer.value);
    if(!Number.isInteger(offerRate)||offerRate<1||offerRate>100000){status.textContent='Enter a valid hourly offer between ₹1 and ₹1,00,000.';offer.focus();b.disabled=false;return}
+   const identity=await client.auth.getUser();if(identity.error||identity.data?.user?.id!==bookingOwner)throw Error('Sign in again before sending this request.');
    const {data,error}=await client.rpc('create_booking_request_with_offer',{p_companion_public_id:r.public_id,p_category:category.value,p_meeting_mode:mode.value,p_requested_for:iso,p_duration_minutes:Number(duration.value),p_note:note.value.trim(),p_offer_hourly_rate:offerRate});if(error)throw error;status.textContent='Request sent. Notifying the companion…';await sendBookingPush(client,data,'request');status.textContent='Request sent. Opening your bookings…';location.href='bookings.html?id='+encodeURIComponent(data)+'&booked=1'
   }catch(err){status.textContent=err.message||'Could not send request.';b.disabled=false;}
  };
@@ -530,6 +556,11 @@ async function detail(){
    publicClient.from('companion_rating_public').select('review_count,average_rating').eq('public_id',id).maybeSingle()
   ]);
   if(error)throw error;if(!r){$('status').textContent='This profile is unavailable or has been hidden by its owner.';return;}
+  if(bookingView){
+   const access=await bookingAccess(r);
+   $('detail').replaceChildren(bookingForm(r,access));$('detail').hidden=false;$('status').textContent='';document.title='Booking Details — Sathivo';
+   return;
+  }
   r.review_count=rating?.review_count||0;r.average_rating=rating?.average_rating||null;
   const [current]=await withCompletedCounts([r]);r.completed_count=current?.completed_count??null;r.is_active_member=current?.is_active_member===true;
   const access=await bookingAccess(r);
@@ -577,9 +608,8 @@ async function detail(){
   if(!own)safetyActions.append(reportBtn,blockBtn);
   safetyControls.append(safetyHeading,safetyActions,safetyFeedback);
   copy.append(el('p',locationName(r.location_id,r.city_name)),el('div',rateText(r.hourly_rate),'detail-rate'),trustChips(r),tags(r));
-  // Prioritize the complete booking form immediately after rate and experience tags.
-  // Keep all trust, safety, About and payment information intact below it.
-  copy.append(bookingForm(r,access));
+  // The profile contains only the booking entry point; the form lives in the dedicated booking view.
+  copy.append(profileBookingAction(r,access));
   const trust=el('section',undefined,'profile-trust-panel');trust.append(el('strong','Trust & account details'));const trustGrid=el('div',undefined,'profile-trust-grid');
   trustGrid.append(el('span',r.email_verified_at?'✓ Email verified':'Email verification unavailable'),el('span',r.adult_confirmed?'18+ self-declared':'Age declaration missing'),el('span',r.boundaries_accepted?'Platonic boundaries accepted':'Boundaries declaration missing'));
   if(r.joined_at)trustGrid.append(el('span','Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(r.joined_at))));if(r.safety_id)trustGrid.append(el('span','Safety ID '+r.safety_id));trust.append(trustGrid);copy.append(trust,safetyControls);
@@ -677,6 +707,14 @@ async function init(){
   catch(error){
    locationsLoaded=false;
    console.warn('Sathivo location index temporarily unavailable:',error?.code||error?.message||'network error');
+  }
+  if(bookingView){
+   // Check the current account before enabling any booking controls.
+   client=await getSathivoClient();
+   const auth=await client.auth.getUser();
+   currentUser=auth.error?null:auth.data?.user||null;
+   detailAuthReady=true;authStarted=true;
+   await detail();return;
   }
   if(savedView){
    // Saved profiles are private account data. Authenticate before applying
