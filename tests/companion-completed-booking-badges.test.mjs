@@ -23,7 +23,7 @@ test('Explore and public companion profile show counts via read-only RPC',async(
  const list=await read('companions.html');
  const profile=await read('companion.html');
  for(const html of [list,profile]){
-  assert.match(html,/companions-page\.js\?v=20261126-first-card-1/);
+  assert.match(html,/companions-page\.js\?v=20261127-rated-only-1/);
   assert.match(html,/companions\.css\?v=[a-z0-9.-]+/i);
  }
 });
