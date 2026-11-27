@@ -19,12 +19,41 @@ function requestHistory(state){
  if(!(next===null||Object.hasOwn(viewNames,next)))return null;
  return {view:next,fromMenu:next!==null&&entry.fromMenu===true};
 }
-let requestBackPending=false;
+let requestBackPending=false,requestsReady=false;
+function setRequestLoading(loading){
+ const hub=$('request-hub-skeleton'),list=$('request-list-skeleton');
+ const initial=loading&&!requestsReady;
+ hub.hidden=!initial||view!==null;
+ list.hidden=!initial||view===null;
+ $('request-menu').hidden=initial||view!==null;
+ $('request-detail').hidden=view===null;
+ $('request-view-count').hidden=initial;
+ $('requests').hidden=initial;
+ $('request-menu').setAttribute('aria-busy',String(initial));
+ $('request-detail').setAttribute('aria-busy',String(initial));
+ $('status').classList.toggle('request-loading-sr',initial);
+ if(initial){
+  $('empty').hidden=true;
+  if(view)$('request-view-name').textContent=viewNames[view];
+  $('status').textContent='Loading requests…';
+ }
+}
+function finishRequestLoadingError(error){
+ if(!requestsReady){
+  $('request-hub-skeleton').hidden=true;$('request-list-skeleton').hidden=true;
+  $('request-menu').hidden=true;$('request-detail').hidden=true;
+  $('request-menu').setAttribute('aria-busy','false');$('request-detail').setAttribute('aria-busy','false');
+  $('status').classList.remove('request-loading-sr');
+ }
+ $('status').textContent=error?.message||'Could not load requests.';
+}
 function writeRequestHistory(mode='replaceState',fromMenu=false){
  history[mode]({sathivoRequests:{view,fromMenu}},'',location.href);
 }
 function showMenu(){
- view=null;$('request-detail').hidden=true;$('request-menu').hidden=false;$('status').textContent='';
+ view=null;
+ if(!requestsReady){setRequestLoading(true);return;}
+ $('request-detail').hidden=true;$('request-menu').hidden=false;$('status').textContent='';
 }
 function focusRequestMenu(){
  window.scrollTo({top:0,left:0,behavior:'instant'});
@@ -134,6 +163,8 @@ function sentCard(r){
 }
 function card(r){return r.companion_id===user.id?receivedCard(r):sentCard(r)}
 function render(){
+ if(!requestsReady){setRequestLoading(true);return;}
+ setRequestLoading(false);
  syncRequestCounts();
  if(!view){$('status').textContent='';$('request-detail').hidden=true;$('request-menu').hidden=false;return}
  $('request-menu').hidden=true;$('request-detail').hidden=false;
@@ -175,6 +206,7 @@ async function load(){
  const prior=rows;rows=await withCurrentBookingNames(client,accessible);
  reviewLookupOk=!reviews.error;
  reviewedBookings=new Set((reviews.data||[]).map(r=>r.booking_id));
+ requestsReady=true;
  const newlyCompleted=rows.some(r=>r.companion_id===user.id&&r.status==='completed'&&prior.some(p=>p.id===r.id&&p.status==='accepted'));
  if(newlyCompleted)offerCompletionFeedback(user);
  if(linkedRequestId&&!linkedRequestChecked){
@@ -230,6 +262,9 @@ async function rateBooking(r){
 }
 async function markLinkedNotification(){if(!linkedRequestId)return;await client.from('notifications').update({read_at:new Date().toISOString()}).eq('user_id',user.id).eq('link','requests.html?id='+linkedRequestId).is('read_at',null)}
 async function init(){try{
+ const initialHistory=requestHistory(history.state);
+ if(initialHistory)view=initialHistory.view;
+ setRequestLoading(true);
  client=await getSathivoClient();
  const u=await client.auth.getUser();user=u.data.user;if(!user){if(linkedRequestId){const signIn=new URL('account.html',location.href);signIn.searchParams.set('next','requests.html?id='+linkedRequestId);signIn.hash='login';location.replace(signIn.href)}else location.replace('account.html#login');return}
  const restored=requestHistory(history.state);
@@ -250,6 +285,6 @@ async function init(){try{
   else openView(entry.view,{record:false});
  });
  await markLinkedNotification();await load();
- channel=client.channel('incoming-requests:'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_requests'},()=>void load()).subscribe();
- }catch(e){$('status').textContent=e.message||'Could not load requests.'}}
+ channel=client.channel('incoming-requests:'+user.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_requests'},()=>void load().catch(finishRequestLoadingError)).subscribe();
+ }catch(e){finishRequestLoadingError(e)}}
 window.addEventListener('pagehide',()=>{if(channel)void client.removeChannel(channel)});void init();
