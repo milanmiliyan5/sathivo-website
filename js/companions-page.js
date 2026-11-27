@@ -123,7 +123,11 @@ function cardRate(rate){
  return n;
 }
 function totalFor(rate,minutes){return Number(rate)>0?Math.round(Number(rate)*Number(minutes)/60):null}
-function ratingText(row){const n=Number(row.review_count||0);return n>0?'★ '+Number(row.average_rating||0).toFixed(1)+' · '+n+' review'+(n===1?'':'s'):'☆ No reviews yet';}
+function hasCompanionRating(row){
+ const n=Number(row.review_count),stars=Number(row.average_rating);
+ return Number.isSafeInteger(n)&&n>0&&Number.isFinite(stars)&&stars>=1&&stars<=5;
+}
+function ratingText(row){const n=Number(row.review_count);return hasCompanionRating(row)?'★ '+Number(row.average_rating).toFixed(1)+' · '+n+' review'+(n===1?'':'s'):'No reviews yet';}
 function completedBookingBadge(row){
  const raw=row.completed_count;
  if(raw===null||raw===undefined)return null; // Never mislabel a failed lookup as 0.
@@ -137,10 +141,13 @@ function completedBookingBadge(row){
 function experienceAndRating(row){
  const wrap=el('div',undefined,'experience-rating-row');
  const badge=completedBookingBadge(row);if(badge)wrap.append(badge);
- const link=el('a',ratingText(row),'public-rating-link');
- link.href='companion.html?id='+encodeURIComponent(row.public_id)+'#ratings-and-reviews';
- link.setAttribute('aria-label',ratingText(row)+' — read ratings and reviews');
- wrap.append(link);return wrap;
+ if(hasCompanionRating(row)){
+  const link=el('a',ratingText(row),'public-rating-link');
+  link.href='companion.html?id='+encodeURIComponent(row.public_id)+'#ratings-and-reviews';
+  link.setAttribute('aria-label',ratingText(row)+' — read ratings and reviews');
+  wrap.append(link);
+ }
+ return wrap.childElementCount?wrap:null;
 }
 async function withCompletedCounts(rows){
  const ids=[...new Set(rows.map(row=>row.public_id).filter(Boolean))];
@@ -237,7 +244,7 @@ function card(row){
  const n=el('article',undefined,'companion-card'),copy=el('div',undefined,'card-copy'),head=el('div',undefined,'card-heading-row'),name=namedHeading('h2',row);
  head.append(name,favoriteButton(row));
  copy.append(head);
- copy.append(experienceAndRating(row));
+ const experience=experienceAndRating(row);if(experience)copy.append(experience);
  copy.append(el('p',locationName(row.location_id,row.city_name)),cardRate(row.hourly_rate),trustChips(row,true),tags(row),el('p',row.bio.length>150?row.bio.slice(0,147)+'…':row.bio));
  const actions=el('div',undefined,'card-actions'),link=el('a','Get to know '+row.display_name+' ↗','text-link companion-profile-link'),share=el('button','Share ↗','text-link share-link');
  const profileHref='companion.html?id='+encodeURIComponent(row.public_id);
@@ -470,7 +477,7 @@ async function detail(){
   if(own){favorite.disabled=true;favorite.title='Your own profile';favorite.setAttribute('aria-label','Your own profile');}
   titleRow.append(namedHeading('h1',r),favorite);copy.append(titleRow);
   if(own)copy.append(el('span','Your own profile','own-profile-badge'));
-  copy.append(experienceAndRating(r));
+  const experience=experienceAndRating(r);if(experience)copy.append(experience);
   // Keep the lightweight share action below the name; safety controls live
   // together under Trust & account details so the profile header stays clean.
   const shareRow=el('div',undefined,'profile-actions sathivo-profile-share-row'),share=el('button',own?'Share My Profile ↗':'Share Profile ↗','sathivo-profile-share-button');
