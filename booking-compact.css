@@ -51,3 +51,16 @@ body.sathivo-2d .directory .booking-form.booking-compact{
 .booking-compact .field-hint:empty{display:none}
 @media(max-width:350px){.booking-compact .booking-schedule{grid-template-columns:1fr}.booking-compact .booking-person-photo{display:none}.booking-compact .booking-choice span{font-size:.72rem}}
 @media(prefers-reduced-motion:reduce){.booking-compact *{transition:none!important;animation:none!important}}
+
+/* Dedicated booking route: one centered, responsive column. */
+.profile-booking-action{margin:18px 0;display:grid;gap:7px}
+.profile-booking-action .button{width:100%;min-height:46px;justify-content:center;box-sizing:border-box;text-align:center}
+.profile-booking-action .field-hint{margin:0;font-size:.76rem}
+body.booking-page-view .directory{max-width:680px;width:100%;box-sizing:border-box}
+body.booking-page-view .booking-page-content{display:block;min-width:0;width:100%;padding:0;margin:0;background:transparent;box-shadow:none;border:0}
+body.booking-page-view .booking-page-content[hidden]{display:none!important}
+body.booking-page-view .directory .booking-form.booking-compact{margin-top:14px;max-width:100%;box-sizing:border-box}
+body.booking-page-view .booking-compact form{margin-top:0}
+body.booking-page-view .booking-compact .booking-field>label>input,body.booking-page-view .booking-compact .booking-field>label>select,body.booking-page-view .booking-compact textarea{width:100%;box-sizing:border-box}
+body.booking-page-view .booking-compact .booking-schedule{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:380px){body.booking-page-view .booking-compact .booking-schedule{grid-template-columns:1fr}}
