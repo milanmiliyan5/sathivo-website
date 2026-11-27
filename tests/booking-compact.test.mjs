@@ -19,3 +19,20 @@ test('compact booking retains all backend request arguments and safety',()=>{
  for(const n of ['30','60','90','120','180'])assert.ok(form.includes("['"+n+"',"));
  assert.match(form,/access!=='other'\|\|!currentUser/);
 });
+
+test('Book Now uses a separate booking URL and never embeds a form in profile details',()=>{
+ const routing=vm.createContext({encodeURIComponent});
+ vm.runInContext(source.slice(source.indexOf('function bookingPageUrl('),source.indexOf('if(bookingView){')),routing);
+ const id='550e8400-e29b-41d4-a716-446655440000';
+ assert.equal(routing.bookingPageUrl(id),'companion.html?id='+id+'&view=booking');
+ assert.equal(routing.profilePageUrl(id),'companion.html?id='+id);
+ assert.match(source,/copy\.append\(profileBookingAction\(r,access\)\)/);
+ assert.doesNotMatch(source,/copy\.append\(bookingForm\(/);
+ assert.match(source,/\$\('detail'\)\.replaceChildren\(bookingForm\(r,access\)\)/);
+ const action=source.slice(source.indexOf('function profileBookingAction('),source.indexOf('function bookingForm('));
+ assert.match(action,/\['own','checking','unavailable'\]/);
+ assert.match(action,/button\.disabled=true/);
+ assert.match(action,/link\.href=bookingPageUrl\(r\.public_id\)/);
+ assert.match(source,/const bookingOwner=currentUser\.id/);
+ assert.match(source,/identity\.data\?\.user\?\.id!==bookingOwner/);
+});
