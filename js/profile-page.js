@@ -1,7 +1,7 @@
 import {createProfileScrollReset} from './profile-scroll.js?v=20261125-profile-scroll-1';
 import {profileSectionCompletion,savedProfileTicks,nextProfileStage,stageAfterSave,availableProfileTabs,profileDraftChanged} from './profile-section-completion.js?v=20261125-persistent-ticks-1';
 import {experienceCategoryGroups,experienceCategories,experienceLabel,experienceSafetyNote,experienceVisual} from './experience-categories.js?v=20261123-pastels-1';
-import { setupPublishing,publicationProblem } from './listing-publish.js?v=20261126-safari-photo-1';
+import { setupPublishing,publicationProblem } from './listing-publish.js?v=20261127-public-sync-1';
 import {districtsByState,statesAndUTs} from './india-districts.js?v=20261015-1';
 import { authConfig } from './auth-config.js?v=20260926-1';
 import { getSathivoClient } from './supabase-client.js?v=20261025-polish-1';
@@ -312,10 +312,11 @@ form.addEventListener('submit',async event=>{
  let privateSaved=false,advance=false;
  try{
   const fresh=await client.auth.getUser();if(fresh.error||fresh.data.user?.id!==user.id)throw Error('Your session ended. Sign in again before saving.');
-  // Personal and Companion save only private data. Only Privacy applies new publication choices.
+  // Only Privacy changes visibility. Existing public cards can refresh saved details.
   const final=section==='privacy'||!companion;
   const file=section==='personal'&&companion?$('photo').files[0]:null;
   let preparedPhoto=null;
+  const priorStage=savedSectionProfile?.setup_stage;
   await publishing.prepareSave({applyVisibility:final,photoChanged:section==='privacy'&&['companion','privacy'].includes(savedSectionProfile?.setup_stage)});
   let row;
   if(section==='personal'){
@@ -356,7 +357,15 @@ form.addEventListener('submit',async event=>{
    message(visibility.published?(visibility.active?'Profile saved and published.':'Profile saved. Public listing is subject to moderation.'):'Profile saved and kept private.');
    if(!companion&&wasNew)window.setTimeout(()=>location.assign('companions.html'),450);
   }else{
-   message('');
+   const sync=await publishing.syncExistingPublic(data,{refreshPhoto:section==='personal'||['companion','privacy'].includes(priorStage),uploadedBlob:preparedPhoto?.blob||null});
+   if(sync.synced){
+    const finish=await client.from('member_profiles').update({setup_stage:'complete'}).eq('user_id',user.id).select('*').single();
+    if(finish.error||!finish.data)throw Error('Public profile updated, but progress could not be recorded. Save again to retry.');
+    savedSectionProfile=finish.data;
+    message('Profile saved and public profile updated.');
+   }else{
+    message('Details saved. Review Privacy to apply any pending visibility changes.');
+   }
    advance=true;
   }
   dirty=profileDraftChanged(savedSectionProfile,currentDraft(),{pendingPhoto:!!$('photo').files[0]})||publishing.hasPendingChanges();

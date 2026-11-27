@@ -132,6 +132,42 @@ export async function setupPublishing({client,user,onDraftChange,isCompanion,can
   }
   return {published:true,active:listing.moderation_status==='active'};
  }
+ // A section save may refresh an already public card, never enable visibility.
+ async function syncExistingPublic(p,{refreshPhoto=false,uploadedBlob=null}={}){
+  if(!known||!wasPublicAtSave||!listing?.published||pending()||listing.moderation_status!=='active')return {synced:false};
+  const before=visibilityDraft(listing);
+  await refresh({preserveDraft:true});
+  if(!same(before,visibilityDraft(listing))||pending()||!listing?.published||listing.moderation_status!=='active')return {synced:false};
+  const problem=publicationProblem(p);
+  if(problem)throw Error(problem+' Your public details were not updated.');
+  const target=isBuiltinAvatar(p.avatar_path)?p.avatar_path:user.id+'/avatar.webp';
+  const previousPhoto=listing.photo_path;
+  if(!isBuiltinAvatar(target)){
+   if(p.avatar_path!==user.id+'/avatar.webp')throw Error('Choose your own profile photo before updating your public profile.');
+   if(refreshPhoto||previousPhoto!==target){
+    let blob=uploadedBlob;
+    if(!blob){const image=await client.storage.from('profile-photos').download(p.avatar_path);if(image.error||!image.data)throw Error('Public photo could not be prepared. Save again to retry.');blob=image.data;}
+    const type=await encodedPhotoType(blob);
+    if(!type)throw Error('The saved photo format is unsupported. Choose a new photo and save again.');
+    if(blob.type!==type)blob=blob.slice(0,blob.size,type);
+    const upload=await client.storage.from('listing-photos').upload(target,blob,{upsert:true,contentType:type,cacheControl:'0'});
+    if(upload.error)throw Error('Public photo upload failed. Save again to retry.');
+   }
+  }
+  const row={photo_path:target};
+  for(const k of ['display_name','bio','location_id','city_name','languages','interests','categories','meeting_mode','availability','hourly_rate'])row[k]=p[k];
+  // Match the original visibility and moderation; do not write published or gender.
+  let update=client.from('companion_listings').update(row).eq('user_id',user.id).eq('published',true).eq('moderation_status','active');
+  update=before.showGender?update.not('public_gender','is',null):update.is('public_gender',null);
+  const saved=await update.select('public_id').maybeSingle();
+  if(saved.error||!saved.data)throw Error('Public profile was not updated. Review Privacy and save again.');
+  await refresh({preserveDraft:true});
+  if(!listing?.published||listing.moderation_status!=='active'||pending())throw Error('Visibility changed in another session. Review Privacy and save again.');
+  if(isBuiltinAvatar(target)&&previousPhoto===user.id+'/avatar.webp'){
+   try{await client.storage.from('listing-photos').remove([previousPhoto]);}catch{}
+  }
+  return {synced:true};
+ }
  publish.addEventListener('click',()=>{if(!busy&&known&&isCompanion())change('public');});
  gender.addEventListener('click',()=>{if(!busy&&known&&isCompanion())change('gender');});
  try{await refresh();}catch(error){status.textContent=error.message;}
@@ -139,7 +175,7 @@ export async function setupPublishing({client,user,onDraftChange,isCompanion,can
   isKnown:()=>known,hasListing:()=>known&&!!listing,selection:()=>({...draft}),hasPendingChanges:pending,
   setBusy(value){busy=value;render();},
   syncMode(){if(!isCompanion())change('private');else if(!canShowGender())change('no-gender');render();},
-  prepareSave,saveVisibility,
+  prepareSave,saveVisibility,syncExistingPublic,
   async recover(){try{await refresh({preserveDraft:true});}catch{}}
  };
 }

@@ -78,3 +78,44 @@ test('switch clicks never write, save publishes/hides, and stale visibility is r
   assert.equal(pub.selection().published,true);
  }finally{globalThis.document=original;}
 });
+
+
+test('section saves sync only an existing active public card without republishing or changing gender',async()=>{
+ const original=globalThis.document,nodes=new Map();
+ function node(id){if(!nodes.has(id))nodes.set(id,{dataset:{},listeners:{},setAttribute(){},removeAttribute(){},addEventListener(k,f){this.listeners[k]=f;}});return nodes.get(id);}
+ globalThis.document={getElementById:node};
+ let listing=null,writes=[],uploads=0,pushes=0;
+ const client={from(table){let action='select',payload,filters=[];
+ const chain={select(){return chain},eq(k,v){filters.push([k,v]);return chain},is(){return chain},not(){return chain},update(v){action='update';payload=v;return chain},async maybeSingle(){if(action==='update'){if(!listing||!listing.published||listing.moderation_status!=='active')return {data:null};writes.push({payload,filters});listing={...listing,...payload};}return {data:listing?{...listing}:null,error:null}}};return chain;},
+ storage:{from(bucket){return {download:async()=>({data:new Blob([new Uint8Array([255,216,255,224,0,0,0,0,0,0,0,0])],{type:'image/jpeg'})}),upload:async()=>{uploads++;return {error:null}},remove:async()=>({error:null})}}},
+ functions:{invoke:async()=>{pushes++;}}};
+ const p={profile_kind:'companion',adult_confirmed:true,boundaries_accepted:true,bio:'A friendly companion for walks.',categories:['coffee'],hourly_rate:1500,avatar_path:'builtin:female-1',gender:'female'};
+ try{
+  let pub=await setupPublishing({client,user:{id:'test-user'},onDraftChange(){},isCompanion:()=>true,canShowGender:()=>true});
+  await pub.prepareSave({applyVisibility:false});
+  assert.equal((await pub.syncExistingPublic(p)).synced,false);
+  assert.equal(writes.length,0);
+  listing={public_id:'test-id',published:true,public_gender:null,moderation_status:'active',photo_path:'builtin:male-1'};
+  pub=await setupPublishing({client,user:{id:'test-user'},onDraftChange(){},isCompanion:()=>true,canShowGender:()=>true});
+  await pub.prepareSave({applyVisibility:false});
+  assert.equal((await pub.syncExistingPublic(p)).synced,true);
+  assert.equal(listing.hourly_rate,1500);assert.equal(listing.photo_path,'builtin:female-1');
+  assert.equal('published' in writes[0].payload,false);assert.equal('public_gender' in writes[0].payload,false);
+  await pub.prepareSave({applyVisibility:false});
+  assert.equal((await pub.syncExistingPublic({...p,avatar_path:'test-user/avatar.webp'},{refreshPhoto:true})).synced,true);
+  assert.equal(uploads,1);assert.equal(listing.photo_path,'test-user/avatar.webp');
+  await pub.prepareSave({applyVisibility:false});
+  await pub.syncExistingPublic({...p,avatar_path:'test-user/avatar.webp'},{refreshPhoto:true});
+  assert.equal(uploads,2);
+  node('publish-listing').listeners.click();
+  await pub.prepareSave({applyVisibility:false});
+  assert.equal((await pub.syncExistingPublic(p)).synced,false);
+  assert.equal(writes.length,3);
+  assert.equal(pushes,0);
+  listing={...listing,published:false};
+  pub=await setupPublishing({client,user:{id:'test-user'},onDraftChange(){},isCompanion:()=>true,canShowGender:()=>true});
+  await pub.prepareSave({applyVisibility:false});
+  assert.equal((await pub.syncExistingPublic(p)).synced,false);
+  assert.equal(writes.length,3);
+ }finally{globalThis.document=original;}
+});
