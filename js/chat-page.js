@@ -6,6 +6,8 @@ import {confirmCompletion,completionState,completionLabel,submitCompletion} from
 import {compressImageFile} from './image-compress.js?v=20261126-safari-photo-1';
 import {openSafetyReport,confirmSafetyBlock} from './safety-actions.js?v=20261018-1';
 
+import {checkPaymentSafety,paymentSafetyEligible} from './payment-safety-popup.js?v=20261127-1';
+
 const $=id=>document.getElementById(id);
 let client,user,booking,otherId,messageChannel,bookingChannel,presenceChannel;
 let blockedByMe=false,blockedByOther=false;
@@ -340,6 +342,14 @@ function syncComposer(){
  else if(booking?.status==='pending')$('status').textContent='Chat and photo sharing will open after the companion accepts this request.';
  else $('status').textContent='This booking is '+booking.status+'. Chat history is read-only.';
 }
+function syncPaymentSafety(manual=false){
+ const current=booking?.id,uid=user?.id;
+ const eligible=paymentSafetyEligible(booking,uid);
+ const button=$('payment-safety-help');
+ if(button)button.hidden=!eligible;
+ if(!completionReady||!eligible||blockedByMe||blockedByOther)return;
+ void checkPaymentSafety({client,uid,booking,manual,isCurrent:()=>booking?.id===current&&user?.id===uid&&paymentSafetyEligible(booking,uid)&&!blockedByMe&&!blockedByOther});
+}
 async function loadBooking(){
  const {data,error}=await client.from('booking_requests').select('*').eq('id',booking.id).single();if(error)throw error;
  booking=(await withCurrentBookingNames(client,[data]))[0];otherId=user.id===booking.customer_id?booking.companion_id:booking.customer_id;
@@ -354,6 +364,7 @@ async function loadBooking(){
  const deal=$('deal-summary');
  $('chat-deal-details').hidden=!booking.agreed_hourly_rate;
  if(booking.agreed_hourly_rate){const total=Math.round(Number(booking.agreed_hourly_rate)*Number(booking.duration_minutes)/60);deal.textContent='Agreed rate: ₹'+Number(booking.agreed_hourly_rate).toLocaleString('en-IN')+'/hour · Approx. ₹'+total.toLocaleString('en-IN')+' for '+booking.duration_minutes+' minutes. Coordinate the plan here. Sathivo currently charges no platform fees or commission and does not collect, process or manage payments. Agree directly on payment by your own UPI ID, QR code, UPI-linked mobile number or cash. Verify the recipient and amount first. Sathivo does not hold funds, process refunds or provide payment protection. Never share UPI PINs, banking passwords or payment OTPs.';deal.hidden=false}else deal.hidden=true;const tips=$('chat-safety-tips');if(tips)tips.hidden=!(booking.status==='accepted'&&booking.meeting_mode==='in-person');syncComposer();
+ syncPaymentSafety();
 }
 function presenceText(){
  const p=$('presence-status');if(!p)return;
@@ -475,6 +486,9 @@ async function init(){try{
  for(const id of ['report-user','block-user']){
   $(id).addEventListener('click',()=>{safetyMenu.open=false});
  }
+ const paymentHelp=$('payment-safety-help');
+ if(paymentHelp)paymentHelp.addEventListener('click',()=>{safetyMenu.open=false;syncPaymentSafety(true)});
+ syncPaymentSafety();
  protectPrivateMedia();setupPresence();await loadMessages(true);
  messageChannel=client.channel('booking-messages:'+booking.id).on('postgres_changes',{event:'*',schema:'public',table:'booking_messages',filter:'booking_id=eq.'+booking.id},()=>void loadMessages(false)).subscribe();
  bookingChannel=client.channel('booking-status:'+booking.id).on('postgres_changes',{event:'UPDATE',schema:'public',table:'booking_requests',filter:'id=eq.'+booking.id},()=>void loadBooking().catch(()=>{})).subscribe(status=>{if(status==='SUBSCRIBED')void loadBooking().catch(()=>{});});
