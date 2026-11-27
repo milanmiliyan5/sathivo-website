@@ -1,0 +1,24 @@
+/* Accessible, centered booking payment reminder with a native modal backdrop. */
+.payment-safety-dialog{position:fixed;inset:0;margin:auto;width:min(340px,calc(100vw - 32px));max-height:calc(100dvh - 28px);overflow:auto;box-sizing:border-box;background:#fff;color:#38242f;border:1px solid #f1e4eb;border-radius:23px;padding:23px 20px 18px;box-shadow:0 14px 48px #24101d35;font-family:inherit}
+.payment-safety-dialog[open]{animation:ps-in .2s ease-out}
+.payment-safety-dialog::backdrop{background:#22121c70;backdrop-filter:blur(3px)}
+.payment-safety-dialog *{box-sizing:border-box}
+.ps-icon{display:grid;place-items:center;background:#f9eaf2;color:#6b2146;border-radius:50%;width:54px;height:54px;margin:0 auto 12px}
+.ps-icon svg{width:29px;height:29px}
+.payment-safety-dialog h2{font-size:21px;line-height:1.25;text-align:center;color:#6b2146;margin:0;font-weight:750}
+.ps-intro{font-size:13px;line-height:1.5;text-align:center;color:#74636d;margin:8px 0 18px}
+.ps-step{display:flex;align-items:center;gap:12px;margin:14px 0;text-align:left}
+.ps-step svg{flex:0 0 22px;color:#6b2146}
+.ps-step strong,.ps-step small{display:block}
+.ps-step strong{font-size:13px;font-weight:700}
+.ps-step small{font-size:12px;color:#74636d;line-height:1.4;margin-top:3px}
+.ps-continue{display:block;width:100%;background:#6b2146;color:white;border:0;border-radius:11px;padding:13px 8px;font:inherit;font-size:13px;font-weight:650;margin-top:20px;cursor:pointer}
+.ps-continue:disabled{opacity:.65;cursor:wait}
+.ps-note,.ps-error{font-size:11px;line-height:1.5;text-align:center;color:#74636d;margin:11px 0 0}
+.ps-error{color:#b4234b}.ps-dismiss{width:100%;border:0;background:none;color:inherit;padding:8px;cursor:pointer}
+:is([data-theme="dark"],.dark,.dark-mode) .payment-safety-dialog{background:#342030;color:#f8e9f1;border-color:#604054}
+:is([data-theme="dark"],.dark,.dark-mode) .payment-safety-dialog :is(h2,.ps-step svg){color:#f7b9d8}
+:is([data-theme="dark"],.dark,.dark-mode) .payment-safety-dialog :is(.ps-intro,.ps-step small,.ps-note){color:#d7c2d0}
+:is([data-theme="dark"],.dark,.dark-mode) .ps-icon{background:#543348;color:#f7b9d8}
+@keyframes ps-in{from{opacity:0;transform:translateY(7px) scale(.98)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.payment-safety-dialog[open]{animation:none}}
