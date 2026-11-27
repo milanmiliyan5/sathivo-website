@@ -1,0 +1,53 @@
+/* Compact booking UI, scoped to the public companion detail. */
+body.sathivo-2d .directory .booking-form.booking-compact{
+ --booking-accent:#6b2146;--booking-bg:#fdf6f9;--booking-line:#ead8e1;
+ padding:clamp(14px,3vw,24px)!important;background:var(--booking-bg);border:1px solid var(--booking-line);
+ border-radius:18px;box-shadow:none;min-width:0;margin-top:22px;
+}
+.booking-compact h2{font-family:var(--sans);font-size:1.35rem!important;letter-spacing:-.035em;color:var(--booking-accent);line-height:1.25;margin:0 0 14px!important;font-weight:700}
+.booking-compact .booking-person{display:flex;align-items:center;gap:10px;padding:11px;background:#fff;border:1px solid var(--booking-line);border-radius:13px;min-width:0}
+.booking-compact .booking-person-photo{height:48px!important;width:48px!important;min-height:0;flex:0 0 48px;border-radius:12px;font-size:1.25rem;overflow:hidden}
+.booking-compact .booking-person-photo img{height:100%;width:100%;object-fit:cover}
+.booking-compact .booking-person-name{flex:1;min-width:0;overflow-wrap:anywhere}
+.booking-compact .booking-person strong{display:block;font-size:.9rem;line-height:1.4}
+.booking-compact .booking-person small{display:block;color:var(--muted);font-size:.7rem;line-height:1.4}
+.booking-compact .booking-listed-rate{text-align:right;color:var(--booking-accent);flex:0 1 auto;max-width:42%}
+.booking-compact form{margin-top:16px;display:grid;gap:12px}
+.booking-compact .booking-grid{display:grid;grid-template-columns:minmax(0,1fr)!important;gap:13px!important}
+.booking-compact .booking-field{min-width:0}
+.booking-compact .booking-field.full{grid-column:1/-1!important}
+.booking-compact .booking-schedule{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:9px}
+.booking-compact label,.booking-compact legend{color:var(--ink);font-size:.82rem;font-weight:650;letter-spacing:0;margin:0}
+.booking-compact .booking-field>label>input,.booking-compact .booking-field>label>select,.booking-compact .booking-field>label>textarea{display:block;margin-top:5px}
+.booking-compact .booking-field>label>input,.booking-compact .booking-field>label>select,.booking-compact textarea{min-width:0;min-height:44px;border:1px solid var(--booking-line);border-radius:10px;padding:10px 11px;font-size:16px;background:white}
+.booking-compact input[type=date],.booking-compact input[type=time]{padding:9px 5px;font-size:.86rem;max-width:100%}
+.booking-compact textarea{min-height:62px;resize:vertical}
+.booking-compact .booking-helper{font-size:.72rem;margin-top:4px;line-height:1.4}
+.booking-compact .booking-choice-field{border:0;padding:0;margin:0;min-inline-size:0}
+.booking-compact legend{padding:0;margin-bottom:5px}
+.booking-compact .booking-choice-group{display:flex;gap:6px;flex-wrap:wrap}
+.booking-compact .booking-choice{position:relative;flex:1 1 40px;min-width:0;display:flex;cursor:pointer;margin:0}
+.booking-compact .booking-choice input{position:absolute;width:1px!important;height:1px!important;min-height:0!important;padding:0!important;margin:0;opacity:0;overflow:hidden}
+.booking-compact .booking-choice span{display:flex;align-items:center;justify-content:center;text-align:center;flex:1;min-height:44px;padding:6px 4px;border:1px solid var(--booking-line);border-radius:10px;background:white;color:var(--booking-accent);font-size:.78rem;line-height:1.2;transition:background-color .15s,color .15s}
+.booking-compact .booking-choice input:checked+span{background:var(--booking-accent);color:white;border-color:var(--booking-accent)}
+.booking-compact .booking-choice input:focus-visible+span{outline:2px solid var(--booking-accent);outline-offset:2px}
+.booking-compact .booking-total{display:flex;justify-content:space-between;align-items:center;gap:10px;background:#f0e2e9;border-radius:12px;padding:12px 14px;color:var(--booking-accent)}
+.booking-compact .booking-total-copy,.booking-compact .booking-total-fees{display:grid;gap:1px;min-width:0;overflow-wrap:anywhere}
+.booking-compact .booking-total-fees{text-align:right}
+.booking-compact .booking-total small{font-size:.73rem;color:#705365}
+.booking-compact .booking-total-amount{font-size:1.6rem;line-height:1.2;font-variant-numeric:tabular-nums}
+.booking-compact .booking-total-fees strong{font-size:.76rem}
+.booking-compact .booking-category-safety,.booking-compact .booking-payment-short,.booking-compact .booking-confirmation-note{font-size:.75rem;line-height:1.45;margin:0!important;padding:0;color:var(--muted);background:none;border:0;box-shadow:none}
+.booking-compact .booking-safety-details{border-top:1px solid var(--booking-line);border-bottom:1px solid var(--booking-line);padding:7px 0}
+.booking-compact .booking-safety-details summary{min-height:40px;display:flex;align-items:center;gap:8px;cursor:pointer;font-weight:650;font-size:.83rem;color:var(--booking-accent);list-style:none}
+.booking-compact .booking-safety-details summary::-webkit-details-marker{display:none}
+.booking-compact .booking-safety-details summary::before{content:'♧';font-size:1.15rem}
+.booking-compact .booking-safety-details summary::after{content:'⌄';margin-left:auto;font-size:1rem}
+.booking-compact .booking-safety-details[open] summary::after{content:'⌃'}
+.booking-compact .booking-safety-details p{font-size:.78rem;color:var(--muted);line-height:1.5;margin:0 0 7px}
+.booking-compact .booking-submit-row{display:grid!important;grid-template-columns:1fr;gap:7px;margin:0}
+.booking-compact .booking-submit-row button{width:100%;min-height:48px;border-radius:12px;background:var(--booking-accent);box-shadow:none}
+.booking-compact .booking-confirmation-note{text-align:center}
+.booking-compact .field-hint:empty{display:none}
+@media(max-width:350px){.booking-compact .booking-schedule{grid-template-columns:1fr}.booking-compact .booking-person-photo{display:none}.booking-compact .booking-choice span{font-size:.72rem}}
+@media(prefers-reduced-motion:reduce){.booking-compact *{transition:none!important;animation:none!important}}

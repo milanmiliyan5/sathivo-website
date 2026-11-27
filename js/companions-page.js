@@ -378,29 +378,91 @@ function disabledBookingPanel(wrap,access){
  button.type='button';button.disabled=true;wrap.append(button);
  return wrap;
 }
+// Booking dates are entered in the viewer's local timezone, then converted to ISO.
+function bookingLocalParts(date){
+ const pad=n=>String(n).padStart(2,'0');
+ return {date:date.getFullYear()+'-'+pad(date.getMonth()+1)+'-'+pad(date.getDate()),time:pad(date.getHours())+':'+pad(date.getMinutes())};
+}
+function bookingLocalDate(date,time){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(date)||!/^\d{2}:\d{2}$/.test(time))return null;
+ const chosen=new Date(date+'T'+time);
+ if(Number.isNaN(chosen.getTime()))return null;
+ const parts=bookingLocalParts(chosen);
+ return parts.date===date&&parts.time===time?chosen:null;
+}
+function bookingMinimum(){
+ // Round upward so a selectable minute is never less than 30 minutes away.
+ return new Date(Math.ceil((Date.now()+30*60*1000)/60000)*60000);
+}
+function bookingChoices(label,name,options,initial){
+ const fieldset=el('fieldset',undefined,'booking-field booking-choice-field full');
+ fieldset.append(el('legend',label));
+ const group=el('div',undefined,'booking-choice-group');
+ const inputs=options.map(([value,text])=>{
+  const lab=el('label',undefined,'booking-choice');
+  const input=document.createElement('input');input.type='radio';input.name=name;input.value=value;input.required=true;input.checked=value===initial;
+  lab.append(input,el('span',text));group.append(lab);return input;
+ });
+ fieldset.append(group);
+ return {field:fieldset,inputs,get value(){return inputs.find(input=>input.checked)?.value||''}};
+}
 function bookingForm(r,access='checking'){
  const wrap=el('section',undefined,'booking-form');
  if(['own','checking','unavailable'].includes(access))return disabledBookingPanel(wrap,access);
- wrap.append(el('h2','Send a booking request'),el('p','The companion has set '+rateText(r.hourly_rate)+'. You can send your own hourly offer. If they accept, your offer becomes the agreed rate.'));
+ wrap.classList.add('booking-compact');
+ wrap.append(el('h2','Book your company'));
  if(!Number(r.hourly_rate)){wrap.append(el('p','This companion has not set a rate yet, so new booking requests are temporarily unavailable.','payment-note'));return wrap;}
  if(access==='guest'||!currentUser){const a=el('a','Sign in to send a request ↗','button button-primary');a.href='account.html#login';wrap.append(a);return wrap;}
+ const companion=el('div',undefined,'booking-person'),photo=portrait(r);
+ photo.classList.add('booking-person-photo');
+ const identity=el('div',undefined,'booking-person-name');
+ identity.append(el('strong',r.display_name),el('small','Public companion profile'));
+ const listed=el('div',undefined,'booking-listed-rate');
+ listed.append(el('strong',rateText(r.hourly_rate)),el('small','Listed rate'));
+ companion.append(photo,identity,listed);wrap.append(companion);
  const form=document.createElement('form'),grid=el('div',undefined,'booking-grid');
  const category=document.createElement('select');category.required=true;r.categories.forEach(v=>category.add(new Option(experienceLabel(v),v)));
- const mode=document.createElement('select');mode.required=true;if(['online','both'].includes(r.meeting_mode))mode.add(new Option('Online','online'));if(['in-person','both'].includes(r.meeting_mode))mode.add(new Option('In person — public place','in-person'));
- const when=document.createElement('input');when.type='datetime-local';when.required=true;const minDate=new Date(Date.now()+30*60*1000);const pad=n=>String(n).padStart(2,'0');when.min=`${minDate.getFullYear()}-${pad(minDate.getMonth()+1)}-${pad(minDate.getDate())}T${pad(minDate.getHours())}:${pad(minDate.getMinutes())}`;
- const duration=document.createElement('select');[30,60,90,120,180].forEach(v=>duration.add(new Option(v+' minutes',String(v))));duration.value='60';
- const offer=document.createElement('input');offer.type='number';offer.min='1';offer.max='100000';offer.step='1';offer.inputMode='numeric';offer.required=true;offer.value=String(r.hourly_rate);offer.placeholder='Your offer per hour';
- const estimate=el('small','', 'booking-helper deal-estimate');
- const updateEstimate=()=>{const rate=Number(offer.value),mins=Number(duration.value),total=totalFor(rate,mins);estimate.textContent=total?'Your offer: '+rateText(rate)+' · Approx. ₹'+total.toLocaleString('en-IN')+' for '+mins+' minutes.':'Enter a valid hourly offer.';};offer.addEventListener('input',updateEstimate);duration.addEventListener('change',updateEstimate);updateEstimate();
+ const modes=[];if(['online','both'].includes(r.meeting_mode))modes.push(['online','Online']);if(['in-person','both'].includes(r.meeting_mode))modes.push(['in-person','In person']);
+ const mode=bookingChoices('Meeting type','booking-mode',modes,modes[0]?.[0]);
+ const date=document.createElement('input'),time=document.createElement('input');
+ date.type='date';time.type='time';date.required=time.required=true;time.step='60';
+ const updateMinimum=()=>{
+  const min=bookingLocalParts(bookingMinimum());
+  date.min=min.date;
+  if(date.value===min.date)time.min=min.time;else time.removeAttribute('min');
+ };
+ date.addEventListener('change',updateMinimum);date.addEventListener('focus',updateMinimum);time.addEventListener('focus',updateMinimum);updateMinimum();
+ const duration=bookingChoices('Duration','booking-duration',[['30','30m'],['60','1 hr'],['90','90m'],['120','2 hr'],['180','3 hr']],'60');
+ const offer=document.createElement('input');offer.type='number';offer.min='1';offer.max='100000';offer.step='1';offer.inputMode='numeric';offer.required=true;offer.value=String(r.hourly_rate);offer.placeholder='Hourly offer';
+ const estimate=el('strong','', 'booking-total-amount');estimate.setAttribute('aria-live','polite');
+ const length=el('small','', 'booking-total-duration');
+ const updateEstimate=()=>{const rate=Number(offer.value),mins=Number(duration.value),valid=Number.isInteger(rate)&&rate>=1&&rate<=100000&&mins>0;estimate.textContent=valid?'₹'+totalFor(rate,mins).toLocaleString('en-IN'):'—';length.textContent=mins+' minutes';};
+ offer.addEventListener('input',updateEstimate);duration.inputs.forEach(input=>input.addEventListener('change',updateEstimate));updateEstimate();
  const bookingSafety=el('p','','booking-category-safety');bookingSafety.setAttribute('role','note');
  const refreshBookingSafety=()=>{bookingSafety.textContent=experienceSafetyNote(category.value);};
  category.addEventListener('change',refreshBookingSafety);refreshBookingSafety();
- const note=document.createElement('textarea');note.maxLength=1000;note.rows=3;note.placeholder='Example: Coffee and a relaxed conversation around 5 PM.';
+ const note=document.createElement('textarea');note.maxLength=1000;note.rows=2;note.placeholder='Anything about your plan…';
  const field=(label,input,full=false,helper='')=>{const box=el('div',undefined,'booking-field'+(full?' full':'')),lab=el('label',label);lab.append(input);box.append(lab);if(helper)box.append(el('small',helper,'booking-helper'));return box;};
- grid.append(field('Experience',category),field('Meeting type',mode),field('Preferred date & time',when,false,'Choose a future time that suits you.'),field('Duration',duration),field('Your hourly offer (₹)',offer,false,'You may offer the listed rate or a different amount. The companion decides whether to accept.'),field('Offer estimate',estimate,false),field('Note to companion',note,true,'Optional. Use this for the plan or preferred public meeting area. Do not share passwords, OTPs or your exact home address.'));
- form.append(grid);form.append(bookingSafety);form.append(el('p','Sathivo currently charges no platform fees or commission and does not collect, process or manage payments. Agree directly on payment by your own UPI ID, QR code, UPI-linked mobile number or cash. Verify the recipient and amount first. Sathivo does not hold funds, process refunds or provide payment protection. Never share UPI PINs, banking passwords or payment OTPs.','payment-note'));
- const row=el('div',undefined,'booking-submit-row'),b=el('button','Send request ↗','button button-primary'),status=el('p','', 'field-hint');b.type='submit';row.append(b,status);form.append(row);
- form.onsubmit=async e=>{e.preventDefault();if(access!=='other'||!currentUser)return;const chosen=new Date(when.value);if(!when.value||Number.isNaN(chosen.getTime())||chosen<=new Date()){status.textContent='Please choose a future date and time.';when.focus();return}b.disabled=true;status.textContent='Sending request…';try{const iso=chosen.toISOString();const offerRate=Number(offer.value);if(!Number.isInteger(offerRate)||offerRate<1||offerRate>100000){status.textContent='Enter a valid hourly offer between ₹1 and ₹1,00,000.';offer.focus();b.disabled=false;return}const {data,error}=await client.rpc('create_booking_request_with_offer',{p_companion_public_id:r.public_id,p_category:category.value,p_meeting_mode:mode.value,p_requested_for:iso,p_duration_minutes:Number(duration.value),p_note:note.value.trim(),p_offer_hourly_rate:offerRate});if(error)throw error;status.textContent='Request sent. Notifying the companion…';await sendBookingPush(client,data,'request');status.textContent='Request sent. Opening your bookings…';location.href='bookings.html?id='+encodeURIComponent(data)+'&booked=1'}catch(err){status.textContent=err.message||'Could not send request.';b.disabled=false;}};
+ const schedule=el('div',undefined,'booking-field full booking-schedule');schedule.append(field('Date',date),field('Time',time));
+ grid.append(field('Activity',category,true),mode.field,schedule,duration.field,field('Your hourly offer (₹)',offer,true,'You can change the offer. The companion must accept it.'),field('Note (optional)',note,true));
+ const total=el('div',undefined,'booking-total'),amount=el('div',undefined,'booking-total-copy'),fees=el('div',undefined,'booking-total-fees');
+ amount.append(el('small','Estimated total'),estimate);fees.append(el('strong','₹0 platform fee'),length);total.append(amount,fees);
+ const payment=el('details',undefined,'booking-safety-details');
+ payment.append(el('summary','Payment & safety'),el('p','Sathivo does not collect, manage or process payments, hold funds, issue refunds or provide payment protection. Pay directly by UPI or cash; verify the recipient and amount. Never share UPI PINs, passwords, OTPs or your exact home address. For in-person plans, meet in a public place.'));
+ form.append(grid,total,bookingSafety,el('p','Pay directly to the companion. No payment protection.','booking-payment-short'),payment);
+ const row=el('div',undefined,'booking-submit-row'),b=el('button','Send Request ↗','button button-primary'),status=el('p','', 'field-hint');b.type='submit';status.setAttribute('role','status');row.append(b,status);form.append(row,el('p','Booking confirmed only after acceptance.','booking-confirmation-note'));
+ form.onsubmit=async e=>{
+  e.preventDefault();if(access!=='other'||!currentUser)return;
+  updateMinimum();
+  const chosen=bookingLocalDate(date.value,time.value);
+  if(!chosen||chosen<bookingMinimum()){status.textContent='Choose a date and time at least 30 minutes from now.';date.focus();return}
+  if(!mode.value||!duration.value){status.textContent='Choose a meeting type and duration.';return}
+  b.disabled=true;status.textContent='Sending request…';
+  try{const iso=chosen.toISOString();const offerRate=Number(offer.value);
+   if(!Number.isInteger(offerRate)||offerRate<1||offerRate>100000){status.textContent='Enter a valid hourly offer between ₹1 and ₹1,00,000.';offer.focus();b.disabled=false;return}
+   const {data,error}=await client.rpc('create_booking_request_with_offer',{p_companion_public_id:r.public_id,p_category:category.value,p_meeting_mode:mode.value,p_requested_for:iso,p_duration_minutes:Number(duration.value),p_note:note.value.trim(),p_offer_hourly_rate:offerRate});if(error)throw error;status.textContent='Request sent. Notifying the companion…';await sendBookingPush(client,data,'request');status.textContent='Request sent. Opening your bookings…';location.href='bookings.html?id='+encodeURIComponent(data)+'&booked=1'
+  }catch(err){status.textContent=err.message||'Could not send request.';b.disabled=false;}
+ };
  wrap.append(form);return wrap;
 }
 // Detail-only photo overlay. Use a sibling layer because the photo may load
