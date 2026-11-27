@@ -40,6 +40,9 @@ body.home-clean{background:#fffaf8;--home-line:#eadde2;--home-ink:#382630;--home
 .home-clean .home-activity{display:flex;align-items:center;gap:10px;min-height:58px;padding:9px 11px;border:1px solid var(--home-line);border-radius:13px;background:#fff;color:var(--home-ink);font-size:.82rem;font-weight:650;line-height:1.35;min-width:0;transition:background .16s,border-color .16s}
 .home-clean .home-activity:hover{background:#fff0f6;border-color:#dcb3c8}
 .home-clean .home-activity-icon{display:grid;place-items:center;background:#f8eef3;border-radius:10px;flex:0 0 34px;width:34px;height:34px;font-size:1.12rem}
+.home-clean .home-activity-icon{color:#6b2146}
+.home-clean .home-activity-icon svg{display:block;width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+@media(max-width:640px){.home-clean .home-activity-icon svg{width:19px;height:19px}}
 .home-clean .home-activity-arrow{margin-left:auto;color:#98617a;flex:none}
 .home-clean .availability-note{margin-top:12px}
 .home-clean .how-section{background:#fff5f6;border-block:1px solid var(--home-line)}
