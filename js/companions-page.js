@@ -24,6 +24,7 @@ if(bookingView){
  if(back){back.textContent='← Back to profile';back.href=profilePageUrl(id);}
  $('status').textContent='Loading booking details…';
  if($('profile-skeleton'))$('profile-skeleton').hidden=true;
+ if($('booking-skeleton'))$('booking-skeleton').hidden=false;
 }
 const savedView=directory&&new URLSearchParams(location.search).get('saved')==='1';
 if(savedView){
@@ -42,10 +43,11 @@ let discoverCursors=new Map(),directoryFilterKey='';
 let detailAuthReady=false;
 let refreshDetailAccount=null,initializing=false;
 function setProfileLoading(loading){
- const skeleton=$('profile-skeleton');
+ const skeleton=$('profile-skeleton'),bookingSkeleton=$('booking-skeleton');
  if(skeleton)skeleton.hidden=!loading||bookingView;
+ if(bookingSkeleton)bookingSkeleton.hidden=!loading||!bookingView;
  if($('detail'))$('detail').setAttribute('aria-busy',String(loading));
- if(loading&&!bookingView&&$('status'))$('status').textContent='Loading profile…';
+ if(loading&&$('status'))$('status').textContent=bookingView?'Loading booking details…':'Loading profile…';
 }
 let favoritesLoaded=false;
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
