@@ -23,6 +23,7 @@ if(bookingView){
  const id=new URLSearchParams(location.search).get('id')||'';
  if(back){back.textContent='← Back to profile';back.href=profilePageUrl(id);}
  $('status').textContent='Loading booking details…';
+ if($('profile-skeleton'))$('profile-skeleton').hidden=true;
 }
 const savedView=directory&&new URLSearchParams(location.search).get('saved')==='1';
 if(savedView){
@@ -39,6 +40,13 @@ let client,publicClient,locations=[],locationsLoaded=false,page=0,request=0,curr
 const discoverSeed=directory?Array.from(crypto.getRandomValues(new Uint8Array(8)),n=>n.toString(16).padStart(2,'0')).join(''):'';
 let discoverCursors=new Map(),directoryFilterKey='';
 let detailAuthReady=false;
+let refreshDetailAccount=null,initializing=false;
+function setProfileLoading(loading){
+ const skeleton=$('profile-skeleton');
+ if(skeleton)skeleton.hidden=!loading||bookingView;
+ if($('detail'))$('detail').setAttribute('aria-busy',String(loading));
+ if(loading&&!bookingView&&$('status'))$('status').textContent='Loading profile…';
+}
 let favoritesLoaded=false;
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!==undefined)n.textContent=text;if(cls)n.className=cls;return n;};
 function opts(id,rows,title){$(id).replaceChildren(new Option(title,''));rows.forEach(([v,t])=>$(id).add(new Option(t,String(v))));}
@@ -579,9 +587,11 @@ function detailPhotoFrame(row){
 }
 
 async function detail(){
- $('retry').hidden=true;$('detail').hidden=true;
+ $('retry').hidden=true;
+ refreshDetailAccount=null;
+ setProfileLoading(true);
  const id=new URL(location.href).searchParams.get('id');
- if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id||'')){$('status').textContent='Invalid profile link. Browse companions to choose a profile.';return;}
+ if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id||'')){$('status').textContent='Invalid profile link. Browse companions to choose a profile.';setProfileLoading(false);return;}
  try{
   const [{data:r,error},{data:rating}]=await Promise.all([
    publicClient.from('companion_listings').select(fields).eq('published',true).eq('moderation_status','active').eq('public_id',id).maybeSingle(),
@@ -601,12 +611,15 @@ async function detail(){
   const titleRow=el('div',undefined,'detail-title-row'),favorite=favoriteButton(r,true);
   if(own){favorite.disabled=true;favorite.title='Your own profile';favorite.setAttribute('aria-label','Your own profile');}
   titleRow.append(namedHeading('h1',r),favorite);copy.append(titleRow);
-  if(own)copy.append(el('span','Your own profile','own-profile-badge'));
+  const ownBadge=el('span','Your own profile','own-profile-badge');
+   if(own)copy.append(ownBadge);
+   if(access==='checking')favorite.disabled=true;
   const experience=experienceAndRating(r);if(experience)copy.append(experience);
   // Keep the lightweight share action below the name; safety controls live
   // together under Trust & account details so the profile header stays clean.
   const shareRow=el('div',undefined,'profile-actions sathivo-profile-share-row'),share=el('button',own?'Share My Profile ↗':'Share Profile ↗','sathivo-profile-share-button');
-  share.type='button';share.onclick=()=>void shareProfile(r,share);shareRow.append(share);if(own){const edit=el('a','Edit Profile ↗','text-link');edit.href='profile.html';shareRow.append(edit);}copy.append(shareRow);
+  const edit=el('a','Edit Profile ↗','text-link');edit.href='profile.html';
+   share.type='button';share.onclick=()=>void shareProfile(r,share);shareRow.append(share);if(own)shareRow.append(edit);copy.append(shareRow);
   const safetyControls=el('section',undefined,'sathivo-profile-safety-tools');
   safetyControls.setAttribute('aria-label','Safety and help actions');
   const safetyHeading=el('h3','Safety & Help','sathivo-profile-safety-heading');
@@ -638,10 +651,32 @@ async function detail(){
    }
    }catch{ safetyFeedback.textContent='Could not block this user. Please try again.';}finally{if(blockBtn.textContent!=='User blocked')blockBtn.disabled=false;}};
   if(!own)safetyActions.append(reportBtn,blockBtn);
+   if(access==='checking')reportBtn.disabled=blockBtn.disabled=true;
   safetyControls.append(safetyHeading,safetyActions,safetyFeedback);
   copy.append(el('p',locationName(r.location_id,r.city_name)),el('div',rateText(r.hourly_rate),'detail-rate'),trustChips(r),tags(r));
   // The profile contains only the booking entry point; the form lives in the dedicated booking view.
   copy.append(profileBookingAction(r,access));
+   // Auth restoration only updates viewer-dependent controls. Keep public DOM intact.
+   let bookingAction=copy.lastElementChild;
+   refreshDetailAccount=async()=>{
+    const settledAccess=await bookingAccess(r);
+    if(!copy.isConnected)return;
+    const isOwn=settledAccess==='own';
+    favorite.disabled=isOwn;
+    if(isOwn){
+     favorite.title='Your own profile';favorite.setAttribute('aria-label','Your own profile');
+     if(!ownBadge.isConnected)titleRow.after(ownBadge);
+     share.textContent='Share My Profile ↗';if(!edit.isConnected)shareRow.append(edit);
+     reportBtn.remove();blockBtn.remove();
+    }else{
+     ownBadge.remove();edit.remove();share.textContent='Share Profile ↗';
+     syncFavoriteButtons(r.public_id);
+     if(!reportBtn.isConnected)safetyActions.append(reportBtn,blockBtn);
+     reportBtn.disabled=blockBtn.disabled=false;
+    }
+    const nextAction=profileBookingAction(r,settledAccess);
+    bookingAction.replaceWith(nextAction);bookingAction=nextAction;
+   };
   const trust=el('section',undefined,'profile-trust-panel');trust.append(el('strong','Trust & account details'));const trustGrid=el('div',undefined,'profile-trust-grid');
   trustGrid.append(el('span',r.email_verified_at?'✓ Email verified':'Email verification unavailable'),el('span',r.adult_confirmed?'18+ self-declared':'Age declaration missing'),el('span',r.boundaries_accepted?'Platonic boundaries accepted':'Boundaries declaration missing'));
   if(r.joined_at)trustGrid.append(el('span','Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(r.joined_at))));if(r.safety_id)trustGrid.append(el('span','Safety ID '+r.safety_id));trust.append(trustGrid);copy.append(trust,safetyControls);
@@ -670,6 +705,7 @@ async function detail(){
   $('detail').replaceChildren(detailPhotoFrame(r),copy);$('detail').hidden=false;$('status').textContent='';document.title=r.display_name+' — Sathivo';
   if(location.hash==='#ratings-and-reviews')requestAnimationFrame(()=>reviews.scrollIntoView({behavior:'smooth',block:'start'}));
  }catch(e){$('status').textContent=e.message||'Could not load this profile. Please try again.';$('retry').hidden=false;}
+  finally{setProfileLoading(false);}
 }
 // State/district options are bundled locally, so they remain usable even when
 // Auth refreshes or the network is slow. Avoid registering handlers twice on retry.
@@ -717,7 +753,7 @@ function refreshAccountInBackground(){
   }catch{/* Public content remains readable without a restored account. */}
   finally{
    detailAuthReady=true;
-   if(!directory&&$('detail')&&!$('detail').hidden&&!$('detail').querySelector('.booking-form form'))void detail();
+   if(!directory&&!bookingView&&refreshDetailAccount)await refreshDetailAccount();
   }
  })();
 }
@@ -728,6 +764,9 @@ async function loadPublicLocations(){
  locationsLoaded=true;
 }
 async function init(){
+ if(initializing)return;
+ initializing=true;
+ if(!directory&&$('detail')?.hidden)setProfileLoading(true);
  try{
   setupDirectory();
   // Public data uses its own isolated anonymous client, never the user's
@@ -768,14 +807,14 @@ async function init(){
    refreshAccountInBackground();
   }catch(error){
    detailAuthReady=true;
-   if(!directory&&$('detail')&&!$('detail').hidden)void detail();
+   if(!directory&&!bookingView&&refreshDetailAccount)await refreshDetailAccount();
    console.warn('Optional account tools unavailable, public discovery remains available:',error?.message||'network error');
   }
  }catch(error){
   $('status').textContent='Could not connect to Sathivo right now. Please try again.';
   $('retry').hidden=false;
   console.warn('Sathivo discovery initialization failed:',error?.message||'network error');
- }
+  }finally{initializing=false;if(!directory)setProfileLoading(false);}
 }
 // The Account preview imports this exact Explore renderer on demand.
 // Never start directory/detail initialization on an Account page.
