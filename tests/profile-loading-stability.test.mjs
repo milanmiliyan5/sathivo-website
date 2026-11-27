@@ -27,7 +27,7 @@ test('skeleton is present before JavaScript and clears on success or failure',()
  assert.match(html,/prefers-reduced-motion:reduce/);
  assert.match(detail,/finally\{setProfileLoading\(false\);\}/);
  const loading=source.slice(source.indexOf('function setProfileLoading('),source.indexOf('let favoritesLoaded='));
- const nodes={'profile-skeleton':{hidden:false},detail:{setAttribute(k,v){this[k]=v;}},status:{}};
+ const nodes={'profile-skeleton':{hidden:false},'booking-skeleton':{hidden:true},detail:{setAttribute(k,v){this[k]=v;}},status:{}};
  const ctx=vm.createContext({$:id=>nodes[id],bookingView:false});
  vm.runInContext(loading+'\nsetProfileLoading(true);',ctx);
  assert.equal(nodes['profile-skeleton'].hidden,false);
@@ -38,4 +38,21 @@ test('skeleton is present before JavaScript and clears on success or failure',()
  ctx.bookingView=true;
  vm.runInContext('setProfileLoading(true);',ctx);
  assert.equal(nodes['profile-skeleton'].hidden,true);
+ assert.equal(nodes['booking-skeleton'].hidden,false);
+ assert.equal(nodes.status.textContent,'Loading booking details…');
+ vm.runInContext('setProfileLoading(false);',ctx);
+ assert.equal(nodes['booking-skeleton'].hidden,true);
+ assert.equal(nodes.detail['aria-busy'],'false');
+});
+
+test('booking route starts with its own form-shaped loader before asynchronous initialization',()=>{
+ const html=read('companion.html');
+ assert.match(html,/id="booking-skeleton"[^>]*aria-hidden="true" hidden/);
+ assert.match(html,/booking-sk-schedule/);
+ assert.match(html,/booking-sk-total/);
+ assert.match(html,/booking-sk-submit/);
+ assert.match(html,/getElementById\('booking-skeleton'\)\.hidden=false/);
+ assert.match(html,/booking-page-view \.booking-form\[data-site-slide\]/);
+ assert.match(detail,/replaceChildren\(bookingForm\(r,access\)\)/);
+ assert.match(detail,/finally\{setProfileLoading\(false\);\}/);
 });
