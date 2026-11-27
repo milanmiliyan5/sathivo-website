@@ -300,3 +300,28 @@ body.sathivo-2d .incoming-compact-page .request-hub-card[data-view="cancelled"] 
 @media(max-width:350px){
  body.sathivo-2d .incoming-compact-page .request-hub-icon svg{width:22px;height:22px}
 }
+
+/* Initial-only skeletons use the exact hub geometry; no fake live counts. */
+body.sathivo-2d .incoming-compact-page #status.request-loading-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;margin:0}
+body.sathivo-2d .incoming-compact-page .request-sk-card{cursor:default;pointer-events:none}
+.request-sk-shape{position:relative;overflow:hidden;background:#eadce5;border-radius:7px;display:block}
+.request-sk-shape::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent,rgba(255,255,255,.62),transparent);transform:translateX(-100%);animation:request-sk-shimmer 1.55s linear infinite}
+@keyframes request-sk-shimmer{to{transform:translateX(100%)}}
+body.sathivo-2d .incoming-compact-page .request-sk-card[data-skeleton-tone="blue"] .request-hub-icon{background:#e3edfc}
+body.sathivo-2d .incoming-compact-page .request-sk-card[data-skeleton-tone="green"] .request-hub-icon{background:#dcefe5}
+body.sathivo-2d .incoming-compact-page .request-sk-card[data-skeleton-tone="amber"] .request-hub-icon{background:#faebcf}
+body.sathivo-2d .incoming-compact-page .request-sk-card[data-skeleton-tone="rose"] .request-hub-icon{background:#f8e1e9}
+body.sathivo-2d .incoming-compact-page .request-sk-card .request-hub-count{background:#eadce5}
+.request-sk-name{height:13px;width:65%;max-width:100%}
+.request-sk-arrow{width:8px;height:14px;flex:none;margin:0 4px}
+#request-list-skeleton{display:grid;gap:13px;min-width:0}
+.request-sk-list-card{display:grid;gap:12px;border:1px solid #ead8e2;border-radius:15px;background:#fff;padding:14px;min-width:0}
+.request-sk-list-head{display:flex;align-items:center;gap:9px;min-width:0}
+.request-sk-avatar{width:34px;height:34px;border-radius:11px;flex:none}
+.request-sk-list-copy{flex:1;min-width:0;display:grid;gap:8px}
+.request-sk-meta{width:90%;height:9px}
+.request-sk-pill{width:52px;height:24px;border-radius:999px;flex:none}
+.request-sk-wide{width:90%;height:11px}.request-sk-short{width:60%;height:11px}
+.request-sk-list-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.request-sk-list-actions span{height:36px;border-radius:9px}
+body.sathivo-2d:not(.home-2d).site-motion-ready .incoming-compact-page .request-card[data-site-slide]{opacity:1;transform:none;transition:none}
+@media(prefers-reduced-motion:reduce){.request-sk-shape::after{animation:none}}
