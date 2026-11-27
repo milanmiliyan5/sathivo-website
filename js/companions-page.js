@@ -586,6 +586,31 @@ function detailPhotoFrame(row){
  return frame;
 }
 
+// Compact profile notes: static outline artwork and native accessible disclosures.
+function profileNoteIcon(kind){
+ const icon=el('span',undefined,'profile-note-icon');icon.setAttribute('aria-hidden','true');
+ const shapes={
+  shield:'<path d="M12 3 4 6v6c0 5 4 8 8 10 4-2 8-5 8-10V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+  wallet:'<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M21 10h-6a2 2 0 0 0 0 4h6M16 12h.01"/>',
+  pin:'<path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"/><circle cx="12" cy="10" r="2.5"/>',
+ };
+ icon.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" focusable="false">'+shapes[kind]+'</svg>';
+ return icon;
+}
+function compactProfileNotes(){
+ const notes=el('ul',undefined,'profile-compact-notes');notes.setAttribute('aria-label','Booking and safety essentials');
+ for(const [kind,label] of [['shield','18+ only · Strictly platonic'],['wallet','Agree on pricing before meeting.'],['pin','Meet safely in public places.']]){
+  const item=el('li');item.append(profileNoteIcon(kind),el('span',label));notes.append(item);
+ }
+ return notes;
+}
+function profileDisclosure(label){
+ const panel=el('details',undefined,'profile-compact-disclosure');
+ const summary=el('summary',label);
+ panel.append(summary);
+ const content=el('div',undefined,'profile-disclosure-content');panel.append(content);
+ return {panel,content};
+}
 async function detail(){
  $('retry').hidden=true;
  refreshDetailAccount=null;
@@ -679,7 +704,10 @@ async function detail(){
    };
   const trust=el('section',undefined,'profile-trust-panel');trust.append(el('strong','Trust & account details'));const trustGrid=el('div',undefined,'profile-trust-grid');
   trustGrid.append(el('span',r.email_verified_at?'✓ Email verified':'Email verification unavailable'),el('span',r.adult_confirmed?'18+ self-declared':'Age declaration missing'),el('span',r.boundaries_accepted?'Platonic boundaries accepted':'Boundaries declaration missing'));
-  if(r.joined_at)trustGrid.append(el('span','Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(r.joined_at))));if(r.safety_id)trustGrid.append(el('span','Safety ID '+r.safety_id));trust.append(trustGrid);copy.append(trust,safetyControls);
+  if(r.joined_at)trustGrid.append(el('span','Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(r.joined_at))));if(r.safety_id)trustGrid.append(el('span','Safety ID '+r.safety_id));trust.append(trustGrid);
+  const trustDisclosure=profileDisclosure('Trust, Safety & Account Details');
+  trustDisclosure.content.append(trust,safetyControls);
+  const reviewsDisclosure=profileDisclosure('Ratings & Reviews');
   // About, languages, interests and availability appear on the photo overlay
   // (with full text available through See More), instead of repeating below the form.
   const reviews=el('section',undefined,'public-reviews');reviews.id='ratings-and-reviews';reviews.tabIndex=-1;
@@ -697,13 +725,21 @@ async function detail(){
     review.append(el('p',item.comment));reviewList.append(review);
    }
   }catch{reviewList.append(el('p','Written reviews are unavailable right now. Please try later.'));}
-  copy.append(reviews);
+  reviewsDisclosure.content.append(reviews);
   const safetyNote=el('section',undefined,'sathivo-safety-panel');
   safetyNote.append(el('h3','🛡️ First meeting? Stay in control.'),el('p','Choose a public place, tell someone you trust, arrange your own travel and never share passwords or UPI PINs.'));
-  const moreSafety=el('a','Read our Safety & Community Guidelines ↗');moreSafety.href='safety.html#first-meeting';safetyNote.append(moreSafety);copy.append(safetyNote);
-  copy.append(el('p','The displayed amount is the companion’s own hourly rate. You can propose a different hourly amount in your request. A price becomes agreed only if the companion accepts your request. Payment happens directly between users outside Sathivo; Sathivo does not process payments.','payment-note'),el('p','Self-described profile. Identity and age have not been verified. Availability is a preference, not a confirmed booking.','launch-note'),el('p','18+ and strictly platonic. Respect boundaries and choose public places for in-person meetings.'));
+  const moreSafety=el('a','Read our Safety & Community Guidelines ↗');moreSafety.href='safety.html#first-meeting';safetyNote.append(moreSafety);trustDisclosure.content.append(safetyNote);
+  trustDisclosure.content.append(el('p','The displayed amount is the companion’s own hourly rate. You can propose a different hourly amount in your request. A price becomes agreed only if the companion accepts your request. Payment happens directly between users outside Sathivo; Sathivo does not process payments.','payment-note'),el('p','Self-described profile. Identity and age have not been verified. Availability is a preference, not a confirmed booking.','launch-note'),el('p','18+ and strictly platonic. Respect boundaries and choose public places for in-person meetings.'));
+  const disclosures=el('div',undefined,'profile-compact-disclosures');
+  disclosures.append(trustDisclosure.panel,reviewsDisclosure.panel);
+  copy.append(compactProfileNotes(),disclosures);
   $('detail').replaceChildren(detailPhotoFrame(r),copy);$('detail').hidden=false;$('status').textContent='';document.title=r.display_name+' — Sathivo';
-  if(location.hash==='#ratings-and-reviews')requestAnimationFrame(()=>reviews.scrollIntoView({behavior:'smooth',block:'start'}));
+  const openLinkedReviews=()=>{
+   if(location.hash!=='#ratings-and-reviews'||!reviews.isConnected)return;
+   reviewsDisclosure.panel.open=true;
+   requestAnimationFrame(()=>reviews.scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'}));
+  };
+  openLinkedReviews();window.addEventListener('hashchange',openLinkedReviews);
  }catch(e){$('status').textContent=e.message||'Could not load this profile. Please try again.';$('retry').hidden=false;}
   finally{setProfileLoading(false);}
 }
