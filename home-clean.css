@@ -114,3 +114,20 @@ body.home-clean{background:#fffaf8;--home-line:#eadde2;--home-ink:#382630;--home
 @keyframes home-headline-scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 @media(max-width:640px){.home-clean .home-ticker-set{gap:24px;padding:7px 12px;font-size:.65rem}.home-clean .home-ticker-track{animation-duration:30s}}
 @media(prefers-reduced-motion:reduce){.home-clean .home-ticker-track{animation:none;will-change:auto;width:100%}.home-clean .home-ticker-window{overflow-x:auto}.home-clean .home-ticker-set{justify-content:flex-start}.home-clean .home-ticker-set:nth-child(2),.home-clean .home-ticker-toggle{display:none}}
+
+/* Compact three-step home guide: retain its layout, pastel cards and icons. */
+.home-clean #how-it-works .how-flow-eyebrow{margin-bottom:10px;padding:4px 11px;letter-spacing:.075em}
+.home-clean #how-it-works .how-flow-intro{margin-top:8px;line-height:1.5}
+.home-clean #how-it-works .how-flow-grid{margin-top:16px;gap:10px}
+.home-clean #how-it-works .how-flow-card{min-height:0;gap:6px;padding:18px 14px}
+.home-clean #how-it-works .how-flow-card p{line-height:1.5}
+.home-clean #how-it-works .how-flow-bottom{margin-top:14px;gap:9px}
+.home-clean #how-it-works .how-flow-cta.button{border:0;box-shadow:none;min-height:46px}
+.home-clean #how-it-works .how-flow-cta.button:hover{box-shadow:none}
+.home-clean #how-it-works .how-flow-disclaimer{line-height:1.5}
+@media(max-width:740px){
+ .home-clean #how-it-works .how-flow-shell{padding:18px 14px}
+ .home-clean #how-it-works .how-flow-card{grid-template-columns:42px minmax(0,1fr);column-gap:12px;row-gap:3px;padding:13px 12px}
+ .home-clean #how-it-works .how-flow-icon{width:42px;height:42px;flex-basis:42px}
+ .home-clean #how-it-works .how-flow-icon svg{width:21px;height:21px}
+}
