@@ -1,0 +1,41 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import {readFileSync} from 'node:fs';
+const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
+const source=read('js/companions-page.js');
+const detail=source.slice(source.indexOf('async function detail()'),source.indexOf('// State/district options'));
+const refresh=source.slice(source.indexOf('function refreshAccountInBackground()'),source.indexOf('async function loadPublicLocations()'));
+
+test('account restoration never reloads or hides the rendered public profile',async()=>{
+ assert.doesNotMatch(refresh,/\bdetail\(\)/);
+ assert.doesNotMatch(detail,/\$\('detail'\)\.hidden\s*=\s*true/);
+ let updates=0,authCalls=0;
+ const ctx=vm.createContext({authStarted:false,detailAuthReady:false,currentUser:null,directory:false,bookingView:false,client:{auth:{getUser:async()=>{authCalls++;return {data:{user:{id:'viewer'}}};}}},loadFavorites:async()=>{},document:{querySelectorAll:()=>[]},syncFavoriteButtons:()=>{},refreshDetailAccount:async()=>{updates++;}});
+ vm.runInContext(refresh+'\nrefreshAccountInBackground();refreshAccountInBackground();',ctx);
+ await new Promise(resolve=>setImmediate(resolve));
+ assert.equal(authCalls,1);
+ assert.equal(updates,1);
+ assert.equal(ctx.detailAuthReady,true);
+ assert.match(detail,/if\(!copy\.isConnected\)return/);
+ assert.match(detail,/bookingAction\.replaceWith\(nextAction\)/);
+});
+test('skeleton is present before JavaScript and clears on success or failure',()=>{
+ const html=read('companion.html');
+ assert.match(html,/id="profile-skeleton"[^>]*aria-hidden="true"/);
+ assert.match(html,/profile-shimmer/);
+ assert.match(html,/prefers-reduced-motion:reduce/);
+ assert.match(detail,/finally\{setProfileLoading\(false\);\}/);
+ const loading=source.slice(source.indexOf('function setProfileLoading('),source.indexOf('let favoritesLoaded='));
+ const nodes={'profile-skeleton':{hidden:false},detail:{setAttribute(k,v){this[k]=v;}},status:{}};
+ const ctx=vm.createContext({$:id=>nodes[id],bookingView:false});
+ vm.runInContext(loading+'\nsetProfileLoading(true);',ctx);
+ assert.equal(nodes['profile-skeleton'].hidden,false);
+ assert.equal(nodes.detail['aria-busy'],'true');
+ vm.runInContext('setProfileLoading(false);',ctx);
+ assert.equal(nodes['profile-skeleton'].hidden,true);
+ assert.equal(nodes.detail['aria-busy'],'false');
+ ctx.bookingView=true;
+ vm.runInContext('setProfileLoading(true);',ctx);
+ assert.equal(nodes['profile-skeleton'].hidden,true);
+});
