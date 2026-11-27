@@ -5,7 +5,13 @@ let client,allowed=false,busy=false,pendingId=null;
 const status=(s,success=false)=>{$('contribution-status').textContent=s;$('contribution-status').dataset.success=String(success)};
 const api=async body=>{const {data,error}=await client.functions.invoke('sathivo-contribution-checkout',{body});if(error)throw Error('Contribution request unavailable. If a payment was attempted, check its status or contact support before retrying.');return data};
 const amount=()=>{const a=document.querySelector('input[name=amount]:checked')?.value;return a==='custom'?Number($('custom-amount').value):Number(a)};
-const state=()=>{$('contribution-fieldset').disabled=!allowed||busy||!!pendingId;$('contribution-refresh').hidden=!pendingId||busy};
+const validAmount=n=>Number.isInteger(n)&&n>=10&&n<=10000;
+function syncPayButton(){
+ const n=amount(),valid=validAmount(n);
+ $('contribution-pay-label').textContent=busy?'Processing…':pendingId?'Payment pending':valid?'Contribute ₹'+n.toLocaleString('en-IN'):'Contribute';
+ $('contribution-pay').disabled=!allowed||busy||!!pendingId||!valid||!$('contribution-consent').checked;
+}
+const state=()=>{$('contribution-fieldset').disabled=!allowed||busy||!!pendingId;$('contribution-refresh').hidden=!pendingId||busy;syncPayButton()};
 function sdk(){return new Promise((resolve,reject)=>{if(window.Razorpay)return resolve();const script=document.createElement('script');script.src='https://checkout.razorpay.com/v1/checkout.js';script.onload=resolve;script.onerror=reject;document.head.append(script)})}
 function remember(id){pendingId=id;try{if(id)sessionStorage.setItem('sathivo.contribution.pending',id);else sessionStorage.removeItem('sathivo.contribution.pending')}catch{}state()}
 function displayReceipt(r){if(r.status==='captured'){status('Thank you! Your ₹'+(r.amount_paise/100)+' contribution is verified. ♡',true);remember(null)}else if(r.status==='refunded'||r.status==='partially_refunded'){status('Your contribution has a recorded refund. Contact Support for details.');remember(null)}else if(r.status==='failed'){status('Payment attempt failed. Check your bank before trying again.');remember(null)}else{status('Awaiting verified payment status. Do not pay again until you have checked the result.');state()}}
@@ -16,8 +22,10 @@ function syncCustomAmount(){
  const custom=document.querySelector('input[name=amount]:checked')?.value==='custom';
  $('custom-label').hidden=!custom;
  $('custom-amount').disabled=!custom;
+ syncPayButton();
 }
 $('contribution-form').addEventListener('change',syncCustomAmount);
+$('custom-amount').addEventListener('input',syncPayButton);
 // Amount-only hint from the Android app; never authorizes checkout or consent.
 const prefill=contributionPrefill(new URLSearchParams(location.search).get('amount'));
 if(prefill!==null){
