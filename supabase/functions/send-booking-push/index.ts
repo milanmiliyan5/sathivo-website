@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.116.0";
 import webpush from "npm:web-push@3.6.7";
+import { deliverAndroid } from "./fcm.ts";
 
 const allowedOrigins = new Set([
   "https://sathivo.co",
@@ -95,6 +96,7 @@ function bookingMessage(event, b) {
 }
 
 async function deliver(admin, target, payload) {
+  await ensureVapid(admin);
   const { data: subscriptions, error: subError } = await admin
     .from("push_subscriptions")
     .select("endpoint,p256dh,auth_key")
@@ -147,8 +149,6 @@ Deno.serve(async (req) => {
     const key = serverKey();
     if (!key) throw new Error("Server key unavailable");
     const admin = createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
-    await ensureVapid(admin);
-
     const body = await req.json();
     const event = String(body?.event ?? "");
 
@@ -244,14 +244,17 @@ Deno.serve(async (req) => {
       if (deliveryError) throw deliveryError;
     }
 
-    const sent = await deliver(admin, msg.target, {
-      title: msg.title,
-      body: msg.body,
-      url: msg.url,
-      tag: `sathivo-${booking.id}-${tagSuffix}`,
-    });
-
-    return Response.json({ ok: true, sent }, { headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
+    // A single existing database claim protects both channels from repeated client calls.
+    // Channel failures are isolated; FCM does not depend on VAPID or web subscriptions.
+    const tag = `sathivo-${booking.id}-${tagSuffix}`;
+    const outcomes = await Promise.allSettled([
+      deliver(admin, msg.target, {title:msg.title,body:msg.body,url:msg.url,tag}),
+      deliverAndroid(admin,msg.target,{event,bookingId:booking.id,url:msg.url,tag}),
+    ]);
+    const sent=outcomes[0].status==="fulfilled"?outcomes[0].value:0;
+    const android_sent=outcomes[1].status==="fulfilled"?outcomes[1].value:0;
+    if(outcomes.some(result=>result.status==="rejected"))console.error("One or more push channels unavailable");
+    return Response.json({ ok: true, sent, android_sent }, { headers: { ...corsHeaders(req), "Content-Type": "application/json" } });
   } catch (error) {
     console.error(error);
     return Response.json({ error: error instanceof Error ? error.message : "Unexpected error" }, { status: 500, headers: corsHeaders(req) });
