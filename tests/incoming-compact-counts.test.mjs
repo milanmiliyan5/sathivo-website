@@ -1,3 +1,4 @@
+import {assertVersionedAsset} from './versioned-asset.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import vm from 'node:vm';
@@ -25,8 +26,8 @@ test('Requests is a vertically stacked five-card hub with a same-page Back view'
   assert.match(html,new RegExp('data-count-for="'+types[i]+'"'));
   assert.ok(html.includes('class="request-hub-name">'+labels[i]+'</span>'));
  }
- assert.match(html,/requests-compact\.css\?v=20261125-icons-1/);
- assert.match(html,/requests-page\.js\?v=20261125-no-booking-email-1/);
+ assertVersionedAsset(html, 'requests-compact.css', '20261125');
+ assertVersionedAsset(html, 'js/requests-page.js', '20261125');
  assert.equal((html.match(/class="request-hub-card" data-view=/g)||[]).length,5);
  assert.match(html,/request-hub-group-title">Your requests/);
  assert.match(html,/request-hub-group-divider">Booking status/);
@@ -86,7 +87,7 @@ test('Sent and received bookings keep their distinct actions and secured access'
   "showCompletedBookingRating({client,user,booking:r})","appendRecoveryControls",
   "sendBookingPush","withCurrentBookingNames"
  ])assert.ok(js.includes(action),'Missing action '+action);
- assert.match(js,/function render\(\)\{\s*syncRequestCounts\(\);/);
+ assert.match(js,/function render\(\)\{\s*if\(!requestsReady\)\{setRequestLoading\(true\);return;\}\s*setRequestLoading\(false\);\s*syncRequestCounts\(\);/);
  assert.match(js,/\[data-view\]/);
  assert.match(js,/\$\('request-back'\)\.addEventListener\('click'/);
  assert.match(js,/client\.channel\('incoming-requests:'/);

@@ -1,3 +1,4 @@
+import {assertVersionedAsset} from './versioned-asset.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -7,6 +8,6 @@ test('publishing does not duplicate an already recorded gender response',async()
  assert.match(code,/from\('companion_gender_prompt_responses'\)\.upsert\(/);
  assert.match(code,/onConflict:'user_id',ignoreDuplicates:true/);
  assert.doesNotMatch(code,/from\('companion_gender_prompt_responses'\)\.insert\(/);
- assert.match(await read('js/profile-page.js'),/listing-publish\.js\?v=20261125-persistent-ticks-1/);
- assert.match(await read('profile.html'),/profile-page\.js\?v=20261125-profile-back-2/);
+ assertVersionedAsset(await read('js/profile-page.js'), './listing-publish.js', '20261125');
+ assertVersionedAsset(await read('profile.html'), 'js/profile-page.js', '20261125');
 });

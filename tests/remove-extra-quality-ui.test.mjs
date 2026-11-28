@@ -15,7 +15,8 @@ test('admin companion listings use the original search, status and moderation UI
  assert.doesNotMatch(css,/listing-quality/);
  assert.doesNotMatch(script,/assessListingQuality|summarizeListingQuality|qualityDuplicates|listing-quality-filter|listing-quality-summary|companion-quality\.js/);
  assert.match(script,/const q=\$\('listing-search'\)\.value\.trim\(\)\.toLowerCase\(\),status=value\('listing-status-filter'\)/);
- assert.match(script,/emptyRow\(5,'No matching companion listings\.'\)/);
+ assert.match(script,/renderTablePage\('listings',rows,listingRow,5,'No matching companion listings\.'\)/);
+ assert.match(script,/emptyRow\(columns,emptyMessage\)/);
  assert.match(script,/b\.onclick=\(\)=>void setListing\(r\.user_id,next\)/);
 });
 test('profile publishing and public explore no longer show optional bio quality prompts',async()=>{
@@ -30,7 +31,10 @@ test('profile publishing and public explore no longer show optional bio quality 
 test('manual global Refresh All and safety/report moderation remain unchanged',async()=>{
  const html=await read('admin.html'),page=await read('js/admin-page.js');
  assert.match(html,/id="refresh-dashboard"[^>]*>↻ Refresh All/);
- assert.match(page,/Promise\.all\(\[load\(\),loadStats\(\),refreshContributions\(client\),refreshSidebarBadges\(\)\]\)/);
+ const refresh = page.slice(page.indexOf('async function refreshAll()'),page.indexOf('await refreshAll();startPresence()'));
+ const batch = refresh.match(/await Promise\.allSettled\(\[([^\]]+)\]\)/);
+ assert.ok(batch,'Refresh waits for every section');
+ for(const call of ['load()', 'loadStats()', 'refreshContributions(client)', 'refreshSidebarBadges()', 'founder?.refresh()', 'refreshDeletions(client)', 'refreshOfficialInbox(client)'])assert.ok(batch[1].split(',').map(s=>s.trim()).includes(call),call);
  assert.match(page,/await refreshAll\(\);startPresence\(\)/);
  assert.match(html,/id="support-section"/);
  assert.match(html,/id="reports-section"/);

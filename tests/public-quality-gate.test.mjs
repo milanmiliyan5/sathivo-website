@@ -46,7 +46,7 @@ test('booking and optional contribution remain clearly distinct',async()=>{
   assert.match(html,/companion|booking/i,name+': booking distinction missing');
  }
  const contribute=await read('contribute.html');
- assert.match(contribute,/not a companion booking payment/i);
+ assert.match(contribute,/not (?:a companion booking payment|a charitable or tax-deductible donation or booking payment)/i);
  assert.match(contribute,/no additional benefits/i);
 });
 

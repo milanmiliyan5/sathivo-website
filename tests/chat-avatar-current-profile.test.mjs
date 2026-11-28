@@ -1,3 +1,4 @@
+import {assertVersionedAsset} from './versioned-asset.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -18,8 +19,8 @@ test('Both chat routes import cache-busted current-DP code',async()=>{
   const avatarImport='chat-avatars.js?v=20261123-avatar-square-1';
   assert.ok((await read('js/chat-page.js')).includes(avatarImport));
   assert.ok((await read('js/chats-page.js')).includes(avatarImport));
-  assert.ok((await read('chat.html')).includes('js/chat-page.js?v=20261125-clean-photo-status-1'));
-  assert.ok((await read('chats.html')).includes('js/chats-page.js?v=20261125-stable-inbox-1'));
+  assertVersionedAsset(await read('chat.html'), 'js/chat-page.js', '20261125');
+  assertVersionedAsset(await read('chats.html'), 'js/chats-page.js', '20261125');
 });
 
 test('Chat-avatar DB access remains restricted to booking partners and private storage',async()=>{

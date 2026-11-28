@@ -77,11 +77,13 @@ function loadStats(){
 }
 async function fetchStats(){
   const [statsResult,visualResult]=await Promise.allSettled([client.functions.invoke('admin-dashboard-stats'),client.rpc('admin_visual_summary')]);
-  if(statsResult.status==='rejected'){visualUnavailable();throw statsResult.reason;}
-  const {data,error}=statsResult.value;
-  if(error){$('metrics-updated').textContent='Dashboard refresh failed';throw error}
-  const row=Array.isArray(data)?data[0]:data;
-  if(!row)throw Error('Dashboard statistics unavailable');
+  const payload=statsResult.status==='fulfilled'?statsResult.value:null;
+  const row=Array.isArray(payload?.data)?payload.data[0]:payload?.data;
+  if(!row||payload?.error){
+    $('metrics-updated').textContent='Dashboard refresh failed';
+    visualUnavailable();
+    throw (statsResult.status==='rejected'?statsResult.reason:payload?.error) || Error('Dashboard statistics unavailable');
+  }
   metric('metric-accounts',row.total_accounts);
   metric('metric-today-bookings',row.bookings_today);
   metric('metric-total-bookings',row.total_bookings);

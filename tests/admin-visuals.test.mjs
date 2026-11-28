@@ -13,3 +13,22 @@ test('visuals use one manually refreshed authenticated aggregate and preserve ad
  for(const id of ['visual-growth-plot','visual-donut','visual-cities','visual-gender','visual-top-companions','recent-activity','founder-section','maintenance-section','refresh-dashboard'])assert.equal((html.match(new RegExp('id="'+id+'"','g'))||[]).length,1);
  assert.match(sql,/auth.uid\(\) is null/);assert.match(sql,/platform_admins/);assert.match(sql,/security invoker/);assert.match(sql,/revoke all/);assert.match(sql,/generate_series\(0,29\)/);
 });
+
+test('failed statistics refresh marks both the metrics and previous charts stale',async()=>{
+ const {runInNewContext}=await import('node:vm');
+ const page=await read('js/admin-page.js');
+ const source=page.slice(page.indexOf('async function fetchStats()'),page.indexOf('// The presence connection'));
+ for(const invoke of [
+   async()=>{throw Error('Offline')},
+   async()=>({data:null,error:Error('Unavailable')}),
+   async()=>({data:[],error:null})
+ ]){
+   const updated={textContent:'Updated'},warnings=[];
+   const context={client:{functions:{invoke},rpc:async()=>({data:{days:[]}})},
+     $:id=>{assert.equal(id,'metrics-updated');return updated;},
+     visualUnavailable:()=>warnings.push('stale')};
+   await assert.rejects(runInNewContext(source+';fetchStats()',context));
+   assert.equal(updated.textContent,'Dashboard refresh failed');
+   assert.deepEqual(warnings,['stale']);
+ }
+});

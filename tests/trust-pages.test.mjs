@@ -59,3 +59,10 @@ test('unreviewed content ideas are kept out of the public sitemap',async()=>{
  assert.match(plan,/human editor/i);
  assert.doesNotMatch(sitemap,/docs\/content-plan|P01|P15/);
 });
+
+test('Safety header links can wrap on narrow screens',async()=>{
+ const html=await readFile(new URL('../safety.html',import.meta.url),'utf8');
+ const css=await readFile(new URL('../safety-help.css',import.meta.url),'utf8');
+ assert.match(html,/safety-help\.css\?v=[\w-]+/);
+ assert.match(css,/@media\s*\(max-width:\s*700px\)\s*\{\s*\.legal-header \.legal-top-links\s*\{[^}]*flex-wrap:\s*wrap/);
+});

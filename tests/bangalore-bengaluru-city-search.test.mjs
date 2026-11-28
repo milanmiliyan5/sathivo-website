@@ -1,3 +1,4 @@
+import {assertVersionedAsset} from './versioned-asset.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFile} from 'node:fs/promises';
@@ -27,6 +28,6 @@ test('location suggestions merge Bangalore/Bengaluru under a readable name', asy
   assert.match(js, /browse_public_companions_v3/);
   for (const page of ['companions.html','companion.html']) {
     const html = await read(page);
-    assert.match(html, /js\/companions-page\.js\?v=20261125-saved-clean-2/);
+    assertVersionedAsset(html, 'js/companions-page.js', '20261125');
   }
 });

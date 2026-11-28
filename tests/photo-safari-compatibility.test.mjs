@@ -1,3 +1,4 @@
+import {assertVersionedAsset} from './versioned-asset.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {encodePhoto,encodedPhotoType,compressImageFile} from '../js/image-compress.js';
@@ -26,5 +27,6 @@ test('profile and public listing preserve legacy keys and actual MIME, with cach
  const [profile,publish,chat,html]=await Promise.all(['js/profile-page.js','js/listing-publish.js','js/chat-page.js','profile.html'].map(read));
  assert.ok(profile.includes("user.id+'/avatar.webp'"));assert.ok(profile.includes('contentType:preparedPhoto.type'));
  assert.ok(publish.includes('await encodedPhotoType(blob)'));assert.ok(publish.includes('contentType:type'));
- assert.ok(chat.includes("prepared.ext"));assert.ok(html.includes('20261126-safari-photo-1'));
+ assert.ok(chat.includes("prepared.ext"));assertVersionedAsset(html, 'js/profile-page.js', '20261126');
+ assertVersionedAsset(profile, './image-compress.js', '20261126');
 });

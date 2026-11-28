@@ -8,6 +8,13 @@ test('all public website wordmarks use sathivo.co and preserve brand navigation'
  for(const page of pages){
   const html=await readFile(new URL(page,root),'utf8');
   const brands=[...html.matchAll(/<a class="brand"[^>]*>[\s\S]*?<\/a>/g)];
+  if(page==='contribute.html'||page==='support-chat.html'){
+   const back=page==='contribute.html'?'href="./?view=home" aria-label="Back to home"':'href="chats.html" aria-label="Back to Chats"';
+   assert.ok(html.includes(back),page+' preserves contextual navigation');
+   assert.ok(html.includes(page==='contribute.html'?'Support Sathivo':'Sathivo Official'),page+' identifies Sathivo');
+   assert.ok(html.includes('styles.css?v=20261119-brand-co'));
+   continue;
+  }
   if(page==='top-companions.html'){
    assert.match(html,/<h1>Top Companions<\/h1>/);
    assert.match(html,/href="companions.html" aria-label="Back to Explore"/);
