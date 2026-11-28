@@ -1,0 +1,41 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import vm from 'node:vm';
+import {readFileSync} from 'node:fs';
+const read=path=>readFileSync(new URL('../'+path,import.meta.url),'utf8');
+const js=read('js/profile-page.js'),html=read('profile.html');
+test('save feedback is immediate, resets on error, and briefly acknowledges success',()=>{
+ const nodes={'save-profile':{dataset:{},setAttribute(k,v){this[k]=v;}}};
+ let timeout;
+ const ctx=vm.createContext({$:id=>nodes[id],document:{body:{toggleAttribute(k,v){this[k]=v;}}},clearTimeout(){timeout=null;},setTimeout(fn){timeout=fn;return 1;}});
+ const helpers=js.slice(js.indexOf('let profileSaving=false'),js.indexOf('function markSafetySaved'));
+ vm.runInContext(helpers+'\nsetProfileSaving(true);',ctx);
+ assert.equal(nodes['save-profile'].textContent,'Saving…');
+ assert.equal(nodes['save-profile'].disabled,true);
+ assert.equal(nodes['save-profile']['aria-busy'],'true');
+ assert.equal(ctx.document.body['data-profile-saving'],true);
+ vm.runInContext("setProfileSaving(false);setSaveFeedback('idle');",ctx);
+ assert.equal(nodes['save-profile'].disabled,false);
+ assert.equal(nodes['save-profile'].textContent,'Save');
+ vm.runInContext("setSaveFeedback('saved');",ctx);
+ assert.equal(nodes['save-profile'].textContent,'Saved successfully');
+ timeout();
+ assert.equal(nodes['save-profile'].textContent,'Save');
+});
+test('save retains draft locks and privacy checks but removes transient fading',()=>{
+ assert.match(js,/if\(!user\|\|!profileLoaded\|\|profileSaving\|\|\$\('fields'\)\.disabled\)return/);
+ assert.match(js,/setProfileSaving\(true\);\$\('fields'\)\.disabled=true;publishing\.setBusy\(true\)/);
+ assert.match(js,/button\.disabled=profileSaving\|\|!allowed/);
+ assert.match(js,/await publishing\.prepareSave/);
+ assert.match(js,/await publishing\.saveVisibility/);
+ assert.match(js,/await publishing\.recover/);
+ assert.match(html,/body\[data-profile-saving\] #fields:disabled\{opacity:1!important\}/);
+ assert.match(html,/prefers-reduced-motion:reduce[^\n]*profile-save/);
+ assert.match(js,/saveSucceeded=true;updateCompleteness\(\)/);
+});
+test('unchanged photos avoid reload and pending public sync remains retryable',()=>{
+ assert.match(js,/const photoChanged=!!file\|\|draft\.avatar_path!==savedAvatarPath/);
+ assert.match(js,/if\(photoChanged\|\|\$\('avatar'\)\.hidden\|\|!\$\('avatar'\)\.getAttribute\('src'\)\)await showPhoto/);
+ assert.match(js,/refreshPhoto:photoChanged\|\|\['companion','privacy'\]\.includes\(priorStage\)/);
+ assert.match(js,/if\(section==='privacy'&&data\.setup_stage!=='complete'\)/);
+});
