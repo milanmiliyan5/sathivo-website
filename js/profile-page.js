@@ -9,6 +9,36 @@ import { avatarOptions, avatarMarker, avatarAsset, isBuiltinAvatar } from './ava
 import { compressImageFile } from './image-compress.js?v=20261126-safari-photo-1';
 const $ = id => document.getElementById(id);
 const form = $('profile-form');
+const kindSelect=$('profile_kind'),kindDialog=$('kind-dialog'),kindOpen=$('kind-open');
+const kindDescriptions={customer:['Find Company','I want to book companions'],companion:['Become a Companion','I want to receive bookings and earn'],both:['Both','I want to book and earn']};
+const kindEnhanced=typeof kindDialog?.showModal==='function';
+function syncKindPicker(){
+ if(!kindEnhanced)return;
+ const choice=kindDescriptions[kindSelect.value]||kindDescriptions.customer;
+ $('kind-current').textContent=choice[0];
+ $('kind-current-desc').textContent=choice[1];
+}
+function openKindPicker(){
+ if(!kindEnhanced){kindSelect.focus();return;}
+ if($('fields').disabled||kindDialog.open)return;
+ for(const radio of kindDialog.querySelectorAll('input[type=radio]'))radio.checked=radio.value===kindSelect.value;
+ kindDialog.showModal();
+}
+if(kindEnhanced){
+ kindSelect.hidden=true;kindOpen.hidden=false;$('kind-label').htmlFor='kind-open';
+ kindOpen.addEventListener('click',openKindPicker);
+ $('kind-close').addEventListener('click',()=>kindDialog.close());
+ $('kind-confirm').addEventListener('click',()=>{
+  const chosen=kindDialog.querySelector('input:checked')?.value;
+  if(chosen&&Object.hasOwn(kindDescriptions,chosen)&&!$('fields').disabled){
+   if(kindSelect.value!==chosen){kindSelect.value=chosen;kindSelect.dispatchEvent(new Event('change',{bubbles:true}));}
+   syncKindPicker();
+  }
+  kindDialog.close();
+ });
+ syncKindPicker();
+}
+
 const profileScroll=createProfileScrollReset(window,document);
 const categories = experienceCategories;
 const el=(tag,text,cssClass)=>{const element=document.createElement(tag);if(text!==undefined)element.textContent=text;if(cssClass)element.className=cssClass;return element;};
@@ -46,7 +76,7 @@ function revealProfileControl(control){
  if(panel)showProfileTab(panel.dataset.profilePanel,{record:true});
  if(control){
   for(let parent=control.parentElement;parent;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;
-  control.focus();
+  (control===kindSelect&&kindEnhanced?kindOpen:control).focus();
  }
 }
 function validateProfileForm(section=profileTab){
@@ -82,7 +112,7 @@ document.querySelectorAll('[data-profile-tab]').forEach(button=>{
   if(next){event.preventDefault();showProfileTab(next,{record:true,focus:true,resetScroll:true});}
  });
 });
-$('profile-choose-companion').addEventListener('click',()=>revealProfileControl($('profile_kind')));
+$('profile-choose-companion').addEventListener('click',()=>{revealProfileControl(kindSelect);if(kindEnhanced)openKindPicker();});
 // Older releases created same-document history entries for each tab.
 // If Back reaches one of those entries, leave the editor rather than reopening a tab.
 window.addEventListener('popstate',event=>{
@@ -198,6 +228,7 @@ function setSectionDisabled(id,disabled){
  section.querySelectorAll('input,select,textarea,button').forEach(control=>{control.disabled=disabled;});
 }
 function syncModeUI(){
+ syncKindPicker();
  const companion=isCompanionKind();
  document.body.dataset.profileMode=companion?'companion':'customer';
  setSectionDisabled('companion-photo-section',!companion);
@@ -437,6 +468,7 @@ async function init(){
     if(isCompanionKind()&&avatarPath)await showPhoto(avatarPath);updateCompleteness();
     publishing.syncMode();updateSectionTicks();
     $('fields').disabled=false;profileLoaded=true;
+    if(!p&&kindEnhanced)openKindPicker();
     $('publication').hidden=!isCompanionKind();
     // Support photo retry deep link: restore Personal and reveal the upload control.
     const revealPhotoSection=()=>{
