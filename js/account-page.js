@@ -394,6 +394,7 @@ bindForm('#otp-form', async values => {
   try {
     const result = await flow.verify(values.code);
     if (result.kind === 'recovery') showPanel('new-password');
+    else if(result.kind==='signup') window.location.replace(new URL('profile.html',window.location.href).href);
     else renderAccount(result.user);
   } finally { document.querySelector('#otp-code').value = ''; }
 }, 'Checking your code…');
