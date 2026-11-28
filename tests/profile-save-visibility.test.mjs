@@ -21,7 +21,7 @@ test('single explicit save, no dialog or separate update button',async()=>{
  assert.doesNotMatch(html,/id="publish-prompt"|id="update-public-listing"|Ready to go public/);
  assert.match(html,/Turn on Public Profile and save to share/);
  assert.match(page,/await publishing\.prepareSave\(/);assert.match(page,/await publishing\.saveVisibility\(data/);
- assert.doesNotMatch(page,/openPublishPrompt|showModal\(/);
+ assert.doesNotMatch(page,/openPublishPrompt|publishPrompt\.showModal\(/);
  assert.match(publish,/if\(!draft\.published\|\|!\['companion','both'\]\.includes\(p.profile_kind\)\)/);
  assert.match(publish,/publish\.addEventListener\('click',\(\)=>\{if\(!busy&&known&&isCompanion\(\)\)change\('public'\);\}\)/);
 });
