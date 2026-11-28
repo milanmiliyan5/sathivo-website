@@ -45,6 +45,21 @@ const el=(tag,text,cssClass)=>{const element=document.createElement(tag);if(text
 let client, user, locations = [], avatarPath = null, savedAvatarPath = null, dirty = false, publishing = null;
 let profileTab='personal',profileLoaded=false,hadSavedProfile=false;
 let savedSectionProfile=null;
+let profileSaving=false,saveFeedbackTimer=0;
+function setSaveFeedback(state){
+ clearTimeout(saveFeedbackTimer);
+ const button=$('save-profile');
+ button.dataset.saveState=state;
+ button.textContent=state==='saving'?'Saving…':state==='saved'?'Saved successfully':'Save';
+ button.setAttribute('aria-busy',String(state==='saving'));
+ if(state==='saved')saveFeedbackTimer=setTimeout(()=>setSaveFeedback('idle'),1400);
+}
+function setProfileSaving(value){
+ profileSaving=value;
+ document.body.toggleAttribute('data-profile-saving',value);
+ if(value){setSaveFeedback('saving');$('save-profile').disabled=true;}
+ else $('save-profile').disabled=false;
+}
 function markSafetySaved(p){
  for(const [name,prefix] of [['adult_confirmed','adult'],['boundaries_accepted','boundaries']]){
   const confirmed=p?.[name]===true&&form.elements[name].checked;
@@ -105,8 +120,9 @@ $('profile-summary-photo').addEventListener('load',()=>{if(isCompanionKind()&&!$
 $('profile-summary-photo').addEventListener('error',()=>{$('profile-summary-photo').hidden=true;});
 new MutationObserver(syncSummaryPhoto).observe($('avatar'),{attributes:true,attributeFilter:['src','hidden']});
 document.querySelectorAll('[data-profile-tab]').forEach(button=>{
- button.addEventListener('click',()=>showProfileTab(button.dataset.profileTab,{record:true,resetScroll:true}));
+ button.addEventListener('click',()=>{if(!profileSaving)showProfileTab(button.dataset.profileTab,{record:true,resetScroll:true});});
  button.addEventListener('keydown',event=>{
+  if(profileSaving)return;
   const tabs=availableProfileTabs(savedSectionProfile,$('profile_kind').value),index=tabs.indexOf(profileTab);
   const next=event.key==='ArrowRight'?tabs[(index+1)%tabs.length]:event.key==='ArrowLeft'?tabs[(index+tabs.length-1)%tabs.length]:event.key==='Home'?tabs[0]:event.key==='End'?tabs[tabs.length-1]:null;
   if(next){event.preventDefault();showProfileTab(next,{record:true,focus:true,resetScroll:true});}
@@ -236,7 +252,7 @@ function syncModeUI(){
  setSectionDisabled('companion-details-section',!companion);
  $('hourly_rate').required=companion;
  $('publication').hidden=!companion;
- $('save-profile').textContent='Save';
+ if(!profileSaving)setSaveFeedback('idle');
  for(const name of ['companion','privacy'])$('profile-tab-'+name).hidden=!companion;
  if(!companion&&profileTab!=='personal')showProfileTab('personal');
  syncSafetyPlacement();
@@ -260,7 +276,7 @@ function updateSectionTicks(){
  const completed=savedProfileTicks(savedSectionProfile,{hasListing:publishing?.hasListing()===true});
  const allowed=availableProfileTabs(savedSectionProfile,$('profile_kind').value);
  document.querySelectorAll('[data-profile-tab]').forEach(button=>{
-  button.disabled=!allowed.includes(button.dataset.profileTab);
+  button.disabled=profileSaving||!allowed.includes(button.dataset.profileTab);
   const done=completed[button.dataset.profileTab]===true;
   button.querySelector('.profile-section-tick').toggleAttribute('hidden',!done);
   const label=button.querySelector('span').textContent;
@@ -301,7 +317,7 @@ function showSystemInfo(p){
  const joined=p?.joined_at||user?.created_at;
  $('joined-date').textContent=joined?'Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(joined)):'';
 }
-form.addEventListener('input',e=>{if(e.target.name==='profile_kind_choice')return;dirty=true;updateCompleteness();});
+form.addEventListener('input',e=>{if(e.target.name==='profile_kind_choice')return;if(!profileSaving)setSaveFeedback('idle');dirty=true;updateCompleteness();});
 form.addEventListener('change',e=>{if(e.target.name==='profile_kind_choice')return;if(e.target.id==='profile_kind')syncModeUI();else{if(e.target.id==='gender')publishing?.syncMode();updateCompleteness();}});
 window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
 async function showPhoto(path) {
@@ -317,7 +333,7 @@ async function photoBlob(file) {
 
 form.addEventListener('submit',async event=>{
  event.preventDefault();
- if(!user||!profileLoaded||$('fields').disabled)return;
+ if(!user||!profileLoaded||profileSaving||$('fields').disabled)return;
  const section=profileTab,companion=isCompanionKind(),draft=currentDraft(),kind=draft.profile_kind;
  if(!validateProfileForm(section))return;
  if(!publishing?.isKnown()){message('Could not check profile visibility. Refresh before saving.',true);return;}
@@ -339,8 +355,8 @@ form.addEventListener('submit',async event=>{
  }
  if(section==='privacy'&&(!draft.adult_confirmed||!draft.boundaries_accepted)){fail('Confirm both safety declarations.','privacy');return;}
  const wasNew=!hadSavedProfile;
- $('fields').disabled=true;publishing.setBusy(true);message('Saving…');
- let privateSaved=false,advance=false;
+ setProfileSaving(true);$('fields').disabled=true;publishing.setBusy(true);updateSectionTicks();
+ let privateSaved=false,advance=false,saveSucceeded=false;
  try{
   const fresh=await client.auth.getUser();if(fresh.error||fresh.data.user?.id!==user.id)throw Error('Your session ended. Sign in again before saving.');
   // Only Privacy changes visibility. Existing public cards can refresh saved details.
@@ -348,6 +364,7 @@ form.addEventListener('submit',async event=>{
   const file=section==='personal'&&companion?$('photo').files[0]:null;
   let preparedPhoto=null;
   const priorStage=savedSectionProfile?.setup_stage;
+  const photoChanged=!!file||draft.avatar_path!==savedAvatarPath;
   await publishing.prepareSave({applyVisibility:final,photoChanged:section==='privacy'&&['companion','privacy'].includes(savedSectionProfile?.setup_stage)});
   let row;
   if(section==='personal'){
@@ -371,7 +388,11 @@ form.addEventListener('submit',async event=>{
    }
    savedAvatarPath=data.avatar_path;avatarPath=data.avatar_path;$('photo').value='';
    if(localPreviewUrl){URL.revokeObjectURL(localPreviewUrl);localPreviewUrl=null;}
-   if(companion&&avatarPath)await showPhoto(avatarPath);else{$('avatar').hidden=true;syncAvatarChoice();}
+   if(companion&&avatarPath){
+    // Keep the already loaded image when the saved photo did not change.
+    if(photoChanged||$('avatar').hidden||!$('avatar').getAttribute('src'))await showPhoto(avatarPath);
+    else syncAvatarChoice();
+   }else{$('avatar').hidden=true;syncAvatarChoice();}
   }
   markSafetySaved(data);syncSafetyPlacement();showSystemInfo(data);updateCompleteness();
   if(final){
@@ -380,7 +401,7 @@ form.addEventListener('submit',async event=>{
     if(!confirmed.personal||!confirmed.companion)throw Error('Profile details changed in another session. Reload and review your details before publishing.');
    }
    const visibility=await publishing.saveVisibility(data,{photoChanged:section==='privacy'&&['companion','privacy'].includes(data.setup_stage),uploadedBlob:preparedPhoto?.blob||null});
-   if(section==='privacy'){
+   if(section==='privacy'&&data.setup_stage!=='complete'){
     const finish=await client.from('member_profiles').update({setup_stage:'complete'}).eq('user_id',user.id).select('*').single();
     if(finish.error||!finish.data)throw Error('Visibility saved, but setup completion could not be recorded. Save again to retry.');
     savedSectionProfile=finish.data;
@@ -388,11 +409,13 @@ form.addEventListener('submit',async event=>{
    message(visibility.published?(visibility.active?'Profile saved and published.':'Profile saved. Public listing is subject to moderation.'):'Profile saved and kept private.');
    if(!companion&&wasNew)window.setTimeout(()=>location.assign('companions.html'),450);
   }else{
-   const sync=await publishing.syncExistingPublic(data,{refreshPhoto:section==='personal'||['companion','privacy'].includes(priorStage),uploadedBlob:preparedPhoto?.blob||null});
+   const sync=await publishing.syncExistingPublic(data,{refreshPhoto:photoChanged||['companion','privacy'].includes(priorStage)||(section==='personal'&&priorStage!=='complete'),uploadedBlob:preparedPhoto?.blob||null});
    if(sync.synced){
-    const finish=await client.from('member_profiles').update({setup_stage:'complete'}).eq('user_id',user.id).select('*').single();
-    if(finish.error||!finish.data)throw Error('Public profile updated, but progress could not be recorded. Save again to retry.');
-    savedSectionProfile=finish.data;
+    if(data.setup_stage!=='complete'){
+     const finish=await client.from('member_profiles').update({setup_stage:'complete'}).eq('user_id',user.id).select('*').single();
+     if(finish.error||!finish.data)throw Error('Public profile updated, but progress could not be recorded. Save again to retry.');
+     savedSectionProfile=finish.data;
+    }
     message('Profile saved and public profile updated.');
    }else{
     message('Details saved. Review Privacy to apply any pending visibility changes.');
@@ -400,13 +423,14 @@ form.addEventListener('submit',async event=>{
    advance=true;
   }
   dirty=profileDraftChanged(savedSectionProfile,currentDraft(),{pendingPhoto:!!$('photo').files[0]})||publishing.hasPendingChanges();
-  updateCompleteness();
+  saveSucceeded=true;updateCompleteness();
  }catch(error){
   await publishing.recover();
   if(error.message?.includes('Visibility changed in another session'))showProfileTab('privacy',{record:true});
   message((privateSaved?'Saved details. ':'')+(error.message||'Could not save. Please try again.'),true);updateCompleteness();
  }finally{
   $('fields').disabled=false;publishing.setBusy(false);
+  setProfileSaving(false);updateSectionTicks();setSaveFeedback(saveSucceeded?'saved':'idle');
   if(advance)showProfileTab(section==='personal'?'companion':'privacy',{record:true,focus:true,resetScroll:true});
   else if($('profile-status').textContent)$('profile-status').focus();
  }
