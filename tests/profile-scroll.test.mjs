@@ -28,7 +28,7 @@ test('manual tabs, back history and successful saves reset while validation reta
  const js=await readFile(new URL('../js/profile-page.js',import.meta.url),'utf8');
  assert.match(js,/showProfileTab\(button\.dataset\.profileTab,\{record:true,resetScroll:true\}\)/);
  assert.match(js,/if\(advance\)showProfileTab\(section==='personal'\?'companion':'privacy',\{record:true,focus:true,resetScroll:true\}\)/);
- assert.match(js,/finally\{\s*\$\('fields'\)\.disabled=false;publishing\.setBusy\(false\);\s*if\(advance\)/);
+ assert.match(js,/finally\{\s*\$\('fields'\)\.disabled=false;publishing\.setBusy\(false\);\s*setProfileSaving\(false\);updateSectionTicks\(\);setSaveFeedback\(saveSucceeded\?'saved':'idle'\);\s*if\(advance\)/);
  assert.match(js,/function revealProfileControl\(control\)\{\s*profileScroll\.cancel\(\)/);
  assert.match(js,/focus\(\{preventScroll:true\}\)/);
 });
