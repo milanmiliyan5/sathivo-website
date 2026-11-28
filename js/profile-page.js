@@ -31,7 +31,7 @@ if(kindEnhanced){
  $('kind-confirm').addEventListener('click',()=>{
   const chosen=kindDialog.querySelector('input:checked')?.value;
   if(chosen&&Object.hasOwn(kindDescriptions,chosen)&&!$('fields').disabled){
-   if(kindSelect.value!==chosen){kindSelect.value=chosen;kindSelect.dispatchEvent(new Event('change',{bubbles:true}));}
+   if(kindSelect.value!==chosen){kindSelect.value=chosen;kindSelect.dispatchEvent(new Event('input',{bubbles:true}));kindSelect.dispatchEvent(new Event('change',{bubbles:true}));}
    syncKindPicker();
   }
   kindDialog.close();
@@ -301,8 +301,8 @@ function showSystemInfo(p){
  const joined=p?.joined_at||user?.created_at;
  $('joined-date').textContent=joined?'Member since '+new Intl.DateTimeFormat('en-IN',{month:'short',year:'numeric'}).format(new Date(joined)):'';
 }
-form.addEventListener('input',()=>{dirty=true;updateCompleteness();});
-form.addEventListener('change',e=>{if(e.target.id==='profile_kind')syncModeUI();else{if(e.target.id==='gender')publishing?.syncMode();updateCompleteness();}});
+form.addEventListener('input',e=>{if(e.target.name==='profile_kind_choice')return;dirty=true;updateCompleteness();});
+form.addEventListener('change',e=>{if(e.target.name==='profile_kind_choice')return;if(e.target.id==='profile_kind')syncModeUI();else{if(e.target.id==='gender')publishing?.syncMode();updateCompleteness();}});
 window.addEventListener('beforeunload',event=>{if(dirty){event.preventDefault();event.returnValue='';}});
 async function showPhoto(path) {
   const builtIn=avatarAsset(path);
@@ -468,7 +468,10 @@ async function init(){
     if(isCompanionKind()&&avatarPath)await showPhoto(avatarPath);updateCompleteness();
     publishing.syncMode();updateSectionTicks();
     $('fields').disabled=false;profileLoaded=true;
-    if(!p&&kindEnhanced)openKindPicker();
+    if(kindEnhanced&&(!p||new URLSearchParams(location.search).get('setup')==='1')){
+      showProfileTab('personal',{record:false,resetScroll:true});openKindPicker();
+      if(new URLSearchParams(location.search).get('setup')==='1'){const url=new URL(location.href);url.searchParams.delete('setup');history.replaceState(history.state,'',url.href);}
+    }
     $('publication').hidden=!isCompanionKind();
     // Support photo retry deep link: restore Personal and reveal the upload control.
     const revealPhotoSection=()=>{
